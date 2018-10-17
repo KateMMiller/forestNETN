@@ -13,11 +13,12 @@ joinQuadData(speciesType = "all", park = "all", from = 2006,
 \item{"all"}{Default. Returns all species.}
 \item{"native"}{Returns native species only}
 \item{"exotic"}{Returns exotic species only}
+\item{"invasive"}{Returns species on the Indicator Invasive List}
 }}
 }
 \value{
-Returns a dataframe with average quadrat cover and frequency for each species and guild for each species.
+Returns a dataframe with cover class midpoints for each quadrat and includes guild for each species.
 }
 \description{
-This function combines quadrat species data with species names and calculates average cover and quadrat frequency for each species. Average cover is corrected for number of quadrats sampled.
+This function combines quadrat species data with species names and allows you to filter on species types, park, years, and visit type. Note that the Shrub guild also includes woody vine species.
 }
