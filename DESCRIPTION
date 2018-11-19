@@ -13,9 +13,11 @@ Collate:
     'importData.R'
     'joinLocEvent.R'
     'joinCWDData.R'
+    'joinMicroShrubData.R'
     'joinQuadData.R'
     'joinRegenData.R'
     'joinTreeData.R'
+    'makeSppList.R'
     'sumQuadGuilds.R'
 Encoding: UTF-8
 LazyData: true

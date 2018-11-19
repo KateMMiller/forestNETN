@@ -48,17 +48,23 @@ joinQuadData<-function(speciesType='all', park='all',from=2006, to=2018, QAQC=FA
   old.names<-names(quads2[,14:21])
   new.names<-c('UC','UL','ML','BL','BC','BR','MR','UR')
   quads2<-quads2 %>% rename_at(vars(old.names),~new.names)
+  head(quads2)
+  quads2[,c(14:21)][is.na(quads2[,c(14:21)])]<-0
+  quads3<-quads2 %>% mutate(avg.cover=(UC+UL+ML+BL+BC+BR+MR+UR)/numHerbPlots) #%>% select(Event_ID:TSN,avg.cover)
+  names(quads3)
+  quads3[,c(14:21)][quads3[,c(14:21)]>0]<-1
+  quads3<-quads3 %>% mutate(avg.freq=(UC+UL+ML+BL+BC+BR+MR+UR)/numHerbPlots)
 
-  quads3<-if (speciesType=='native'){filter(quads2,Exotic==FALSE)
-  } else if (speciesType=='exotic'){filter(quads2,Exotic==TRUE)
-  } else if (speciesType=='invasive'){filter(quads2,Indicator_Invasive_NETN==TRUE)
-  } else if (speciesType=='all'){(quads2)
+  quads4<-if (speciesType=='native'){filter(quads3,Exotic==FALSE)
+  } else if (speciesType=='exotic'){filter(quads3,Exotic==TRUE)
+  } else if (speciesType=='invasive'){filter(quads3,Indicator_Invasive_NETN==TRUE)
+  } else if (speciesType=='all'){(quads3)
   } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='invasive'|speciesType!='all'){
     stop("speciesType must be either 'native','exotic', 'invasive', or 'all'")}
 
-  quads4<-merge(quads1,quads3[,c(1,13:29)],by='Event_ID',all.x=T)
-  quads4[,c(14:21, 23:29)][is.na(quads4[,c(14:21, 23:29)])]<-0
-  return(data.frame(quads4))
+  quads5<-merge(quads1,quads4[,c(1,13:31)],by='Event_ID',all.x=T)
+  quads5[,c(14:21, 23:31)][is.na(quads4[,c(14:21, 23:31)])]<-0
+  return(data.frame(quads5))
 
 } # end of function
 
