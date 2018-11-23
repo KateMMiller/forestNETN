@@ -4,20 +4,20 @@
 \alias{sumQuadGuilds}
 \title{sumQuadGuilds}
 \usage{
-sumQuadGuilds(speciesType = "all", park = "all", from = 2006,
-  to = 2018, QAQC = FALSE, locType = "VS", output)
+sumQuadGuilds(speciesType = "native", park = "all", from = 2006,
+  to = 2018, QAQC = FALSE, locType = "VS", output, ...)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
 \describe{
-\item{"all"}{Default. Returns all species.}
-\item{"native"}{Returns native species only}
+\item{"all"}{Returns all species.}
+\item{"native"}{Default. Returns native species only}
 \item{"exotic"}{Returns exotic species only}
 \item{"invasive"}{Returns species on the Indicator Invasive List}
 }}
 }
 \value{
-Returns a dataframe with average quadrat cover, percent quadrat frequency and quadrat frequency count for tree,shrub/vine,herbaceous,and graminoid.
+Returns a dataframe with average quadrat cover, percent quadrat frequency and quadrat frequency count for tree,shrub/vine,herbaceous,and graminoid. Data are sither summarized for all species, native only, exotic only, or invasive only.
 }
 \description{
 This function summarizes output from joinQuadData and calculates average cover and quadrat frequency for each guild. Average cover is corrected for number of quadrats sampled.

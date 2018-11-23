@@ -24,7 +24,7 @@
 # Joins tbl_Trees and tbl_Tree_Data tables and filters by park, year, and plot/visit type
 #------------------------
 joinTreeData<-function(status='all',speciesType='all',park='all',from=2006,to=2018,QAQC=FALSE,locType='VS',output){
-  treeTSN<-merge(trees[,c("Tree_ID","Location_ID","TSN","Tree_Number_NETN")],
+  treeTSN<-merge(trees[,c("Tree_ID","Location_ID","TSN","Tree_Number_NETN", "Distance","Azimuth")],
     plants[,c('TSN','Latin_Name','Common','Exotic')], by="TSN", all.x=T)
   tree2<-merge(treeTSN,treedata,by="Tree_ID", all.x=T,all.y=T)
   tree2<-tree2 %>% select(Tree_ID:HWA_Status,Event_ID,-Location_ID)

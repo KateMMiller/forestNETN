@@ -30,7 +30,8 @@ joinQuadData<-function(speciesType='all', park='all',from=2006, to=2018, QAQC=FA
 
   quadspp<-merge(quads[,c("Event_ID","TSN","qUC_Cover_Class_ID","qUL_Cover_Class_ID","qML_Cover_Class_ID",
     "qBL_Cover_Class_ID","qBC_Cover_Class_ID","qBR_Cover_Class_ID","qMR_Cover_Class_ID","qUR_Cover_Class_ID")],
-    plants[,c("TSN","Latin_Name","Tree","Shrub","Vine","Herbaceous","Graminoid","Exotic","Indicator_Invasive_NETN")],
+    plants[,c("TSN","Latin_Name","Tree","Shrub","Vine","Herbaceous","Graminoid","Fern_Ally",
+      "Exotic","Indicator_Invasive_NETN")],
     by="TSN",all.x=T)
   quads2<-merge(quads1,quadspp,by="Event_ID",all.x=T)
 
@@ -50,7 +51,7 @@ joinQuadData<-function(speciesType='all', park='all',from=2006, to=2018, QAQC=FA
   quads2<-quads2 %>% rename_at(vars(old.names),~new.names)
   head(quads2)
   quads2[,c(14:21)][is.na(quads2[,c(14:21)])]<-0
-  quads3<-quads2 %>% mutate(avg.cover=(UC+UL+ML+BL+BC+BR+MR+UR)/numHerbPlots) #%>% select(Event_ID:TSN,avg.cover)
+  quads3<-quads2 %>% mutate(avg.cover=(UC+UL+ML+BL+BC+BR+MR+UR)/numHerbPlots)
   names(quads3)
   quads3[,c(14:21)][quads3[,c(14:21)]>0]<-1
   quads3<-quads3 %>% mutate(avg.freq=(UC+UL+ML+BL+BC+BR+MR+UR)/numHerbPlots)
@@ -62,8 +63,8 @@ joinQuadData<-function(speciesType='all', park='all',from=2006, to=2018, QAQC=FA
   } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='invasive'|speciesType!='all'){
     stop("speciesType must be either 'native','exotic', 'invasive', or 'all'")}
 
-  quads5<-merge(quads1,quads4[,c(1,13:31)],by='Event_ID',all.x=T)
-  quads5[,c(14:21, 23:31)][is.na(quads4[,c(14:21, 23:31)])]<-0
+  quads5<-merge(quads1,quads4[,c(1,13:32)],by='Event_ID',all.x=T)
+  quads5[,c(14:21, 23:32)][is.na(quads5[,c(14:21, 23:32)])]<-0
   return(data.frame(quads5))
 
 } # end of function
