@@ -41,7 +41,7 @@ makeSppList<-function(speciesType='all', park='all',from=2007, to=2018, QAQC=FAL
   #quads1<-joinQuadData(output='short')
   quads1<-force(joinQuadData(park=park, from=from,to=to,QAQC=QAQC,locType=locType,
     output='short'))
-  quads2<-quads1 %>% select(Event_ID,TSN,avg.cover,avg.freq)
+  quads2<-quads1 %>% select(Event_ID,TSN,avg.cover,avg.freq, germ.cover,germ.freq)
 
   #shrub1<-joinMicroShrubData(output='short')
   shrub1<-force(joinMicroShrubData(park=park, from=from,to=to,QAQC=QAQC,locType=locType,
@@ -70,10 +70,10 @@ makeSppList<-function(speciesType='all', park='all',from=2007, to=2018, QAQC=FAL
   names(comb8)
   colnames(comb8)<-c("Event_ID","Location_ID","Unit_Code","Plot_Name","Plot_Number","X_Coord","Y_Coord","Panel",
     "Year","Event_QAQC","cycle","TSN","tree.stems","tree.BAcm2","seed.den","sap.den","stocking.index","avg.quad.cover",
-    "avg.quad.freq","shrub.present.old","shrub.cover","addspp.present","Latin_Name","Common","Exotic","Tree","Shrub",
-    "Herbaceous","Graminoid","Fern_Ally")
+    "avg.quad.freq",'avg.germ.cover','avg.germ.freq',"shrub.present.old","shrub.cover","addspp.present",
+    "Latin_Name","Common","Exotic","Tree","Shrub","Herbaceous","Graminoid","Fern_Ally")
 
-  comb8[,c(13:19,22)][is.na(comb8[,c(13:19,22)])]<-0
+  comb8[,c(13:21,24)][is.na(comb8[,c(13:21,24)])]<-0
   comb8<-comb8 %>% mutate(shrub.cover=ifelse(Year>2009 & is.na(shrub.cover),0,shrub.cover),
     shrub.present.old=ifelse(Year<=2009 & is.na(shrub.present.old),0,shrub.present.old))
   return(data.frame(comb8))

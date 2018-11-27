@@ -32,7 +32,7 @@ sumQuadGuilds<-function(speciesType='native', park='all',from=2006, to=2018, QAQ
   } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='invasive'|speciesType!='all'){
     stop("speciesType must be either 'native','exotic', 'invasive', or 'all'")}
 
-  # gather to get every combination of plot visit and guild
+  # gather to get every combination of plot visit and guild. Does not include germinants
   quads3<-quads2 %>% group_by(Event_ID,Tree,Shrub,Herbaceous,Graminoid) %>% summarise(avg.cover=sum(avg.cover),
     UC=ifelse(sum(UC)>0,1,0),UR=ifelse(sum(UR)>0,1,0),MR=ifelse(sum(MR)>0,1,0),BR=ifelse(sum(BR)>0,1,0),
     BC=ifelse(sum(BC)>0,1,0),BL=ifelse(sum(BL)>0,1,0),ML=ifelse(sum(ML)>0,1,0),UL=ifelse(sum(UL)>0,1,0),
