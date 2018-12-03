@@ -12,6 +12,7 @@
 #' \item{"all"}{Default. Returns all species.}
 #' \item{"native"}{Returns native species only}
 #' \item{"exotic"}{Returns exotic species only}
+#' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
 #' @return Returns a dataframe with species list for each plot.
@@ -56,14 +57,16 @@ makeSppList<-function(speciesType='all', park='all',from=2007, to=2018, QAQC=FAL
   comb4<-merge(comb3,addspp2,by=c("Event_ID","TSN"),all.x=T,all.y=T)
   comb5<-comb4 %>% filter(TSN!=-9999999951)
 
-  comb6<-merge(comb5,plants[,c("TSN","Latin_Name","Common","Exotic","Tree","Shrub","Herbaceous",
+  comb6<-merge(comb5,plants[,c("TSN","Latin_Name","Common","Exotic",
+    "Indicator_Invasive_NETN","Tree","Shrub","Herbaceous",
     "Graminoid","Fern_Ally")],by="TSN",all.x=T)
 
   comb7<-if (speciesType=='native'){filter(comb6,Exotic==FALSE)
   } else if (speciesType=='exotic'){filter(comb6,Exotic==TRUE)
-  } else if (speciesType=='all'){(comb6)
-  } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='all'){
-    stop("speciesType must be either 'native','exotic', or 'all'")}
+  } else if (speciesType=='invasive'){filter(comb6,Indicator_Invasive_NETN==TRUE)
+  } else if (speciesType=='all'){comb6
+  } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='invasive'|speciesType!='all'){
+    stop("speciesType must be either 'native','exotic','invasive', or 'all'")}
 
   comb8<-merge(park.plots,comb7,by="Event_ID",all.x=T,all.y=F)
 
@@ -71,7 +74,7 @@ makeSppList<-function(speciesType='all', park='all',from=2007, to=2018, QAQC=FAL
   colnames(comb8)<-c("Event_ID","Location_ID","Unit_Code","Plot_Name","Plot_Number","X_Coord","Y_Coord","Panel",
     "Year","Event_QAQC","cycle","TSN","tree.stems","tree.BAcm2","seed.den","sap.den","stocking.index","avg.quad.cover",
     "avg.quad.freq",'avg.germ.cover','avg.germ.freq',"shrub.present.old","shrub.cover","addspp.present",
-    "Latin_Name","Common","Exotic","Tree","Shrub","Herbaceous","Graminoid","Fern_Ally")
+    "Latin_Name","Common","Exotic","Indicator_Invasive_NETN","Tree","Shrub","Herbaceous","Graminoid","Fern_Ally")
 
   comb8[,c(13:21,24)][is.na(comb8[,c(13:21,24)])]<-0
   comb8<-comb8 %>% mutate(shrub.cover=ifelse(Year>2009 & is.na(shrub.cover),0,shrub.cover),
