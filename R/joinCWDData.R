@@ -16,7 +16,8 @@
 #------------------------
 # Join CWD table and filters by park, year, and plot/visit type
 #------------------------
-joinCWDData<-function(units='ha', park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+joinCWDData<-function(units=c('ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+  units<-match.arg(units)
   # Prepare the CWD data
   park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, output='short'))
   cwd1<-merge(park.plots,cwd,by='Event_ID', all.x=T,all.y=F)
@@ -36,8 +37,6 @@ joinCWDData<-function(units='ha', park='all',from=2006, to=2018, QAQC=FALSE, loc
     cwd5 %>% mutate(CWD_Vol=CWD_Vol*35.314667/2.4710538)
     # 35.314667 is the # cubic feet in a cubic meter. 2.4710538 is # acres in 1 hectare.)
   } else if (units=='ha'){return(cwd5)
-  } else if (units!='ha'|units!='acres'){
-    stop("units must be 'ha',or 'acres'")
   }
 
   cwd7<-merge(park.plots,cwd6[,c("Event_ID","CWD_Vol")],by="Event_ID",all.x=T)

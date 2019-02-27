@@ -4,8 +4,9 @@
 \alias{makeSppList}
 \title{makeSppList}
 \usage{
-makeSppList(speciesType = "all", park = "all", from = 2007,
-  to = 2018, QAQC = FALSE, locType = "VS", output, ...)
+makeSppList(speciesType = c("all", "native", "exotic"), park = "all",
+  from = 2007, to = 2018, QAQC = FALSE, locType = "VS", output,
+  ...)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
@@ -13,6 +14,7 @@ makeSppList(speciesType = "all", park = "all", from = 2007,
 \item{"all"}{Default. Returns all species.}
 \item{"native"}{Returns native species only}
 \item{"exotic"}{Returns exotic species only}
+\item{"invasive"}{Returns species on the Indicator Invasive List}
 }}
 }
 \value{

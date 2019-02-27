@@ -23,7 +23,12 @@
 #------------------------
 # Joins tbl_Trees and tbl_Tree_Data tables and filters by park, year, and plot/visit type
 #------------------------
-joinTreeData<-function(status='all',speciesType='all',park='all',from=2006,to=2018,QAQC=FALSE,locType='VS',output){
+joinTreeData<-function(status=c('all', 'live','dead'),speciesType=c('all', 'native','exotic'),park='all',
+  from=2006,to=2018,QAQC=FALSE,locType='VS',output){
+
+  status<-match.arg(status)
+  speciesType<-match.arg(speciesType)
+
   treeTSN<-merge(trees[,c("Tree_ID","Location_ID","TSN","Tree_Number_NETN", "Distance","Azimuth")],
     plants[,c('TSN','Latin_Name','Common','Exotic')], by="TSN", all.x=T)
   tree2<-merge(treeTSN,treedata,by="Tree_ID", all.x=T,all.y=T)
@@ -36,13 +41,12 @@ joinTreeData<-function(status='all',speciesType='all',park='all',from=2006,to=20
   tree3<- if (status=='live') {filter(tree2,Status_ID %in% alive)
   } else if (status=='dead') {filter(tree2,Status_ID %in% dead)
   } else if (status=='all') {(tree2)
-  } else if (status!="live"|status!='dead'|status!='all') {stop("status must either be 'live','dead', or 'all'")}
+  }
 
   tree4<- if (speciesType=='native'){filter(tree3,Exotic==FALSE)
   } else if (speciesType=='exotic'){filter(tree3,Exotic==TRUE)
   } else if (speciesType=='all'){(tree3)
-  } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='all'){
-    stop("speciesType must be either 'native','exotic', or 'all'")}
+  }
 
   park.plots2<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, output='short'))
 

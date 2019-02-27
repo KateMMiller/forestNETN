@@ -22,7 +22,9 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-makeSppList<-function(speciesType='all', park='all',from=2007, to=2018, QAQC=FALSE, locType='VS', output,...){
+makeSppList<-function(speciesType=c('all', 'native','exotic'), park='all',from=2007, to=2018,
+  QAQC=FALSE, locType='VS', output,...){
+  speciesType<-match.arg(speciesType)
 
   park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,rejected=F,output='short'))
   plants<-plants %>% mutate(Shrub=ifelse(Shrub+Vine>0,1,0))
@@ -65,8 +67,7 @@ makeSppList<-function(speciesType='all', park='all',from=2007, to=2018, QAQC=FAL
   } else if (speciesType=='exotic'){filter(comb6,Exotic==TRUE)
   } else if (speciesType=='invasive'){filter(comb6,Indicator_Invasive_NETN==TRUE)
   } else if (speciesType=='all'){comb6
-  } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='invasive'|speciesType!='all'){
-    stop("speciesType must be either 'native','exotic','invasive', or 'all'")}
+  }
 
   comb8<-merge(park.plots,comb7,by="Event_ID",all.x=T,all.y=F)
 

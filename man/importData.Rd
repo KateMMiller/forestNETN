@@ -4,10 +4,16 @@
 \alias{importData}
 \title{importData}
 \usage{
-importData(odbc = "NETNFVM")
+importData(type = c("DSN", "file"), odbc = "NETNFVM", path = NA)
 }
 \arguments{
-\item{odbc}{Name of the ODBC datasource}
+\item{type}{Select whether to use the default DSN to import data or a different database
+\describe{
+\item{"DSN"}{Default. DSN database. If not specified, will use "NETNFVM" .}
+\item{"file"}{A different database than default DSN}
+}}
+
+\item{path}{Quoted path of database backend file, including the name of the backend.}
 }
 \value{
 Assigns database tables to global environment

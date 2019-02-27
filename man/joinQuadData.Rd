@@ -4,8 +4,8 @@
 \alias{joinQuadData}
 \title{joinQuadData}
 \usage{
-joinQuadData(speciesType = "all", park = "all", from = 2006,
-  to = 2018, QAQC = FALSE, locType = "VS", output)
+joinQuadData(speciesType = c("all", "native", "exotic"), park = "all",
+  from = 2006, to = 2018, QAQC = FALSE, locType = "VS", output)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.

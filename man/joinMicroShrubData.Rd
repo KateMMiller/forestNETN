@@ -4,8 +4,9 @@
 \alias{joinMicroShrubData}
 \title{joinMicroShrubData}
 \usage{
-joinMicroShrubData(speciesType = "all", park = "all", from = 2007,
-  to = 2018, QAQC = FALSE, locType = "VS", output)
+joinMicroShrubData(speciesType = c("all", "native", "exotic"),
+  park = "all", from = 2007, to = 2018, QAQC = FALSE,
+  locType = "VS", output)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.

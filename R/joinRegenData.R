@@ -29,7 +29,12 @@
 #------------------------
 # Joins microplot tables and filters by park, year, and plot/visit type
 #------------------------
-joinRegenData<-function(speciesType='all', canopyForm='canopy', units='micro', park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+joinRegenData<-function(speciesType=c('all', 'native','exotic'), canopyForm=c('canopy','all'),
+  units=c('micro','ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+  speciesType<-match.arg(speciesType)
+  canopyForm<-match.arg(canopyForm)
+  units<-match.arg(units)
+
 # Prepare the seedling data
   seeds1<-merge(sdlg,micro, by="Microplot_Characterization_Data_ID",all.x=T)
   seeds1$Num_Seedlings_15_30cm[is.na(seeds1$Num_Seedlings_15_30cm)]<-0
@@ -54,13 +59,12 @@ joinRegenData<-function(speciesType='all', canopyForm='canopy', units='micro', p
 
   regen4<-if(canopyForm=='canopy'){filter(regen3, Canopy_Exclusion!=1)
   } else if(canopyForm=='all'){(regen3)
-  } else if(canopyForm!='all'|canopyForm!='canopy'){stop("canopyForm must be either 'all' or 'canopy'")}
+  }
 
   regen5<- if (speciesType=='native'){filter(regen4,Exotic==FALSE)
   } else if (speciesType=='exotic'){filter(regen4,Exotic==TRUE)
   } else if (speciesType=='all'){(regen4)
-  } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='all'){
-    stop("speciesType must be either 'native','exotic', or 'all'")}
+  }
 
   regen5[,12:17][is.na(regen5[,12:17])]<-0
   regen5<-regen5 %>% mutate(micro=ifelse(Year==2006,1,3),
@@ -88,9 +92,7 @@ joinRegenData<-function(speciesType='all', canopyForm='canopy', units='micro', p
         sap.den=(sap.den*4046.856)/(pi*4),
         regen.den=(regen.den*4046.856)/(pi*4))
   } else if (units=='micro'){regen5
-  } else if (units!='ha'|units!='acres'|units!='micro'){
-    stop("units must be 'ha','acres',or 'micro'")
-    }
+  }
 
   regen7<-regen6 %>% select(Event_ID,TSN,Latin_Name,Common,Exotic,Canopy_Exclusion,seed15.30,
     seed30.100,seed100.150, seed150p,seed.den,sap.den,regen.den,stock) %>% droplevels()
