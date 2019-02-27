@@ -18,11 +18,10 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-sumQuadGuilds<-function(speciesType=c('all','native','exotic'), park='all',from=2006, to=2018,
+sumQuadGuilds<-function(speciesType=c('native','exotic','all'), park='all',from=2006, to=2018,
   QAQC=FALSE, locType='VS', output,...){
 
   speciesType<-match.arg(speciesType)
-
   # Prepare the quadrat data
   park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,output='short'))
   quads1<-force(joinQuadData(park=park, from=from,to=to,QAQC=QAQC,locType=locType,speciesType=speciesType,
