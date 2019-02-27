@@ -18,7 +18,8 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-joinQuadData<-function(speciesType='all', park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+joinQuadData<-function(speciesType=c('all', 'native','exotic'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+  speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
   quadsamp$numHerbPlots<-apply(quadsamp[,c(15:22)], 1,sum)
   park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, output='short'))

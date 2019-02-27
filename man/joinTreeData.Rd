@@ -4,8 +4,9 @@
 \alias{joinTreeData}
 \title{joinTreeData}
 \usage{
-joinTreeData(status = "all", speciesType = "all", park = "all",
-  from = 2006, to = 2018, QAQC = FALSE, locType = "VS", output)
+joinTreeData(status = c("all", "live", "dead"), speciesType = c("all",
+  "native", "exotic"), park = "all", from = 2006, to = 2018,
+  QAQC = FALSE, locType = "VS", output)
 }
 \arguments{
 \item{status}{Filter by live, dead, or all. Acceptable options are:

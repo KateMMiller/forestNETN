@@ -1,12 +1,13 @@
 Package: forestNETN
 Type: Package
 Title: Package for importing, joining and querying NETN forest database tables
-Version: 0.1.0
+Version: 0.1.1
 Author: Kate Miller
 Maintainer: Kate Miller <kathryn_miller@nps.gov>
-Description: This package contains functions that import database tables from the NETN forest backend using RODBC (must use 32-bit R for import), that join tables together and that filter by park, year, location type and visit type.
+Description: This package contains functions that import database tables from the NETN forest backend using odbc (must use 32-bit R for import), that join tables together and that filter by park, year, location type and visit type.
 License: Public Domain
-Depends: RODBC,
+Depends: odbc,
+         DBI,
          tidyverse,
          lubridate
 Collate: 
