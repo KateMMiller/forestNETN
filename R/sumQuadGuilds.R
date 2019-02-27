@@ -18,7 +18,9 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-sumQuadGuilds<-function(speciesType='native', park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output,...){
+sumQuadGuilds<-function(speciesType=c('native','exotic','all'), park='all',from=2006, to=2018,
+  QAQC=FALSE, locType='VS', output,...){
+  speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
   park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,output='short'))
   quads1<-force(joinQuadData(park=park, from=from,to=to,QAQC=QAQC,locType=locType,speciesType=speciesType,
@@ -30,8 +32,7 @@ sumQuadGuilds<-function(speciesType='native', park='all',from=2006, to=2018, QAQ
   } else if (speciesType=='exotic'){filter(quads1,Exotic==TRUE)
   } else if (speciesType=='invasive'){filter(quads1,Indicator_Invasive_NETN==TRUE)
   } else if (speciesType=='all'){(quads1)
-  } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='invasive'|speciesType!='all'){
-    stop("speciesType must be either 'native','exotic', 'invasive', or 'all'")}
+  }
 
   # gather to get every combination of plot visit and guild. Does not include germinants
   quads3<-quads2 %>% group_by(Event_ID,Tree,Shrub,Herbaceous,Graminoid) %>% summarise(avg.cover=sum(avg.cover),
