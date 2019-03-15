@@ -18,7 +18,7 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-joinQuadData<-function(speciesType=c('all', 'native','exotic'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
   speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
   quadsamp$numHerbPlots<-apply(quadsamp[,c(15:22)], 1,sum)
@@ -62,9 +62,7 @@ joinQuadData<-function(speciesType=c('all', 'native','exotic'), park='all',from=
   } else if (speciesType=='exotic'){filter(quads3,Exotic==TRUE)
   } else if (speciesType=='invasive'){filter(quads3,Indicator_Invasive_NETN==TRUE)
   } else if (speciesType=='all'){(quads3)
-  } else if (speciesType!='native'|speciesType!='exotic'|speciesType!='invasive'|speciesType!='all'){
-    stop("speciesType must be either 'native','exotic', 'invasive', or 'all'")}
-
+  }
   quads5<-merge(quads1,quads4[,c(1,13:33)],by='Event_ID',all.x=T)
   quads5[,c(15:22, 24:33)][is.na(quads5[,c(15:22, 24:33)])]<-0
   quads5<-quads5 %>% mutate(germ.cover=ifelse(Germinant==1,avg.cover,0), germ.freq=ifelse(Germinant==1,avg.freq,0),

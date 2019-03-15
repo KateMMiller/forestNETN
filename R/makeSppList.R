@@ -22,7 +22,7 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-makeSppList<-function(speciesType=c('all', 'native','exotic'), park='all',from=2007, to=2018,
+makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2007, to=2018,
   QAQC=FALSE, locType='VS', output,...){
   speciesType<-match.arg(speciesType)
 

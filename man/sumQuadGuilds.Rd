@@ -4,9 +4,9 @@
 \alias{sumQuadGuilds}
 \title{sumQuadGuilds}
 \usage{
-sumQuadGuilds(speciesType = c("native", "exotic", "all"), park = "all",
-  from = 2006, to = 2018, QAQC = FALSE, locType = "VS", output,
-  ...)
+sumQuadGuilds(speciesType = c("native", "exotic", "all", "invasive"),
+  park = "all", from = 2006, to = 2018, QAQC = FALSE,
+  locType = "VS", output, ...)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
