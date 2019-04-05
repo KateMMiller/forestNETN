@@ -30,7 +30,8 @@ sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park
   park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,output='short'))
   quads1<-force(joinQuadData(park=park, from=from,to=to,QAQC=QAQC,locType=locType,speciesType=speciesType,
     output='short'))
-  quads1<-quads1 %>% mutate(Tree=ifelse(Tree+Shrub>1,0,Tree),Shrub=ifelse(Tree+Shrub>1,1,Shrub))
+  quads1<-quads1 %>% mutate(Tree=ifelse(Tree+Shrub>1,0,Tree),Shrub=ifelse(Tree+Shrub>1,1,Shrub)) %>%
+    filter(Latin_Name!='No species recorded') %>% droplevels()
 
   quads2<-if (speciesType=='native'){filter(quads1,Exotic==FALSE)
   } else if (speciesType=='exotic'){filter(quads1,Exotic==TRUE)
