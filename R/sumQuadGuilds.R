@@ -21,6 +21,10 @@
 sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park='all',from=2006, to=2018,
   QAQC=FALSE, locType='VS', output,...){
 
+  if(!requireNamespace("tidyr", quietly = TRUE)){
+    stop("Package 'tidyr' needed for this function to work. Please install it.", call. = FALSE)
+  }
+
   speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
   park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,output='short'))
@@ -47,7 +51,7 @@ sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park
   quads3$guild<-as.factor(quads3$guild)
 
   park.plots2<-park.plots %>% mutate(Graminoid=1,Herbaceous=1,Shrub=1,Tree=1) %>%
-    gather(key=guild,value=pres,Graminoid:Tree) %>% select(-pres)
+    tidyr::gather(key=guild,value=pres,Graminoid:Tree) %>% select(-pres)
   # makes a matrix with every plot visit and every combination of guild
 
   quads.comb1<-merge(park.plots2,quads3,by=c("Event_ID","guild"),all.x=T)
