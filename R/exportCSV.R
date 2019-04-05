@@ -1,4 +1,4 @@
-#' @title importData
+#' @title exportData
 #'
 #' @description This function exports database tables to .csv that were imported using importData.These
 #' .csv files can then be imported via importCSV. This function is mostly for internal use to create flat
