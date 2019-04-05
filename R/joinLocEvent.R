@@ -39,6 +39,7 @@ joinLocEvent<-function(park="all", from=2006,to=2018, QAQC=FALSE, rejected=FALSE
   loc2<-loc %>% mutate(Unit_Code=as.factor(str_sub(Unit_ID,1,4)))
   loc2$Plot_Number<-str_pad(loc2$Plot_Number,width=3,side="left",pad=0) #Pad plot number so retains 3-digits
   loc2$Plot_Name<-paste(loc2$Unit_Code, loc2$Plot_Number, sep="-")
+  event<-event %>% mutate(Start_Date=parse_date_time(Start_Date, "mdy_HMS"))
 
   loc3<- if (locType=='VS') {filter(loc2,Loc_Type=="VS")
   } else if (locType=='all') {(loc2)
