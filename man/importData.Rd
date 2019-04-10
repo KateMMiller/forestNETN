@@ -2,7 +2,7 @@
 % Please edit documentation in R/importData.R
 \name{importData}
 \alias{importData}
-\title{importData}
+\title{importData: Import tables directly from NETN forest database}
 \usage{
 importData(type = c("DSN", "file"), odbc = "NETNFVM", path = NA)
 }

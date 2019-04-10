@@ -1,5 +1,5 @@
 #' @include joinQuadData.R
-#' @title sumQuadGuilds
+#' @title sumQuadGuilds: summarizes quadrat species data by guilds
 #'
 #' @description This function summarizes output from joinQuadData and calculates average cover and quadrat frequency for each guild. Average cover is corrected for number of quadrats sampled.
 #'
@@ -19,7 +19,7 @@
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
 sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park='all',from=2006, to=2018,
-  QAQC=FALSE, locType='VS', output,...){
+  QAQC=FALSE, locType='VS', panels=1:4, output,...){
 
   if(!requireNamespace("tidyr", quietly = TRUE)){
     stop("Package 'tidyr' needed for this function to work. Please install it.", call. = FALSE)
@@ -27,7 +27,7 @@ sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park
 
   speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
-  park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,output='short'))
+  park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType, panels=panels,output='short'))
   quads1<-force(joinQuadData(park=park, from=from,to=to,QAQC=QAQC,locType=locType,speciesType=speciesType,
     output='short'))
   quads1<-quads1 %>% mutate(Tree=ifelse(Tree+Shrub>1,0,Tree),Shrub=ifelse(Tree+Shrub>1,1,Shrub)) %>%

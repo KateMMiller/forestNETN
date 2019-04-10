@@ -1,4 +1,4 @@
-#' @title importCSV
+#' @title importCSV: Import NETN forest data that are formated as .csv files.
 #'
 #' @description This function imports exported CSV tables from the NETN Forest Database.
 #'

@@ -1,5 +1,5 @@
 #' @include joinLocEvent.R
-#' @title joinCWDData
+#' @title joinCWDData: compile coarse woody debris data.
 #'
 #' @description This function combines calculates CWD volume for each plot. Must run importData first.
 #'
@@ -16,10 +16,10 @@
 #------------------------
 # Join CWD table and filters by park, year, and plot/visit type
 #------------------------
-joinCWDData<-function(units=c('ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+joinCWDData<-function(units=c('ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output){
   units<-match.arg(units)
   # Prepare the CWD data
-  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, output='short'))
+  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, panels=panels,output='short'))
   cwd1<-merge(park.plots,cwd,by='Event_ID', all.x=T,all.y=F)
   cwd2<-merge(cwd1[,c("Event_ID","TSN","Diameter","Decay_Class_ID","Hollow","Transect","Distance","Wood_Type")],
               plants[,c('TSN','Latin_Name','Common')], by='TSN',all.x=T)

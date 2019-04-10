@@ -1,4 +1,4 @@
-#' @title exportData
+#' @title exportData: Export Access tables in global enviroment to .csv
 #'
 #' @description This function exports database tables to .csv that were imported using importData.These
 #' .csv files can then be imported via importCSV. This function is primarily for internal use to create flat

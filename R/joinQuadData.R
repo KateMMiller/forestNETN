@@ -1,5 +1,5 @@
 #' @include joinLocEvent.R
-#' @title joinQuadData
+#' @title joinQuadData: compiles quadrat species data
 #'
 #' @description This function combines quadrat species data with species names and allows you to filter on species types, park, years, and visit type. Note that the Shrub guild also includes woody vine species.
 #'
@@ -18,11 +18,12 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2006, to=2018, QAQC=FALSE,
+                       locType='VS', panels=1:4,output){
   speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
   quadsamp$numHerbPlots<-apply(quadsamp[,c(15:22)], 1,sum)
-  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, output='short'))
+  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, panels=panels,output='short'))
 
   quads1<-merge(park.plots, quadsamp[,c("Event_ID","numHerbPlots")], by="Event_ID", all.x=T)
   plants<-plants %>% mutate(Shrub=ifelse(Shrub==1|Vine==1,1,0),

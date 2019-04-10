@@ -2,11 +2,11 @@
 % Please edit documentation in R/joinQuadData.R
 \name{joinQuadData}
 \alias{joinQuadData}
-\title{joinQuadData}
+\title{joinQuadData: compiles quadrat species data}
 \usage{
 joinQuadData(speciesType = c("all", "native", "exotic", "invasive"),
   park = "all", from = 2006, to = 2018, QAQC = FALSE,
-  locType = "VS", output)
+  locType = "VS", panels = 1:4, output)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
