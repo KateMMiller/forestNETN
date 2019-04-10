@@ -2,7 +2,7 @@
 % Please edit documentation in R/exportCSV.R
 \name{exportCSV}
 \alias{exportCSV}
-\title{importData}
+\title{exportData}
 \usage{
 exportCSV(path = NA)
 }
