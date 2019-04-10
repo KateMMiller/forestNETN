@@ -6,7 +6,7 @@
 \usage{
 joinTreeData(status = c("all", "live", "dead"), speciesType = c("all",
   "native", "exotic"), park = "all", from = 2006, to = 2018,
-  QAQC = FALSE, locType = "VS", output)
+  QAQC = FALSE, locType = "VS", dist_m = NA, output)
 }
 \arguments{
 \item{status}{Filter by live, dead, or all. Acceptable options are:
@@ -22,6 +22,10 @@ joinTreeData(status = c("all", "live", "dead"), speciesType = c("all",
 \item{"native"}{Returns native species only}
 \item{"exotic"}{Returns exotic species only}
 }}
+
+\item{dist_m}{Filter trees by a distance that is less than or equal to the specified distance in meters
+of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
+example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.}
 }
 \value{
 returns a dataframe with plot-level and visit-level tree data

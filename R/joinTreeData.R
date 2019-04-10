@@ -9,28 +9,33 @@
 #' \item{"live"}{live trees only}
 #' \item{"dead"}{dead trees only}
 #' }
+#'
 #' @param speciesType Allows you to filter on native, exotic or include all species.
 #' \describe{
 #' \item{"all"}{Default. Returns all species.}
 #' \item{"native"}{Returns native species only}
 #' \item{"exotic"}{Returns exotic species only}
 #' }
+#'
+#' @param dist_m Filter trees by a distance that is less than or equal to the specified distance in meters
+#' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
+#' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
+#'
 #' @return returns a dataframe with plot-level and visit-level tree data
 #'
 #' @export
 #'
-
 #------------------------
 # Joins tbl_Trees and tbl_Tree_Data tables and filters by park, year, and plot/visit type
 #------------------------
 joinTreeData<-function(status=c('all', 'live','dead'),speciesType=c('all', 'native','exotic'),park='all',
-  from=2006,to=2018,QAQC=FALSE,locType='VS',output){
+                       from=2006,to=2018,QAQC=FALSE,locType='VS',dist_m=NA,output){
 
   status<-match.arg(status)
   speciesType<-match.arg(speciesType)
 
   treeTSN<-merge(trees[,c("Tree_ID","Location_ID","TSN","Tree_Number_NETN", "Distance","Azimuth")],
-    plants[,c('TSN','Latin_Name','Common','Exotic')], by="TSN", all.x=T)
+                 plants[,c('TSN','Latin_Name','Common','Exotic')], by="TSN", all.x=T)
   tree2<-merge(treeTSN,treedata,by="Tree_ID", all.x=T,all.y=T)
   tree2<-tree2 %>% select(Tree_ID:HWA_Status,Event_ID,-Location_ID)
   tree2$BA_cm2<-round(pi*((tree2$DBH/2)^2),4)# basal area (cm^2)
@@ -48,11 +53,15 @@ joinTreeData<-function(status=c('all', 'live','dead'),speciesType=c('all', 'nati
   } else if (speciesType=='all'){(tree3)
   }
 
-  park.plots2<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, output='short'))
+  tree5<-if (!is.na(dist_m)){filter(tree4,Distance<=dist_m)
+  } else {tree4}
 
-  tree5<-merge(park.plots2, tree4, by='Event_ID', all.x=T)
-  tree5<-droplevels(tree5)
 
-  return(data.frame(tree5))
+  park.plots2<-force(joinLocEvent(park=park, from=from, to=to, QAQC=QAQC, locType=locType, output='short'))
+
+  tree6<-merge(park.plots2, tree5, by='Event_ID', all.x=T)
+  tree6<-droplevels(tree6)
+
+  return(data.frame(tree6))
 } # end of function
 

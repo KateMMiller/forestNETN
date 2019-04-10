@@ -5,9 +5,9 @@
 \title{joinRegenData}
 \usage{
 joinRegenData(speciesType = c("all", "native", "exotic"),
-  canopyForm = c("canopy", "all"), units = c("micro", "ha", "acres"),
-  park = "all", from = 2006, to = 2018, QAQC = FALSE,
-  locType = "VS", output)
+  canopyForm = c("canopy", "all"), numMicros = 3, units = c("micro",
+  "ha", "acres"), park = "all", from = 2006, to = 2018,
+  QAQC = FALSE, locType = "VS", output)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
@@ -22,6 +22,8 @@ joinRegenData(speciesType = c("all", "native", "exotic"),
 \item{"all"}{Returns all species, including low canopy species.}
 \item{"canopy"}{Default. Returns canopy-forming species only}
 }}
+
+\item{numMicros}{Allows you to select 1, 2, or 3 microplots of data to summarize}
 
 \item{units}{Calculates seedling and sapling densities based on different units.
 \describe{
