@@ -11,7 +11,7 @@ exportCSV(path = NA)
 }
 \description{
 This function exports database tables to .csv that were imported using importData.These
-.csv files can then be imported via importCSV. This function is mostly for internal use to create flat
-files for users to use the functions in this package without having to epenend on an odbc driver
-to import and query NETN data. This is particularly useful for iOS users and those without MS Access installed.
+.csv files can then be imported via importCSV. This function is primarily for internal use to create flat
+files for users to run the functions in this package without having to use an odbc driver to import and
+query NETN data. This is particularly useful for Mac users and those without MS Access installed.
 }
