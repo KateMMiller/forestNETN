@@ -8,6 +8,7 @@ Description: This package contains functions that import database tables from th
 License: Public Domain
 Collate: 
     'exportCSV.R'
+    'filterTreeData.R'
     'importCSV.R'
     'importData.R'
     'joinLocEvent.R'
