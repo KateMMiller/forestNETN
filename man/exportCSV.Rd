@@ -2,7 +2,7 @@
 % Please edit documentation in R/exportCSV.R
 \name{exportCSV}
 \alias{exportCSV}
-\title{exportData}
+\title{exportData: Export Access tables in global enviroment to .csv}
 \usage{
 exportCSV(path = NA)
 }

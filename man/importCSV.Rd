@@ -2,7 +2,7 @@
 % Please edit documentation in R/importCSV.R
 \name{importCSV}
 \alias{importCSV}
-\title{importCSV}
+\title{importCSV: Import NETN forest data that are formated as .csv files.}
 \usage{
 importCSV(path = NA)
 }

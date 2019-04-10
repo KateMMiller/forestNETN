@@ -17,11 +17,11 @@
 # Joins microplot tables and filters by park, year, and plot/visit type
 #------------------------
 joinMicroShrubData<-function(speciesType=c('all', 'native','exotic'), park='all',
-  from=2007, to=2018, QAQC=FALSE, locType='VS', output){
+  from=2007, to=2018, QAQC=FALSE, locType='VS',panels=1:4, output){
 
   speciesType<-match.arg(speciesType)
 
-  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, rejected=F,output='short'))
+  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, rejected=F,panels=panels,output='short'))
 
   # Prepare the sapling data
   shrub1<-merge(micro,shrub[,c("Microplot_Characterization_Data_ID","TSN", "Num_Stems","Cover_Class_ID")],

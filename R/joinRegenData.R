@@ -1,5 +1,5 @@
 #' @include joinLocEvent.R
-#' @title joinRegenData
+#' @title joinRegenData: compiles seedling and sapling data
 #'
 #' @description This function combines seedling and sapling data, and calculates stocking index. Must run importData first.
 #'
@@ -32,7 +32,7 @@
 # Joins microplot tables and filters by park, year, and plot/visit type
 #------------------------
 joinRegenData<-function(speciesType=c('all', 'native','exotic'), canopyForm=c('canopy','all'), numMicros=3,
-  units=c('micro','ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', output){
+  units=c('micro','ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output){
   speciesType<-match.arg(speciesType)
   canopyForm<-match.arg(canopyForm)
   units<-match.arg(units)
@@ -55,7 +55,7 @@ joinRegenData<-function(speciesType=c('all', 'native','exotic'), canopyForm=c('c
     summarise(sap.stems=sum(sap, na.rm=T),avg.sap.dbh=mean(DBH, na.rm=T))
 
 # Combine seedling and sapling data
-  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, output='short'))
+  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType,panels=panels,output='short'))
   regen1<-merge(park.plots,seeds2,by='Event_ID', all.x=T,all.y=F)
   regen2<-merge(regen1,saps2,by=c("Event_ID","TSN", "Microplot_Name"),all.x=T,all.y=F)
   regen3<-merge(regen2,plants[,c('TSN','Latin_Name','Common','Exotic','Canopy_Exclusion')], by='TSN',all.x=T)

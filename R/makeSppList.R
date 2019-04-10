@@ -3,7 +3,7 @@
 #' @include joinQuadData.R
 #' @include joinRegenData.R
 #' @include joinMicroShrubData.R
-#' @title makeSppList
+#' @title makeSppList: creates a species list for each plot
 #'
 #' @description This function creates a plot-level species list from live trees, microplots, quadrats, and additional species lists.
 #'
@@ -23,10 +23,10 @@
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
 makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2007, to=2018,
-  QAQC=FALSE, locType='VS', output,...){
+  QAQC=FALSE, locType='VS', panels=1:4,output,...){
   speciesType<-match.arg(speciesType)
 
-  park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,rejected=F,output='short'))
+  park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,panels=panels,rejected=F,output='short'))
   plants<-plants %>% mutate(Shrub=ifelse(Shrub+Vine>0,1,0))
 
   #trees1<-joinTreeData(status='live',output='short')

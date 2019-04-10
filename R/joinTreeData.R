@@ -1,5 +1,5 @@
 #' @include joinLocEvent.R
-#' @title joinTreeData
+#' @title joinTreeData: compiles tree data
 #'
 #' @description This function combines location and event-level Tree data. Must run importData first.
 #'
@@ -29,7 +29,7 @@
 # Joins tbl_Trees and tbl_Tree_Data tables and filters by park, year, and plot/visit type
 #------------------------
 joinTreeData<-function(status=c('all', 'live','dead'),speciesType=c('all', 'native','exotic'),park='all',
-                       from=2006,to=2018,QAQC=FALSE,locType='VS',dist_m=NA,output){
+                       from=2006,to=2018,QAQC=FALSE,locType='VS',panels=1:4,dist_m=NA,output){
 
   status<-match.arg(status)
   speciesType<-match.arg(speciesType)
@@ -57,7 +57,7 @@ joinTreeData<-function(status=c('all', 'live','dead'),speciesType=c('all', 'nati
   } else {tree4}
 
 
-  park.plots2<-force(joinLocEvent(park=park, from=from, to=to, QAQC=QAQC, locType=locType, output='short'))
+  park.plots2<-force(joinLocEvent(park=park, from=from, to=to, QAQC=QAQC, locType=locType,panels=panels,output='short'))
 
   tree6<-merge(park.plots2, tree5, by='Event_ID', all.x=T)
   tree6<-droplevels(tree6)
