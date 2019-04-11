@@ -1,5 +1,5 @@
 #' @include joinLocEvent.R
-#' @title joinMicroShrubData
+#' @title joinMicroShrubData: compiles shrub data collected in microplots
 #'
 #' @description This function combines shrub stem counts (cycle 1) and percent cover (cycle 2+) data from microplots. Must run importData first.
 #'
@@ -9,6 +9,9 @@
 #' \item{"native"}{Returns native species only}
 #' \item{"exotic"}{Returns exotic species only}
 #' }
+#'
+#'@param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
+#'
 #' @return returns a dataframe with shrub data collected in microplots
 #'
 #' @export
@@ -16,8 +19,8 @@
 #------------------------
 # Joins microplot tables and filters by park, year, and plot/visit type
 #------------------------
-joinMicroShrubData<-function(speciesType=c('all', 'native','exotic'), park='all',
-  from=2007, to=2018, QAQC=FALSE, locType='VS',panels=1:4, output){
+joinMicroShrubData<-function(speciesType=c('all', 'native','exotic'), numMicros=3, park='all',
+  from=2007, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output, ...){
 
   speciesType<-match.arg(speciesType)
 
@@ -47,17 +50,27 @@ joinMicroShrubData<-function(speciesType=c('all', 'native','exotic'), park='all'
   shrub3<-shrub3 %>% mutate(cover=ifelse(TSN==-9999999951 & Year >2009,0,cover)) # Where 'no species recorded' was entered
   # and after % cover being used, record 0.
 
-  shrub4<-shrub3 %>% group_by(Event_ID,TSN,Latin_Name,Common,Exotic) %>%
+  shrub4<- if (numMicros==1) {filter(shrub3, Microplot_Name=='UR') %>% droplevels()
+    } else if (numMicros==2) {filter(shrub3, Microplot_Name %in% c("UR","B")) %>% droplevels()
+    } else if (numMicros==3) {shrub3}
+
+  shrub5<-shrub4 %>% group_by(Event_ID,TSN,Latin_Name,Common,Exotic,Year) %>%
     summarise(present.old=ifelse(sum(present.old)>0,1,NA),
-    cover=sum(cover)/3)
+    cover=sum(cover))
 
-  shrub5<- if (speciesType=='native'){filter(shrub4,Exotic==FALSE)
-  } else if (speciesType=='exotic'){filter(shrub4,Exotic==TRUE)
-  } else if (speciesType=='all'){(shrub4)
+  shrub6<-shrub5 %>% group_by(Event_ID,TSN,Latin_Name,Common,Exotic) %>%
+    summarise(micro=ifelse(Year==2016,1,numMicros), present.old=present.old,
+              cover=cover/micro)
+
+  shrub7<- if (speciesType=='native'){filter(shrub6,Exotic==FALSE)
+  } else if (speciesType=='exotic'){filter(shrub6,Exotic==TRUE)
+  } else if (speciesType=='all'){(shrub6)
   }
-  shrub6<-merge(park.plots,shrub5[,c("Event_ID","TSN","Latin_Name","Common","Exotic","present.old","cover")],by="Event_ID",all.x=T)
 
-  return(data.frame(shrub6))
+  shrub8<-merge(park.plots,shrub7[,c("Event_ID","TSN","Latin_Name","Common","Exotic","present.old","cover")],by="Event_ID",all.x=T)
+  shrub8<-shrub8 %>% arrange(Plot_Name, Year, Latin_Name)
+
+  return(data.frame(shrub8))
 } # end of function
 
 

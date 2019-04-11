@@ -23,7 +23,7 @@
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
 makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2007, to=2018,
-  QAQC=FALSE, locType='VS', panels=1:4,output,...){
+  QAQC=FALSE, locType='VS', panels=1:4,output, ...){
   speciesType<-match.arg(speciesType)
 
   park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,panels=panels,rejected=F,output='short'))

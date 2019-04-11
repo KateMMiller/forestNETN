@@ -5,7 +5,8 @@
 \title{joinCWDData: compile coarse woody debris data.}
 \usage{
 joinCWDData(units = c("ha", "acres"), park = "all", from = 2006,
-  to = 2018, QAQC = FALSE, locType = "VS", panels = 1:4, output)
+  to = 2018, QAQC = FALSE, locType = "VS", panels = 1:4, output,
+  ...)
 }
 \value{
 returns a dataframe with CWD volume for each plot, one with cubic m/ha and cubic ft/acre

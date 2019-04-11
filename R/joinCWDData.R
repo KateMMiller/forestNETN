@@ -16,7 +16,7 @@
 #------------------------
 # Join CWD table and filters by park, year, and plot/visit type
 #------------------------
-joinCWDData<-function(units=c('ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output){
+joinCWDData<-function(units=c('ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output, ...){
   units<-match.arg(units)
   # Prepare the CWD data
   park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, panels=panels,output='short'))
