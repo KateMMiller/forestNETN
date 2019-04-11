@@ -5,8 +5,8 @@
 \title{sumQuadGuilds: summarizes quadrat species data by guilds}
 \usage{
 sumQuadGuilds(speciesType = c("native", "exotic", "all", "invasive"),
-  park = "all", from = 2006, to = 2018, QAQC = FALSE,
-  locType = "VS", panels = 1:4, output, ...)
+  park = "all", from = 2006, to = 2018, splitHerb = TRUE,
+  QAQC = FALSE, locType = "VS", panels = 1:4, output, ...)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
@@ -16,10 +16,16 @@ sumQuadGuilds(speciesType = c("native", "exotic", "all", "invasive"),
 \item{"exotic"}{Returns exotic species only}
 \item{"invasive"}{Returns species on the Indicator Invasive List}
 }}
+
+\item{splitHerb}{TRUE/FALSE. If TRUE (default), allows you to split the herbaceous group into forb and fern. If FALSE,
+then resulting data frame will be summarised for tree, shrub, herbaceous, and graminoid guilds.}
 }
 \value{
 Returns a dataframe with average quadrat cover, percent quadrat frequency and quadrat frequency count for tree,shrub/vine,herbaceous,and graminoid. Data are sither summarized for all species, native only, exotic only, or invasive only.
 }
 \description{
-This function summarizes output from joinQuadData and calculates average cover and quadrat frequency for each guild. Average cover is corrected for number of quadrats sampled.
+This function summarizes output from joinQuadData and calculates average cover and quadrat frequency for each guild.
+Average cover is corrected for number of quadrats sampled. Guilds are tree, shrub, forb, fern, and graminoid. If herbaceous guild
+is split, then cover of ferns does not overlap with cover of herbaceous. If herbaceous guild is not split, then cover of herbaceous
+guild includes fern and other herbaceous (but not graminoid) species cover.
 }
