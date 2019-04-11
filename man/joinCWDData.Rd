@@ -8,15 +8,16 @@ joinCWDData(units = c("ha", "acres"), park = "all", from = 2006,
   to = 2018, QAQC = FALSE, locType = "VS", panels = 1:4, output,
   ...)
 }
+\arguments{
+\item{units}{Calculates CWD Volume based on different units.
+\describe{
+\item{"ha"}{Default. Returns CWD volume as cubic m/hectare}
+\item{"acres"}{Returns CWD volume as cubic ft/ acre}
+}}
+}
 \value{
 returns a dataframe with CWD volume for each plot, one with cubic m/ha and cubic ft/acre
 }
 \description{
 This function combines calculates CWD volume for each plot. Must run importData first.
-
-#' @param units Calculates CWD Volume based on different units.
-\describe{
-\item{"ha"}{Default. Returns CWD volume as cubic m/hectare}
-\item{"acres"}{Returns CWD volume as cubic ft/ acre}
-}
 }
