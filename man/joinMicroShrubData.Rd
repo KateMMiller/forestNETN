@@ -2,11 +2,11 @@
 % Please edit documentation in R/joinMicroShrubData.R
 \name{joinMicroShrubData}
 \alias{joinMicroShrubData}
-\title{joinMicroShrubData}
+\title{joinMicroShrubData: compiles shrub data collected in microplots}
 \usage{
 joinMicroShrubData(speciesType = c("all", "native", "exotic"),
-  park = "all", from = 2007, to = 2018, QAQC = FALSE,
-  locType = "VS", panels = 1:4, output)
+  numMicros = 3, park = "all", from = 2007, to = 2018,
+  QAQC = FALSE, locType = "VS", panels = 1:4, output, ...)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
@@ -15,6 +15,8 @@ joinMicroShrubData(speciesType = c("all", "native", "exotic"),
 \item{"native"}{Returns native species only}
 \item{"exotic"}{Returns exotic species only}
 }}
+
+\item{numMicros}{Allows you to select 1, 2, or 3 microplots of data to summarize}
 }
 \value{
 returns a dataframe with shrub data collected in microplots

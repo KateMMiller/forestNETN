@@ -32,7 +32,7 @@
 # Joins microplot tables and filters by park, year, and plot/visit type
 #------------------------
 joinRegenData<-function(speciesType=c('all', 'native','exotic'), canopyForm=c('canopy','all'), numMicros=3,
-  units=c('micro','ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output){
+  units=c('micro','ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output, ...){
   speciesType<-match.arg(speciesType)
   canopyForm<-match.arg(canopyForm)
   units<-match.arg(units)
