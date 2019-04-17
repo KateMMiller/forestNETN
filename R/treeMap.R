@@ -64,7 +64,7 @@ treeMap<-function(df){
     p<-ggplot(data=df,aes(x=x, y=y, group=Status_ID, fill=Status_ID, size=DBH, label=Tree_Number_NETN))+
       geom_hline(yintercept=0, lwd=1, color='DimGrey')+
       geom_vline(xintercept=0, lwd=1, color='DimGrey')+
-      geom_jitter(aes(fill=Status_ID),shape=21, width=0.2)+ xlim(-11.5,11.5)+ylim(-11.5,11.5)+
+      geom_jitter(aes(fill=Status_ID),shape=21, width=0.2)+ xlim(-11.7,11.7)+ylim(-11.7,11.7)+
       scale_fill_manual(values=status_cols)+
       theme_bw()+
       theme(panel.background=element_blank(), panel.grid.major=element_blank(),
@@ -74,12 +74,12 @@ treeMap<-function(df){
       guides(shape=T, size=F)+
       scale_size_continuous(range=c(2,10))+
       geom_text_repel(aes(x=x,y=y,label=Tree_Number_NETN), direction='both', size=5, nudge_x=0.2,nudge_y=0.2)+
-      coord_cartesian(xlim=c(-11.5,11.5), clip='off')+
+      coord_cartesian(xlim=c(-11.7,11.7), clip='off')+
       labs(x=NULL,y=NULL, fill='Status')+
-      geom_text(x=0, y=13.1, size=5, label='UP')+ geom_text(x=13.1,y=13,size=5,label='UR')+
-      geom_text(x=13.1,y=-13,size=5,label='BR')+ geom_text(x=-13,y=-13,size=5,label='BL')+
+      geom_text(x=0, y=13.3, size=5, label='UP')+ geom_text(x=13.3,y=13,size=5,label='UR')+
+      geom_text(x=13.3,y=-13,size=5,label='BR')+ geom_text(x=-13,y=-13,size=5,label='BL')+
       geom_text(x=-13,y=13, size=5, label='UL')+
-      geom_text(x=0, y=14.5, label=orient, size=5, col='red')
+      geom_text(x=0, y=14.9, label=orient, size=5, col='red')
 
     leg<-get_legend(ggplot(data=df, aes(x=x, y=y, group=Status_ID, fill=Status_ID))+
                       geom_point(aes(fill=Status_ID),shape=21, size=6)+labs(fill='Status')+
