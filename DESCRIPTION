@@ -1,7 +1,7 @@
 Package: forestNETN
 Type: Package
 Title: Package for importing, joining and querying NETN forest database tables
-Version: 0.1.2
+Version: 0.1.3
 Author: Kate Miller
 Maintainer: Kate Miller <kathryn_miller@nps.gov>
 Description: This package contains functions that import database tables from the NETN forest backend using odbc (must use 32-bit R for import), that join tables together and that filter by park, year, location type and visit type.
@@ -18,6 +18,8 @@ Collate:
     'joinTreeData.R'
     'makeSppList.R'
     'sumQuadGuilds.R'
+    'treeMapPrep.R'
+    'treeMap.R'
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
