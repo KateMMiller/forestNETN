@@ -27,11 +27,12 @@ Imports:
     dplyr,
     magrittr,
     stringr,
-    ggplot2
+    ggplot2,
+    lubridate
 Suggests: 
     odbc,
     DBI,
     tidyr,
     ggrepel,
-    cowplot,    
-    lubridate
+    cowplot    
+
