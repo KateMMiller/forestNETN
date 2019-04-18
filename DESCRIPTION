@@ -26,7 +26,10 @@ RoxygenNote: 6.1.1
 Suggests: 
     odbc,
     DBI,
-    tidyr
+    tidyr,
+    ggplot2,
+    ggrepel,
+    cowplot
 Depends: 
     dplyr,
     lubridate,
