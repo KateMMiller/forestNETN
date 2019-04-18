@@ -79,7 +79,9 @@ joinRegenData<-function(speciesType=c('all', 'native','exotic'), canopyForm=c('c
   }
 
   regen6[,14:18][is.na(regen6[,14:18])]<-0
-
+  regen6<-regen6 %>% mutate(Latin_Name= ifelse((Plot_Name=="SAGA-008" & Year==2010),
+                                               paste0('MissingData'), paste0(Latin_Name)),
+                            Common= ifelse(is.na(Common), paste0(Latin_Name), paste0(Common)))
   # Summarise data at plot level. We lose the Microplot name, but average over # microplots selected in next step
   regen7<-regen6 %>% group_by(Event_ID, TSN, Latin_Name, Common, Exotic, Canopy_Exclusion, Year, cycle) %>%
     summarise(seed15.30=sum(seed15.30, na.rm=T),seed30.100=sum(seed30.100, na.rm=T),seed100.150=sum(seed100.150, na.rm=T),

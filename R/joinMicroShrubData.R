@@ -34,9 +34,12 @@ joinMicroShrubData<-function(speciesType=c('all', 'native','exotic'), numMicros=
     by="Microplot_Characterization_Data_ID", all.x=T, all.y=T)
   shrub2<-merge(park.plots,shrub1,by='Event_ID',all.x=T)
   shrub3<-merge(shrub2,plants[,c("TSN","Latin_Name","Common",'Exotic')],by="TSN",all.x=T)
+  shrub3<-shrub3 %>% mutate(Latin_Name= ifelse((Plot_Name=="SAGA-008" & Year==2010),
+                                               paste0('MissingData'), paste0(Latin_Name)),
+                            Common= ifelse(is.na(Common), paste0(Latin_Name), paste0(Common)),
+                            present.old=ifelse(Year<=2009 & (Cover_Class_ID>0 | Num_Stems> 0 ), 1,NA))
 
   # For data with # stems or DRC change anything >0 to 1 for Present.old. For % Cover, change cover classes to midpoint
-  shrub3<-shrub3 %>% mutate(present.old=ifelse(Year<=2009 & (Cover_Class_ID>0 | Num_Stems> 0 ), 1,NA))
   # Cycle 1 changed from stem counts to % cover in 2010.
   # Due to these changes, we're only going to use cover data for cycle 2 (2010) and after, but will record species as
   # present.old if they were recorded from 2006 to 2009.

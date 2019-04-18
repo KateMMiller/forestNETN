@@ -5,8 +5,8 @@
 \title{joinLocEvent: merges Location and Event level data with options for filtering.}
 \usage{
 joinLocEvent(park = "all", from = 2006, to = 2018, QAQC = FALSE,
-  rejected = FALSE, panels = 1:4, locType = "VS", output = "short",
-  ...)
+  rejected = FALSE, panels = 1:4, locType = "VS",
+  eventType = c("complete", "all"), output = "short", ...)
 }
 \arguments{
 \item{park}{Combine data from all parks or one park at a time. Acceptable options are:
@@ -42,6 +42,12 @@ If more than one panel is selected, specify by c(1,3), for example.}
 \describe{
 \item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
 \item{"all"}{Include all plots, such as deer exclosures and bonus plots}}}
+
+\item{eventType}{Allows you to only include complete sampling events, or to include all sampling events
+\describe{
+\item{"complete"}{Only include sampling events for a plot that are complete.}
+\item{"all}{Include all plots with an Event_ID, including plots that are missing all data associated with that event (eg ACAD-029.2010).}
+}}
 }
 \value{
 returns a dataframe with location and visit events

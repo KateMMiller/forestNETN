@@ -26,16 +26,20 @@
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
 makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2007, to=2018,
-  QAQC=FALSE, locType='VS', panels=1:4,output, ...){
+  QAQC=FALSE, locType='VS', panels=1:4,eventType='complete',output, ...){
   speciesType<-match.arg(speciesType)
 
-  park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,locType=locType,panels=panels,rejected=F,output='short'))
+  park.plots<-force(joinLocEvent(park=park,from=from,to=to,QAQC=QAQC,eventType='complete',locType=locType,panels=panels,rejected=F,output='short'))
   plants<-plants %>% mutate(Shrub=ifelse(Shrub+Vine>0,1,0))
 
   #trees1<-joinTreeData(status='live',output='short')
   trees1<-force(joinTreeData(park=park, from=from,to=to,QAQC=QAQC,locType=locType,
     output='short', status='live'))
-  trees2<-trees1 %>% group_by(Event_ID,TSN,Latin_Name,Common) %>% summarise(tree.stems=length(DBH>10),
+  trees1<-trees1 %>% filter(!is.na(Tree_ID)) %>% droplevels() #removes events without live trees (SARA-012.2018,ACAD-029.2010)
+
+  #trees1<-na.omit(trees1, cols='Tree_ID') #removes SARA-012, which doesn't have live trees
+  trees2<-trees1 %>% mutate(Common= ifelse(is.na(Common), paste0(Latin_Name), paste0(Common))) %>%
+                              group_by(Event_ID,TSN,Latin_Name,Common) %>% summarise(tree.stems=length(DBH>10),
     tree.BAcm2=sum(BA_cm2)) %>% ungroup()
   trees3<-trees2 %>% select(Event_ID,TSN,tree.stems,tree.BAcm2)
 
@@ -54,7 +58,7 @@ makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park=
     output='short'))
   shrub2<-shrub1 %>% select(Event_ID,TSN,present.old,cover)
 
-  addspp2<-addspp %>% select(Event_ID,TSN) %>% mutate(addspp=1)
+  addspp2<-addspp %>% filter(TSN!=0) %>% select(Event_ID,TSN) %>% mutate(addspp=1)
 
   comb1<-merge(trees3,regen2,by=c("Event_ID","TSN"),all.x=T,all.y=T)
   comb2<-merge(comb1,quads2,by=c("Event_ID","TSN"),all.x=T,all.y=T)
@@ -66,6 +70,8 @@ makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park=
     "Indicator_Invasive_NETN","Tree","Shrub","Herbaceous",
     "Graminoid","Fern_Ally")],by="TSN",all.x=T)
 
+  comb6<-comb6 %>% mutate(Common= ifelse(is.na(Common), paste0(Latin_Name), paste0(Common)))
+
   comb7<-if (speciesType=='native'){filter(comb6,Exotic==FALSE)
   } else if (speciesType=='exotic'){filter(comb6,Exotic==TRUE)
   } else if (speciesType=='invasive'){filter(comb6,Indicator_Invasive_NETN==TRUE)
@@ -74,14 +80,14 @@ makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park=
 
   comb8<-merge(park.plots,comb7,by="Event_ID",all.x=T,all.y=F)
 
-  names(comb8)
   colnames(comb8)<-c("Event_ID","Location_ID","Unit_Code","Plot_Name","Plot_Number","X_Coord","Y_Coord","Panel",
     "Year","Event_QAQC","cycle","TSN","tree.stems","tree.BAcm2","seed.den","sap.den","stocking.index","avg.quad.cover",
     "avg.quad.freq",'avg.germ.cover','avg.germ.freq',"shrub.present.old","shrub.cover","addspp.present",
     "Latin_Name","Common","Exotic","Indicator_Invasive_NETN","Tree","Shrub","Herbaceous","Graminoid","Fern_Ally")
 
   comb8[,c(13:21,24)][is.na(comb8[,c(13:21,24)])]<-0
-  comb8<-comb8 %>% mutate(shrub.cover=ifelse(Year>2009 & is.na(shrub.cover),0,shrub.cover),
+  comb9<-comb8 %>% mutate(shrub.cover=ifelse(Year>2009 & is.na(shrub.cover),0,shrub.cover),
     shrub.present.old=ifelse(Year<=2009 & is.na(shrub.present.old),0,shrub.present.old))
-  return(data.frame(comb8))
+
+  return(data.frame(comb9))
 } # end of function

@@ -6,7 +6,7 @@
 \usage{
 makeSppList(speciesType = c("all", "native", "exotic", "invasive"),
   park = "all", from = 2007, to = 2018, QAQC = FALSE,
-  locType = "VS", panels = 1:4, output, ...)
+  locType = "VS", panels = 1:4, eventType = "complete", output, ...)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
