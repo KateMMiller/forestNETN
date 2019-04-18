@@ -19,7 +19,7 @@ treeMapPrep<-function(df){
 
   get.coords<-function(df){
     az= ifelse(df$Azimuth-df$Orientation<0,360-df$Orientation+df$Azimuth,df$Azimuth-df$Orientation)
-    df<-df %>% mutate(x=Distance*cos(az*(pi/180)), y=Distance*sin(az*(pi/180)))
+    df<-df %>% mutate(x=Distance*sin(az*(pi/180)), y=Distance*cos(az*(pi/180)))
   }
 
 df<-get.coords(df) # add x,y coordinates to data
