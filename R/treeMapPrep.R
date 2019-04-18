@@ -1,4 +1,7 @@
 #' @title treeMapPrep: prepares tree data for treeMap
+#
+#' @importFrom dplyr select filter arrange mutate summarise group_by
+#' @importFrom magrittr %>%
 #'
 #' @description This function converts tree distance and azimuth values to coordinates and plots the coordinates of live or
 #' dead trees, then simplifies status codes for the map. Works best with data.frame derived

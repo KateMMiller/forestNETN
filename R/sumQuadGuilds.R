@@ -1,6 +1,9 @@
 #' @include joinQuadData.R
 #' @title sumQuadGuilds: summarizes quadrat species data by guilds
 #'
+#' @importFrom dplyr select filter arrange mutate summarise group_by first
+#' @importFrom magrittr %>%
+#'
 #' @description This function summarizes output from joinQuadData and calculates average cover and quadrat frequency for each guild.
 #' Average cover is corrected for number of quadrats sampled. Guilds are tree, shrub, forb, fern, and graminoid. If herbaceous guild
 #' is split, then cover of ferns does not overlap with cover of herbaceous. If herbaceous guild is not split, then cover of herbaceous
@@ -14,7 +17,7 @@
 #' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
-#'@param splitHerb TRUE/FALSE. If TRUE (default), allows you to split the herbaceous group into forb and fern. If FALSE,
+#' @param splitHerb TRUE/FALSE. If TRUE (default), allows you to split the herbaceous group into forb and fern. If FALSE,
 #' then resulting data frame will be summarised for tree, shrub, herbaceous, and graminoid guilds.
 #' @return Returns a dataframe with average quadrat cover, percent quadrat frequency and quadrat frequency count for tree,shrub/vine,herbaceous,and graminoid. Data are sither summarized for all species, native only, exotic only, or invasive only.
 #'

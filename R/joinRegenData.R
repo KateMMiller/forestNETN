@@ -1,6 +1,10 @@
 #' @include joinLocEvent.R
 #' @title joinRegenData: compiles seedling and sapling data
 #'
+#' @importFrom dplyr select filter arrange mutate summarise group_by ungroup
+#' @importFrom magrittr %>%
+#' @importFrom stringr str_sub str_pad
+#'
 #' @description This function combines seedling and sapling data, and calculates stocking index. Must run importData first.
 #'
 #' @param speciesType Allows you to filter on native, exotic or include all species.

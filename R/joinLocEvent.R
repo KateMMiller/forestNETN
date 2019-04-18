@@ -1,5 +1,10 @@
 #' @title joinLocEvent: merges Location and Event level data with options for filtering.
 #'
+#' @importFrom dplyr select filter arrange mutate summarise group_by between
+#' @importFrom magrittr %>%
+#' @importFrom lubridate year
+#' @importFrom stringr str_pad str_sub
+#'
 #' @description This function combines location and event data. Must run importData first.
 #'
 #' @param park Combine data from all parks or one park at a time. Acceptable options are:
@@ -39,7 +44,7 @@
 #------------------------
 joinLocEvent<-function(park="all", from=2006,to=2018, QAQC=FALSE, rejected=FALSE, panels=1:4,
                        locType='VS',output='short', ...){
-    loc2<-loc %>% mutate(Unit_Code=as.factor(str_sub(Unit_ID,1,4)))
+  loc2<-loc %>% mutate(Unit_Code=as.factor(str_sub(Unit_ID,1,4)))
   loc2$Plot_Number<-str_pad(loc2$Plot_Number,width=3,side="left",pad=0) #Pad plot number so retains 3-digits
   loc2$Plot_Name<-paste(loc2$Unit_Code, loc2$Plot_Number, sep="-")
 
@@ -68,9 +73,9 @@ joinLocEvent<-function(park="all", from=2006,to=2018, QAQC=FALSE, rejected=FALSE
       ifelse(between(Year,2014,2017),3,ifelse(between(Year,2018,2021),4,NA))))) %>%
     filter(Year>=from & Year <=to) %>% droplevels()
 
-  park.plots<- if (output=='short') {park.ev4 %>% dplyr::select(Location_ID,Event_ID,Unit_Code,
+  park.plots<- if (output=='short') {park.ev4 %>% select(Location_ID,Event_ID,Unit_Code,
     Plot_Name,Plot_Number,X_Coord,Y_Coord,Panel,Year,Event_QAQC,cycle)
-  } else if (output=='verbose') {park.ev4 %>% dplyr::select(Location_ID:Y_Coord,Coord_Units:Physiographic_Class,
+  } else if (output=='verbose') {park.ev4 %>% select(Location_ID:Y_Coord,Coord_Units:Physiographic_Class,
     Plot_Name,Unit_Code:Start_Date,Event_QAQC, Year,cycle)}
 
   return(data.frame(park.plots))

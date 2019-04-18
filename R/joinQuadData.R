@@ -1,6 +1,9 @@
 #' @include joinLocEvent.R
 #' @title joinQuadData: compiles quadrat species data
 #'
+#' @importFrom dplyr select filter arrange mutate summarise group_by rename_at
+#' @importFrom magrittr %>%
+#'
 #' @description This function combines quadrat species data with species names and allows you to filter on species types, park, years, and visit type. Note that the Shrub guild also includes woody vine species.
 #'
 #' @param speciesType Allows you to filter on native, exotic or include all species.

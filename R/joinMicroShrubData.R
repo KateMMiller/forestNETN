@@ -1,6 +1,9 @@
 #' @include joinLocEvent.R
 #' @title joinMicroShrubData: compiles shrub data collected in microplots
 #'
+#' @importFrom dplyr select filter arrange mutate summarise group_by
+#' @importFrom magrittr %>%
+#'
 #' @description This function combines shrub stem counts (cycle 1) and percent cover (cycle 2+) data from microplots. Must run importData first.
 #'
 #' @param speciesType Allows you to filter on native, exotic or include all species.
@@ -10,7 +13,7 @@
 #' \item{"exotic"}{Returns exotic species only}
 #' }
 #'
-#'@param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
+#' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
 #'
 #' @return returns a dataframe with shrub data collected in microplots
 #'

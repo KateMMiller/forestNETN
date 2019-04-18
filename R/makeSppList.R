@@ -5,6 +5,9 @@
 #' @include joinMicroShrubData.R
 #' @title makeSppList: creates a species list for each plot
 #'
+#' @importFrom dplyr select filter arrange mutate summarise group_by
+#' @importFrom magrittr %>%
+#'
 #' @description This function creates a plot-level species list from live trees, microplots, quadrats, and additional species lists.
 #'
 #' @param speciesType Allows you to filter on native, exotic or include all species.
