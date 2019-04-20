@@ -15,6 +15,14 @@
 #'
 #' @return returns a dataframe with CWD volume for each plot, one with cubic m/ha and cubic ft/acre
 #'
+#' @examples
+#' importData() #imports using default odbc
+#' # Compile CWD data for MABI for most recent survey and return in ft^3/acre
+#' cwd_data <- joinCWDData(park = 'MABI', from = 2015, to = 2018, units = 'acres')
+#'
+#' # Compile CWD data for all parks (default) for most recent survey and return in m^3/ha (default)
+#' cwd_data <- joinCWDData(from = 2015, to = 2018)
+#'
 #' @export
 #'
 #------------------------

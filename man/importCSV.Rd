@@ -13,5 +13,11 @@ importCSV(path = NA)
 Assigns database tables to global environment
 }
 \description{
-This function imports exported CSV tables from the NETN Forest Database.
+This function imports exported CSV tables from the NETN Forest Database, and
+assigns the tables to the global environment with names that functions in this package
+depend on.
+}
+\examples{
+importCSV("C:/Data/forest_csvs")
+
 }

@@ -1,9 +1,14 @@
 #' @title importCSV: Import NETN forest data that are formated as .csv files.
 #'
-#' @description This function imports exported CSV tables from the NETN Forest Database.
+#' @description This function imports exported CSV tables from the NETN Forest Database, and
+#' assigns the tables to the global environment with names that functions in this package
+#' depend on.
 #'
 #' @param path Quoted path of folder containing tables.
 #' @return Assigns database tables to global environment
+#'
+#' @examples
+#' importCSV("C:/Data/forest_csvs")
 #'
 #' @export
 

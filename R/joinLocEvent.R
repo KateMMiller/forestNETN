@@ -39,7 +39,21 @@
 #' }
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1,3), for example.
+#'
 #' @return returns a dataframe with location and visit events
+#'
+#' @examples
+#' importCSV('./forest_csvs')
+#' # Select most recent survey of data from WEFA
+#' WEFA_data <- joinLocEvent(park = 'WEFA', panels = c(2,4), from = 2015, to = 2018)
+#'
+#' # Select data from cycle 3
+#' cycle3 <- joinLocEvent(from = 2014, to = 2017) # all parks is default
+#'
+#' # Select data from plots that had a QA/QC event in ACAD in 2018
+#' ACAD_data<-joinLocEvent(park = 'ACAD', QAQC = T, from = 2018)
+#' QAQC_plots<-ACAD_data$Plot_Name[which(ACAD_data$Event_QAQC==TRUE)]
+#' ACAD_QAQC<-ACAD_data %>% filter(Plot_Name %in% QAQC_plots) %>% droplevels()
 #'
 #' @export
 #'

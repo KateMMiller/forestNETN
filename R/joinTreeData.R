@@ -27,6 +27,20 @@
 #'
 #' @return returns a dataframe with plot-level and visit-level tree data
 #'
+#' @examples
+#' importData()
+#' # compile tree data for live trees only in most recent survey in all parks
+#' live_trees <- joinTreeData(status = 'live', from = 2015, to = 2018)
+#'
+#' # compile ACAD trees within 100m^2 circle in most recent survey
+#' ACAD_100m <- joinTreeData(park = 'ACAD', from = 2015, to = 2018, dist_m = 5.64)
+#'
+#' # compile dead trees in MABI in most recent survey
+#' MABI_dead <- joinTreeData(park = 'MABI', from = 2015, to = 2018, status = 'dead')
+#'
+#' # compile exotic trees in MIMA in all years
+#' MIMA_exotic <- joinTreeData(park = 'MIMA', from = 2015, to = 2018, speciesType = 'exotic')
+#'
 #' @export
 #'
 #------------------------

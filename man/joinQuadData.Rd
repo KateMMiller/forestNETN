@@ -23,3 +23,12 @@ Returns a dataframe with cover class midpoints for each quadrat and includes gui
 \description{
 This function combines quadrat species data with species names and allows you to filter on species types, park, years, and visit type. Note that the Shrub guild also includes woody vine species.
 }
+\examples{
+importData()
+# compile quadrat data for invasive species in SARA for all years
+SARA_quads <- joinQuadData(park = 'SARA', speciesType = 'invasive')
+
+# compile native species only for all parks in most recent survey
+native_quads <- joinQuadData(speciesType = 'native', from = 2015, to = 2018)
+
+}

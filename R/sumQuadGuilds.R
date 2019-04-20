@@ -21,12 +21,21 @@
 #' then resulting data frame will be summarised for tree, shrub, herbaceous, and graminoid guilds.
 #' @return Returns a dataframe with average quadrat cover, percent quadrat frequency and quadrat frequency count for tree,shrub/vine,herbaceous,and graminoid. Data are sither summarized for all species, native only, exotic only, or invasive only.
 #'
+#' @examples
+#' importData()
+#'
+#' # compile invasive quad data for all parks and most recent survey. Keep ferns in with herbs
+#' inv_guilds <- sumQuadGuilds(speciesType = 'invasive', from = 2015, to = 2018, splitHerb = FALSE)
+#'
+#' # compile native quad data for more recent survey in ACAD, with ferns and forbs split in separate guils
+#' ACAD_guilds <- sumQuadGuilds(speciesType = 'native', from = 2015, to = 2018, splitHerb = TRUE)
+#'
 #' @export
 #'
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park='all',from=2006, to=2018,splitHerb=TRUE,
+sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park='all',from=2006, to=2018, splitHerb=TRUE,
   QAQC=FALSE, locType='VS', panels=1:4, output, ...){
 
   if(!requireNamespace("tidyr", quietly = TRUE)){

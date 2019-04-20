@@ -20,5 +20,14 @@ Assigns database tables to global environment
 }
 \description{
 This function imports database tables from a named ODBC datasource from
-NETN or MIDN forest backend databases. You must use the 32-bit version of R to work.
+NETN or MIDN forest backend databases. Each table is assigned to the global environment
+with names that functions in this package depend on. You must use the 32-bit version of R to work.
+}
+\examples{
+# Import database in specific folder:
+importData(type='file', path='./Data/NETN_Forest_Backend.mdb')
+
+# Import ODBC named database
+importData(type='DSN', odbc="NETNFVM")
+
 }

@@ -29,3 +29,13 @@ Average cover is corrected for number of quadrats sampled. Guilds are tree, shru
 is split, then cover of ferns does not overlap with cover of herbaceous. If herbaceous guild is not split, then cover of herbaceous
 guild includes fern and other herbaceous (but not graminoid) species cover.
 }
+\examples{
+importData()
+
+# compile invasive quad data for all parks and most recent survey. Keep ferns in with herbs
+inv_guilds <- sumQuadGuilds(speciesType = 'invasive', from = 2015, to = 2018, splitHerb = FALSE)
+
+# compile native quad data for more recent survey in ACAD, with ferns and forbs split in separate guils
+ACAD_guilds <- sumQuadGuilds(speciesType = 'native', from = 2015, to = 2018, splitHerb = TRUE)
+
+}

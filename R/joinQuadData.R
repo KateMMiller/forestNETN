@@ -16,6 +16,14 @@
 #'
 #' @return Returns a dataframe with cover class midpoints for each quadrat and includes guild for each species.
 #'
+#' @examples
+#' importData()
+#' # compile quadrat data for invasive species in SARA for all years
+#' SARA_quads <- joinQuadData(park = 'SARA', speciesType = 'invasive')
+#'
+#' # compile native species only for all parks in most recent survey
+#' native_quads <- joinQuadData(speciesType = 'native', from = 2015, to = 2018)
+#'
 #' @export
 #'
 #------------------------

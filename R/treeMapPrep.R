@@ -1,4 +1,4 @@
-#' @title treeMapPrep: prepares tree data for treeMap
+#' @title treeMapPrep: prepares tree data for treeMap (internal function)
 #
 #' @importFrom dplyr select filter arrange mutate summarise group_by
 #' @importFrom magrittr %>%
