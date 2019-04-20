@@ -1,8 +1,8 @@
 #' @title importData: Import tables directly from NETN forest database
 #'
 #' @description This function imports database tables from a named ODBC datasource from
-#' NETN or MIDN forest backend databases. Each table is assigned to the global environment
-#' with names that functions in this package depend on. You must use the 32-bit version of R to work.
+#' NETN forest backend databases. Each table is assigned to the global environment with names
+#' that functions in this package depend on. You must use the 32-bit version of R to work.
 #'
 #' @param type Select whether to use the default DSN to import data or a different database
 #' \describe{
