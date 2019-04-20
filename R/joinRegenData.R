@@ -29,9 +29,19 @@
 #'
 #' @return returns a dataframe with seedling and sapling densities, and stocking index
 #'
+#' @examples
+#' importCSV('./forest_csvs/')
+#' # compile seedling and sapling data for all parks and all species in most recent cycle
+#' regen_data <- joinRegenData(canopyForm = 'all', from = 2015, to = 2018)
+#'
+#' # compile regen data for only canopy-forming (default) and native species in SAGA for all years
+#' SAGA_regen <- joinRegenData(park = 'SAGA', speciesType = 'native')
+#'
+#' # compile only 1 microplot of data for ACAD native canopy-forming species for all but first year
+#' ACAD_regen_m1 <- joinRegenData(park = 'ACAD', speciesType = 'native', numMicros = 1, from = 2007)
+#'
 #' @export
 #'
-# consider making it so that individual species can be filtered?
 #------------------------
 # Joins microplot tables and filters by park, year, and plot/visit type
 #------------------------

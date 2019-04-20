@@ -2,7 +2,7 @@
 % Please edit documentation in R/treeMapPrep.R
 \name{treeMapPrep}
 \alias{treeMapPrep}
-\title{treeMapPrep: prepares tree data for treeMap}
+\title{treeMapPrep: prepares tree data for treeMap (internal function)}
 \usage{
 treeMapPrep(df)
 }

@@ -24,3 +24,12 @@ returns a dataframe with shrub data collected in microplots
 \description{
 This function combines shrub stem counts (cycle 1) and percent cover (cycle 2+) data from microplots. Must run importData first.
 }
+\examples{
+importData()
+# native shrubs in MORR all years
+native_shrubs <- joinMicroShrubData(park ='MORR', speciesType = 'native')
+
+# all parks with exotic shrubs in most recent survey
+exotic_shrubs <- joinMicroShrubData(from = 2015, to = 2018, speciesType = 'exotic')
+
+}

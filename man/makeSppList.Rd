@@ -23,3 +23,24 @@ Returns a dataframe with species list for each plot.
 \description{
 This function creates a plot-level species list from live trees, microplots, quadrats, and additional species lists.
 }
+\examples{
+importData()
+
+# Compile number of invasive species found per plot in most recent survey for all parks
+inv_spp <- makeSppList(speciesType = 'invasive', from = 2015, to = 2018)
+inv_spp$present<-ifelse(is.na(inv_spp$Latin_Name),0,1)
+num_inv_per_plot <- inv_spp \%>\% group_by(Plot_Name) \%>\% summarise(numspp=sum(present, na.rm=T))
+
+# Compile species list for a given panel of a park
+SARA_spp <- makeSppList(park = 'SARA', panels = 1, from = 2018)
+
+#--- arrange and drop unnecessary fields.
+SARA_spp_final <- SARA_spp \%>\% arrange(Plot_Name, Latin_Name) \%>\%
+  select(Plot_Name, Latin_Name, Common, tree.stems, stocking.index, avg.quad.cover, shrub.cover,
+  addspp.present)
+
+#--- make species list for a given plot from 2018
+SARA_001_2018_spp <- SARA_spp \%>\% filter(Plot_Name == 'SARA-001') \%>\%
+  select(Plot_Name, Year, Latin_Name, Common) \%>\% droplevels()
+
+}
