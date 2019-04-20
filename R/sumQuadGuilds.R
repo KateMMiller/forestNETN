@@ -27,7 +27,7 @@
 #' # compile invasive quad data for all parks and most recent survey. Keep ferns in with herbs
 #' inv_guilds <- sumQuadGuilds(speciesType = 'invasive', from = 2015, to = 2018, splitHerb = FALSE)
 #'
-#' # compile native quad data for more recent survey in ACAD, with ferns and forbs split in separate guils
+#' # compile native quad data for more recent survey in ACAD, with ferns and forbs split in separate guilds
 #' ACAD_guilds <- sumQuadGuilds(speciesType = 'native', from = 2015, to = 2018, splitHerb = TRUE)
 #'
 #' @export
