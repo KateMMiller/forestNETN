@@ -7,7 +7,7 @@
 #'
 #' @description This function combines calculates CWD volume for each plot. Must run importData first.
 #'
-#'@param units Calculates CWD Volume based on different units.
+#' @param units Calculates CWD Volume based on different units.
 #' \describe{
 #' \item{"ha"}{Default. Returns CWD volume as cubic m/hectare}
 #' \item{"acres"}{Returns CWD volume as cubic ft/ acre}
@@ -36,7 +36,7 @@ joinCWDData<-function(units=c('ha','acres'), park='all',from=2006, to=2018, QAQC
   cwd2<-merge(cwd1[,c("Event_ID","TSN","Diameter","Decay_Class_ID","Hollow","Transect","Distance","Wood_Type")],
               plants[,c('TSN','Latin_Name','Common')], by='TSN',all.x=T)
   cwd.std<-merge(cwd2,stand[,c("Event_ID","Slope_UP","Slope_BR","Slope_BL")],by="Event_ID",all.x=T,all.y=F)
-  cwd.std<-na.omit(cwd.std,cols='Transect')
+  cwd.std<-cwd.std %>% filter(!is.na(Transect)) %>% droplevels()
   cwd.std2<-cwd.std %>% mutate(slope=case_when(Transect=='BL'~ Slope_BL, Transect=='BR'~ Slope_BR, Transect=='UP'~ Slope_UP),
                                pct.slope=ifelse(is.na(slope),0,tan(slope*pi/180)*100),
                                hdist=((((pct.slope/100)^2)+1)^0.5)*((pi^2)/(8*15)),
