@@ -1,6 +1,6 @@
 #' @include joinLocEvent.R
 #'
-#' @importFrom dplyr select
+#' @importFrom dplyr select mutate_at
 #' @importFrom magrittr %>%
 #'
 #' @title joinStandData: compile stand data
@@ -53,5 +53,39 @@ joinStandData<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=2
                            Stunted_Woodland,Derived_Plot_Slope)
 
   stand_df<-merge(park.plots, stand2, by='Event_ID', all.x=T)
-  return(stand_df)
+  head(stand_df)
+
+  stand_df2<-merge(stand_df, stdtlu, by='Stand_Structure_ID', all.x=T)
+  names(stand_df2)[names(stand_df2)=='Description']<-"Stand_Structure"
+
+  stand_df3<-stand_df2 %>% mutate_at(vars(Groundstory_Cover_Class_ID:Forest_Floor_Trampled_Cover_Class_ID),
+                                     list(~case_when(.== 1 ~ 0,
+                                                     .== 2 ~ 3,
+                                                     .== 3 ~ 15,
+                                                     .== 4 ~ 37.5,
+                                                     .== 5 ~ 62.5,
+                                                     .== 6 ~ 85,
+                                                     .== 7 ~ 97.5))) %>%
+    mutate(Crown_Closure_PctMP= case_when(Crown_Closure_ID==1 ~ 5,
+                                          Crown_Closure_ID==2 ~ 17.5,
+                                          Crown_Closure_ID==3 ~ 37.5,
+                                          Crown_Closure_ID==4 ~ 62.5,
+                                          Crown_Closure_ID==5 ~ 87.5))
+
+ stand_df4<-stand_df3 %>% select(Location_ID, Event_ID, Unit_Code:cycle, Stand_Structure_ID, Stand_Structure,
+                                 Crown_Closure_ID, Crown_Closure_PctMP, Deer_Browse_Line_ID, Microtopography_ID,
+                                 Groundstory_Cover_Class_ID:Derived_Plot_Slope) %>% arrange(Plot_Name,cycle)
+
+ names(stand_df4)[names(stand_df4)=='Groundstory_Cover_Class_ID']<-"Pct_Understory_Low"
+ names(stand_df4)[names(stand_df4)=='Mid_Understory_Cover_Class_ID']<-"Pct_Understory_Mid"
+ names(stand_df4)[names(stand_df4)=='High_Understory_Cover_Class_ID']<-"Pct_Understory_High"
+ names(stand_df4)[names(stand_df4)=='Lichen_Cover_Class_ID']<-"Pct_Lichen_Cover"
+ names(stand_df4)[names(stand_df4)=='Non_Vascular_Cover_Class_ID']<-"Pct_Bryophyte_Cover"
+ names(stand_df4)[names(stand_df4)=='Forest_Floor_Bare_Soil_Cover_Class_ID']<-"Pct_Bare_Soil_Cover"
+ names(stand_df4)[names(stand_df4)=='Forest_Floor_Rock_Cover_Class_ID']<-"Pct_Rock_Cover"
+ names(stand_df4)[names(stand_df4)=='Forest_Floor_Water_Cover_Class_ID']<-"Pct_Surface_Water_Cover"
+ names(stand_df4)[names(stand_df4)=='Forest_Floor_Trampled_Cover_Class_ID']<-"Pct_Trampled_Cover"
+ names(stand_df4)[names(stand_df4)=='Derived_Plot_Slope']<-"Plot_Slope_Deg"
+
+ return(stand_df4)
 }
