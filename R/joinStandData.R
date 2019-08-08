@@ -31,7 +31,9 @@
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1,3), for example.
 #'
-#' @return returns a dataframe with stand data attached to location and event data. Note that tree height measurements are omitted
+#' @return returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
+#' between cover class ranges (e.g., 62.5 is the midpoint for 50-75%).
+#' Note that tree height measurements are omitted
 #' from this function because they are compiled in the sumStandHeight function.
 #'
 #' @examples
@@ -66,14 +68,14 @@ joinStandData<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=2
                                                      .== 5 ~ 62.5,
                                                      .== 6 ~ 85,
                                                      .== 7 ~ 97.5))) %>%
-    mutate(Crown_Closure_PctMP= case_when(Crown_Closure_ID==1 ~ 5,
+    mutate(Pct_Crown_Closure= case_when(Crown_Closure_ID==1 ~ 5,
                                           Crown_Closure_ID==2 ~ 17.5,
                                           Crown_Closure_ID==3 ~ 37.5,
                                           Crown_Closure_ID==4 ~ 62.5,
                                           Crown_Closure_ID==5 ~ 87.5))
 
  stand_df4<-stand_df3 %>% select(Location_ID, Event_ID, Unit_Code:cycle, Stand_Structure_ID, Stand_Structure,
-                                 Crown_Closure_ID, Crown_Closure_PctMP, Deer_Browse_Line_ID, Microtopography_ID,
+                                 Crown_Closure_ID, Pct_Crown_Closure, Deer_Browse_Line_ID, Microtopography_ID,
                                  Groundstory_Cover_Class_ID:Derived_Plot_Slope) %>% arrange(Plot_Name,cycle)
 
  names(stand_df4)[names(stand_df4)=='Groundstory_Cover_Class_ID']<-"Pct_Understory_Low"
