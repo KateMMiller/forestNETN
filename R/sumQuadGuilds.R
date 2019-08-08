@@ -1,8 +1,9 @@
 #' @include joinQuadData.R
 #' @title sumQuadGuilds: summarizes quadrat species data by guilds
 #'
-#' @importFrom dplyr select filter arrange mutate summarise group_by first
+#' @importFrom dplyr select filter arrange mutate summarise group_by first case_when
 #' @importFrom magrittr %>%
+#' @importFrom tidyr gather
 #'
 #' @description This function summarizes output from joinQuadData and calculates average cover and quadrat frequency for each guild.
 #' Average cover is corrected for number of quadrats sampled. Guilds are tree, shrub, forb, fern, and graminoid. If herbaceous guild
@@ -37,10 +38,6 @@
 #------------------------
 sumQuadGuilds<-function(speciesType=c('native','exotic','all', 'invasive'), park='all',from=2006, to=2018, splitHerb=TRUE,
   QAQC=FALSE, locType='VS', panels=1:4, output, ...){
-
-  if(!requireNamespace("tidyr", quietly = TRUE)){
-    stop("Package 'tidyr' needed for this function to work. Please install it.", call. = FALSE)
-  }
 
   speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
