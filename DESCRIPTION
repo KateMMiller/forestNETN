@@ -19,6 +19,7 @@ Collate:
     'joinTreeData.R'
     'makeSppList.R'
     'sumQuadGuilds.R'
+    'sumStandHeight.R'
     'treeMapPrep.R'
     'treeMap.R'
 Encoding: UTF-8
@@ -29,10 +30,10 @@ Imports:
     magrittr,
     stringr,
     ggplot2,
-    lubridate
+    lubridate,
+    tidyr
 Suggests: 
     odbc,
     DBI,
-    tidyr,
     ggrepel,
     cowplot    
