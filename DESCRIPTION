@@ -15,6 +15,7 @@ Collate:
     'joinMicroShrubData.R'
     'joinQuadData.R'
     'joinRegenData.R'
+    'joinStandData.R'
     'joinTreeData.R'
     'makeSppList.R'
     'sumQuadGuilds.R'
@@ -35,4 +36,3 @@ Suggests:
     tidyr,
     ggrepel,
     cowplot    
-
