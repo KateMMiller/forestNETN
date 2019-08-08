@@ -50,18 +50,18 @@ sumStandHeight<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=
   stand2<-stand %>% select(Event_ID, Height_Tree_1_Codom:Height_Tree_3_Inter)
 
   stand_df<-merge(park.plots, stand2, by='Event_ID', all.x=T)
-  stand_long <- stand_df %>% select(Unit_Code, Plot_Name, Plot_Number, Year,
+  stand_long <- stand_df %>% select(Location_ID, Event_ID, Unit_Code, Plot_Name, Plot_Number, Year,
                                     Height_Tree_1_Codom, Height_Tree_2_Codom,
                                     Height_Tree_3_Codom, Height_Tree_1_Inter,
                                     Height_Tree_2_Inter, Height_Tree_3_Inter) %>%
-    gather('tree_number', 'height',
+    gather('tree_number', 'height', -Location_ID, -Event_ID,
            -Unit_Code, -Plot_Name, -Plot_Number, -Year) %>%
     arrange(Plot_Name)
 
   stand_long2<-na.omit(stand_long)
   stand_long2<-stand_long2 %>% mutate(CrownType= ifelse(grepl("Codom", tree_number), "Avg_Codom_HT",'Avg_Inter_HT'))
 
-  stand_sum <- stand_long2 %>% group_by(Unit_Code, Plot_Name, Plot_Number, Year, CrownType) %>%
+  stand_sum <- stand_long2 %>% group_by(Location_ID, Event_ID, Unit_Code, Plot_Name, Plot_Number, Year, CrownType) %>%
     summarise(avg_height = round(mean(height, na.rm=T),2)) %>% spread(CrownType, avg_height, fill=NA) %>%
     arrange(Plot_Name, Year)
 
