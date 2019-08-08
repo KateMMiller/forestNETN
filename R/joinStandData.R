@@ -33,8 +33,6 @@
 #'
 #' @return returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
 #' between cover class ranges (e.g., 62.5 is the midpoint for 50-75%).
-#' Note that tree height measurements are omitted
-#' from this function because they are compiled in the sumStandHeight function.
 #'
 #' @examples
 #' importData() #imports using default odbc
@@ -52,7 +50,7 @@ joinStandData<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=2
                                  locType=locType, panels=panels, output='short'))
   stand2<-stand %>% select(Event_ID:Crown_Closure_ID, Deer_Browse_Line_ID,
                            Microtopography_ID:Forest_Floor_Trampled_Cover_Class_ID,
-                           Stunted_Woodland,Derived_Plot_Slope)
+                           Stunted_Woodland,Derived_Plot_Slope, Height_Tree_1_Codom:Height_Tree_3_Inter)
 
   stand_df<-merge(park.plots, stand2, by='Event_ID', all.x=T)
   head(stand_df)
@@ -74,8 +72,26 @@ joinStandData<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=2
                                           Crown_Closure_ID==4 ~ 62.5,
                                           Crown_Closure_ID==5 ~ 87.5))
 
- stand_df4<-stand_df3 %>% select(Location_ID, Event_ID, Unit_Code:cycle, Stand_Structure_ID, Stand_Structure,
-                                 Crown_Closure_ID, Pct_Crown_Closure, Deer_Browse_Line_ID, Microtopography_ID,
+
+  stand_long <- stand_df3 %>% select(Event_ID, Plot_Name, Height_Tree_1_Codom, Height_Tree_2_Codom,
+                                    Height_Tree_3_Codom, Height_Tree_1_Inter,
+                                    Height_Tree_2_Inter, Height_Tree_3_Inter) %>%
+    gather('tree_number', 'height', -Event_ID, -Plot_Name) %>%
+    arrange(Plot_Name)
+
+  stand_long2<-na.omit(stand_long)
+  stand_long2<-stand_long2 %>% mutate(CrownType= ifelse(grepl("Codom", tree_number), "Avg_Codom_HT",'Avg_Inter_HT'))
+
+  stand_sum <- stand_long2 %>% group_by(Event_ID,Plot_Name, CrownType) %>%
+    summarise(avg_height = round(mean(height, na.rm=T),2)) %>% spread(CrownType, avg_height, fill=NA) %>%
+    arrange(Plot_Name)
+
+  stand_comb<- merge(stand_df3, stand_sum, by=c("Event_ID","Plot_Name"), all.x=T)
+names(stand_comb)
+
+stand_df4<-stand_comb %>% select(Location_ID, Event_ID, Unit_Code, Plot_Name,Plot_Number:cycle, Stand_Structure_ID, Stand_Structure,
+                                 Crown_Closure_ID, Pct_Crown_Closure, Avg_Codom_HT, Avg_Inter_HT,
+                                 Deer_Browse_Line_ID, Microtopography_ID,
                                  Groundstory_Cover_Class_ID:Derived_Plot_Slope) %>% arrange(Plot_Name,cycle)
 
  names(stand_df4)[names(stand_df4)=='Groundstory_Cover_Class_ID']<-"Pct_Understory_Low"

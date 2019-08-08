@@ -19,7 +19,6 @@ Collate:
     'joinTreeData.R'
     'makeSppList.R'
     'sumQuadGuilds.R'
-    'sumStandHeight.R'
     'treeMapPrep.R'
     'treeMap.R'
 Encoding: UTF-8

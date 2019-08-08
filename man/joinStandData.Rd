@@ -40,8 +40,6 @@ If more than one panel is selected, specify by c(1,3), for example.}
 \value{
 returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
 between cover class ranges (e.g., 62.5 is the midpoint for 50-75%).
-Note that tree height measurements are omitted
-from this function because they are compiled in the sumStandHeight function.
 }
 \description{
 This function combines stand data for each plot. Must run importData first.
