@@ -1,7 +1,8 @@
 #' @include joinLocEvent.R
 #'
-#' @importFrom dplyr select mutate_at
+#' @importFrom dplyr select mutate_at arrange
 #' @importFrom magrittr %>%
+#' @importFrom tidyr spread
 #'
 #' @title joinStandData: compile stand data
 #'
@@ -53,7 +54,6 @@ joinStandData<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=2
                            Stunted_Woodland,Derived_Plot_Slope, Height_Tree_1_Codom:Height_Tree_3_Inter)
 
   stand_df<-merge(park.plots, stand2, by='Event_ID', all.x=T)
-  head(stand_df)
 
   stand_df2<-merge(stand_df, stdtlu, by='Stand_Structure_ID', all.x=T)
   names(stand_df2)[names(stand_df2)=='Description']<-"Stand_Structure"
@@ -83,7 +83,8 @@ joinStandData<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=2
   stand_long2<-stand_long2 %>% mutate(CrownType= ifelse(grepl("Codom", tree_number), "Avg_Codom_HT",'Avg_Inter_HT'))
 
   stand_sum <- stand_long2 %>% group_by(Event_ID,Plot_Name, CrownType) %>%
-    summarise(avg_height = round(mean(height, na.rm=T),2)) %>% spread(CrownType, avg_height, fill=NA) %>%
+    summarise(avg_height = round(mean(height, na.rm=T),2)) %>%
+    spread(CrownType, avg_height, fill=NA) %>%
     arrange(Plot_Name)
 
   stand_comb<- merge(stand_df3, stand_sum, by=c("Event_ID","Plot_Name"), all.x=T)
