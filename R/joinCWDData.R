@@ -5,7 +5,7 @@
 #'
 #' @title joinCWDData: compile coarse woody debris data.
 #'
-#' @description This function combines calculates CWD volume for each plot. Must run importData first.
+#' @description This function combines and calculates CWD volume for each plot. Must run importData first.
 #'
 #' @param units Calculates CWD Volume based on different units.
 #' \describe{

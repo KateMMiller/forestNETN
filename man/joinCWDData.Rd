@@ -19,7 +19,7 @@ joinCWDData(units = c("ha", "acres"), park = "all", from = 2006,
 returns a dataframe with CWD volume for each plot, one with cubic m/ha and cubic ft/acre
 }
 \description{
-This function combines calculates CWD volume for each plot. Must run importData first.
+This function combines and calculates CWD volume for each plot. Must run importData first.
 }
 \examples{
 importData() #imports using default odbc
