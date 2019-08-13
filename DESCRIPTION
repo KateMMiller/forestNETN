@@ -20,6 +20,7 @@ Collate:
     'joinRegenData.R'
     'makeSppList.R'
     'sumQuadGuilds.R'
+    'sumTreeDBHDist.R'
     'treeMapPrep.R'
     'treeMap.R'
 Encoding: UTF-8

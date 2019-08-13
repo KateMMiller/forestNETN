@@ -5,7 +5,8 @@
 \title{calcStrStage: calculate structural stage for each plot}
 \usage{
 calcStrStage(park = "all", QAQC = FALSE, locType = "VS",
-  panels = 1:4, from = 2006, to = 2019, output, ...)
+  panels = 1:4, from = 2006, to = 2019, output,
+  speciesType = c("all", "native", "exotic"), ...)
 }
 \arguments{
 \item{park}{Combine data from all parks or one park at a time. Acceptable options are:
@@ -31,7 +32,14 @@ calcStrStage(park = "all", QAQC = FALSE, locType = "VS",
 \item{"all"}{Include all plots, such as deer exclosures and bonus plots}}}
 
 \item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
-If more than one panel is selected, specify by c(1,3), for example.}
+If more than one panel is selected, specify by c(1,3), for example.
+
+#' @param speciesType Allows you to filter on native, exotic or include all species.
+\describe{
+\item{"all"}{Default. Returns all species.}
+\item{"native"}{Returns native species only}
+\item{"exotic"}{Returns exotic species only}
+}}
 
 \item{from}{Year to start analysis, ranging from 2006-2019}
 
@@ -50,7 +58,7 @@ Must run importData first.
 }
 \examples{
 importData() #imports using default odbc
-stage_df <- calcStrStage(park = 'MABI', from = 2015, to = 2019)
+stage_df <- calcStrStage(park = 'MABI', from = 2016, to = 2019)
 
 
 }

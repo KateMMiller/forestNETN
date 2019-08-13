@@ -1,7 +1,6 @@
 #' @include joinLocEvent.R
 #' @title joinTreeData: compiles tree data
 #'
-#'
 #' @importFrom dplyr select filter arrange mutate summarise group_by
 #' @importFrom magrittr %>%
 #'
@@ -75,7 +74,7 @@ joinTreeData<-function(status=c('all', 'live','dead'), speciesType=c('all', 'nat
   } else {tree4}
 
 
-  park.plots2<-force(joinLocEvent(park=park, from=from, to=to, QAQC=QAQC, locType=locType,panels=panels,output='short'))
+  park.plots2<-force(joinLocEvent(park=park, from=from, to=to, QAQC=QAQC, locType=locType, panels=panels, output='short'))
 
   tree6<-merge(park.plots2, tree5, by='Event_ID', all.x=T)
   tree6<-droplevels(tree6)

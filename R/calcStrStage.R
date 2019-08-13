@@ -25,12 +25,15 @@
 #' \item{"SAGA"}{Saint-Gaudens NHS only}
 #' \item{"SARA"}{Saratoga NHP only}
 #' \item{"WEFA"}{Weir Farm NHS only}}
+#'
 #' @param from Year to start analysis, ranging from 2006-2019
 #' @param to Year to stop analysis, ranging from 2006-2019
+#'
 #' @param QAQC Allows you to remove or include QAQC events.
 #' \describe{
 #' \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 #' \item{TRUE}{Returns all visits, including QAQC visits}}
+#'
 #' @param locType Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
 #' \describe{
 #' \item{"VS"}{Default. Only include plots that are part of the Vital Signs GRTS sample design}
@@ -38,11 +41,19 @@
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1,3), for example.
 #'
+#' #' @param speciesType Allows you to filter on native, exotic or include all species.
+#' \describe{
+#' \item{"all"}{Default. Returns all species.}
+#' \item{"native"}{Returns native species only}
+#' \item{"exotic"}{Returns exotic species only}
+#' }
+#'
+#'
 #' @return returns a dataframe with structural stage and metrics used to assign stages to plots.
 #'
 #' @examples
 #' importData() #imports using default odbc
-#' stage_df <- calcStrStage(park = 'MABI', from = 2015, to = 2019)
+#' stage_df <- calcStrStage(park = 'MABI', from = 2016, to = 2019)
 #'
 #'
 #' @export
@@ -50,7 +61,8 @@
 #------------------------
 # Join tree data
 #------------------------
-calcStrStage<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4, from = 2006, to = 2019, output, ...){
+calcStrStage<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4,
+                       from = 2006, to = 2019, output, speciesType = c('all', 'native', 'exotic'), ...){
 
   park.plots <- force(joinLocEvent(park = park, from = from, to = to, QAQC = QAQC,
                                  locType = locType, panels = panels, output = 'short'))
@@ -58,7 +70,7 @@ calcStrStage<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4,
   stand_df <- force(joinStandData(park = park, from = from, to = to, QAQC = QAQC,
                                   locType = locType, panels = panels))
 
-  tree_live <- force(joinTreeData(park = park, from = from, to = to, QAQC = QAQC,
+  tree_live <- force(joinTreeData(park = park, from = from, to = to, QAQC = QAQC, speciesType = speciesType,
                                   locType = locType, panels = panels, status = 'live'))
 
   canopy_trees <- c(2, 3, 4)
