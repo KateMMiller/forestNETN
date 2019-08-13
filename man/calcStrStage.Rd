@@ -32,18 +32,18 @@ calcStrStage(park = "all", QAQC = FALSE, locType = "VS",
 \item{"all"}{Include all plots, such as deer exclosures and bonus plots}}}
 
 \item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
-If more than one panel is selected, specify by c(1,3), for example.
+If more than one panel is selected, specify by c(1,3), for example.}
 
-#' @param speciesType Allows you to filter on native, exotic or include all species.
+\item{from}{Year to start analysis, ranging from 2006-2019}
+
+\item{to}{Year to stop analysis, ranging from 2006-2019}
+
+\item{speciesType}{Allows you to filter on native, exotic or include all species.
 \describe{
 \item{"all"}{Default. Returns all species.}
 \item{"native"}{Returns native species only}
 \item{"exotic"}{Returns exotic species only}
 }}
-
-\item{from}{Year to start analysis, ranging from 2006-2019}
-
-\item{to}{Year to stop analysis, ranging from 2006-2019}
 }
 \value{
 returns a dataframe with structural stage and metrics used to assign stages to plots.
