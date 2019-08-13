@@ -29,8 +29,8 @@
 #------------------------
 # Joins quadrat tables and filters by park, year, and plot/visit type
 #------------------------
-joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2006, to=2018, QAQC=FALSE,
-                       locType='VS', panels=1:4, output, ...){
+joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2006, to=2018,
+                       QAQC=FALSE, locType='VS', panels=1:4, output, ...){
   speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
   quadsamp$numHerbPlots<-apply(quadsamp[,c(15:22)], 1,sum)
