@@ -25,7 +25,7 @@
 #' \item{"acres"}{Returns densities per acre}
 #'}
 #'
-#'@param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
+#' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
 #'
 #' @return returns a dataframe with seedling and sapling densities, and stocking index
 #'
@@ -47,6 +47,7 @@
 #------------------------
 joinRegenData<-function(speciesType=c('all', 'native','exotic'), canopyForm=c('canopy','all'), numMicros=3,
   units=c('micro','ha','acres'), park='all',from=2006, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output, ...){
+
   speciesType<-match.arg(speciesType)
   canopyForm<-match.arg(canopyForm)
   units<-match.arg(units)
