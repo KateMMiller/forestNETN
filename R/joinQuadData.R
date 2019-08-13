@@ -37,8 +37,7 @@ joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park
   park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, panels=panels,output='short'))
 
   quads1<-merge(park.plots, quadsamp[,c("Event_ID","numHerbPlots")], by="Event_ID", all.x=T)
-  plants<-plants %>% mutate(Shrub=ifelse(Shrub==1|Vine==1,1,0),
-    Tree=ifelse(Latin_Name=="Rhamnus cathartica",0,Tree))
+  plants<-plants %>% mutate(Tree=ifelse(Latin_Name=="Rhamnus cathartica",0,Tree))
 
   quadspp<-merge(quads[,c("Event_ID","TSN","Germinant","qUC_Cover_Class_ID","qUL_Cover_Class_ID",
     "qML_Cover_Class_ID", "qBL_Cover_Class_ID","qBC_Cover_Class_ID","qBR_Cover_Class_ID",
@@ -48,7 +47,7 @@ joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park
     by="TSN",all.x=T)
   quads2<-merge(quads1,quadspp,by="Event_ID",all.x=T) #%>% filter(Germinant==0) %>% select(-Germinant)
 
-  names(quads2)
+#names(quads2)
 
   # Convert coverclasses to midpoints for all 8 quadrats
   quads2[,15:22][quads2[,15:22]==1]<-0.1
@@ -75,6 +74,7 @@ joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park
   } else if (speciesType=='invasive'){filter(quads3,Indicator_Invasive_NETN==TRUE)
   } else if (speciesType=='all'){(quads3)
   }
+
   quads5<-merge(quads1,quads4[,c(1,13:33)],by='Event_ID',all.x=T)
   quads5[,c(15:22, 24:33)][is.na(quads5[,c(15:22, 24:33)])]<-0
   quads5<-quads5 %>% mutate(germ.cover=ifelse(Germinant==1,avg.cover,0), germ.freq=ifelse(Germinant==1,avg.freq,0),
@@ -99,7 +99,8 @@ joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park
 
   quads10<-merge(quads9,plants[,c("TSN","Latin_Name","Tree","Shrub","Vine","Herbaceous","Graminoid","Fern_Ally",
     "Exotic","Indicator_Invasive_NETN")], by="TSN",all.x=T)
-  names(quads10)
+
+  quads10<-quads10 %>% mutate(Latin_Name= ifelse(is.na(Latin_Name), paste0('No species'), paste0(Latin_Name)))
 
   quads.final<-quads10 %>% select(Location_ID,Event_ID:cycle,numHerbPlots,UC:UL,TSN,Latin_Name,Tree:Indicator_Invasive_NETN,avg.cover:germ.freq)
   return(data.frame(quads.final))
