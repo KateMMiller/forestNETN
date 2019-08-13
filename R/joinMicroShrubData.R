@@ -30,12 +30,13 @@
 #------------------------
 # Joins microplot tables and filters by park, year, and plot/visit type
 #------------------------
-joinMicroShrubData<-function(speciesType=c('all', 'native','exotic'), numMicros=3, park='all',
-  from=2007, to=2018, QAQC=FALSE, locType='VS', panels=1:4, output, ...){
+joinMicroShrubData<-function(speciesType = c('all', 'native','exotic'), numMicros = 3, park='all',
+  from = 2007, to = 2018, QAQC = FALSE, locType = 'VS', panels = 1:4, output, ...){
 
   speciesType<-match.arg(speciesType)
 
-  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, rejected=F,panels=panels,output='short'))
+  park.plots<-force(joinLocEvent(park = park, from = from,to = to, QAQC = QAQC,locType = locType,
+                                 rejected = F, panels = panels, output = 'short'))
 
   # Prepare the sapling data
   shrub1<-merge(micro,shrub[,c("Microplot_Characterization_Data_ID","TSN", "Num_Stems","Cover_Class_ID")],
@@ -73,7 +74,7 @@ joinMicroShrubData<-function(speciesType=c('all', 'native','exotic'), numMicros=
     cover=sum(cover))
 
   shrub6<-shrub5 %>% group_by(Event_ID,TSN,Latin_Name,Common,Exotic) %>%
-    summarise(micro=ifelse(Year==2016,1,numMicros), present.old=present.old,
+    summarise(micro=ifelse(Year==2006,1,numMicros), present.old=present.old,
               cover=cover/micro)
 
   shrub7<- if (speciesType=='native'){filter(shrub6,Exotic==FALSE)
