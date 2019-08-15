@@ -72,7 +72,7 @@ joinRegenData<-function(speciesType=c('all', 'native','exotic'), canopyForm=c('c
 # Combine seedling and sapling data
   park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType,panels=panels,output='short'))
   regen1<-merge(park.plots,seeds2,by='Event_ID', all.x=T,all.y=F)
-  regen2<-merge(regen1,saps2,by=c("Event_ID","TSN", "Microplot_Name"),all.x=T,all.y=F)
+  regen2<-merge(regen1,saps2,by=c("Event_ID","TSN", "Microplot_Name"),all.x=T,all.y=T)
   regen3<-merge(regen2,plants[,c('TSN','Latin_Name','Common','Exotic','Canopy_Exclusion')], by='TSN',all.x=T)
 
   regen4<- if (numMicros==1) {filter(regen3, Microplot_Name=='UR') %>% droplevels() # randomly determined this
