@@ -42,7 +42,8 @@ returns a dataframe with stand data attached to location and event data. Field n
 between cover class ranges (e.g., 62.5 is the midpoint for 50-75%).
 }
 \description{
-This function combines stand data for each plot. Must run importData first.
+This function combines stand-level data for each plot, including cover by strata,
+earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
 }
 \examples{
 importData() #imports using default odbc

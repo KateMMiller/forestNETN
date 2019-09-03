@@ -4,7 +4,8 @@
 \alias{importData}
 \title{importData: Import tables directly from NETN forest database}
 \usage{
-importData(type = c("DSN", "file"), odbc = "NETNFVM", path = NA)
+importData(type = c("DSN", "file"), odbc = "NETNFVM", path = NA,
+  import_tables = c("all", "single"), table_name = NA)
 }
 \arguments{
 \item{type}{Select whether to use the default DSN to import data or a different database
@@ -14,6 +15,16 @@ importData(type = c("DSN", "file"), odbc = "NETNFVM", path = NA)
 }}
 
 \item{path}{Quoted path of database backend file, including the name of the backend.}
+
+\item{import_tables}{Specify whether to import all tables or individual tables
+\describe{
+\item{"all"}{Default. Imports all relevant tables from the backend database.}
+\item{"single"}{Imports an individual table from the backend database. If single is specified, must then specify the
+exact table name in quotes from the backend database. The table will be given the same object name as if all tables
+were imported so that package functions are still useable.}
+}}
+
+\item{table_name}{Specify a quoted list of one or more table names}
 }
 \value{
 Assigns database tables to global environment
@@ -29,5 +40,8 @@ importData(type='file', path='./Data/NETN_Forest_Backend.mdb')
 
 # Import ODBC named database
 importData(type='DSN', odbc="NETNFVM")
+
+# Import individual tables
+importData(type='DSN',odbc='NETNFVM',import_tables='single',table_name=c('tlu_Plants','tbl_Tree_Core'))
 
 }
