@@ -18,6 +18,8 @@ Collate:
     'joinMicroShrubData.R'
     'joinQuadData.R'
     'joinRegenData.R'
+    'joinSoilLabData.R'
+    'joinSoilSampleData.R'
     'makeSppList.R'
     'sumQuadGuilds.R'
     'sumTreeDBHDist.R'

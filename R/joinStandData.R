@@ -6,7 +6,8 @@
 #'
 #' @title joinStandData: compile stand data
 #'
-#' @description This function combines stand data for each plot. Must run importData first.
+#' @description This function combines stand-level data for each plot, including cover by strata,
+#' earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
 #'
 #' @param park Combine data from all parks or one park at a time. Acceptable options are:
 #' \describe{
@@ -106,5 +107,9 @@ stand_df4<-stand_comb %>% select(Location_ID, Event_ID, Unit_Code, Plot_Name,Plo
  names(stand_df4)[names(stand_df4)=='Forest_Floor_Trampled_Cover_Class_ID']<-"Pct_Trampled_Cover"
  names(stand_df4)[names(stand_df4)=='Derived_Plot_Slope']<-"Plot_Slope_Deg"
 
- return(stand_df4)
+ worms<-soildata %>% select(Event_ID, Earthworms) %>% unique()
+
+ stand_df5<- merge(stand_df4, worms, by='Event_ID', all.x=T, all.y=F)
+
+  return(stand_df5)
 }
