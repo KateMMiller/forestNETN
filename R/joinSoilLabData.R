@@ -120,7 +120,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2018, layers = c('al
  soil_qc5 <- merge(soil_qc4, soil_qc4b, by=c('Event_ID','Soil_Data_ID','Horizon'), all.x=T, all.y=T) %>%
    select(Event_ID, Soil_Data_ID, Unit_Code:cycle, Horizon, Hor_Depth, everything())
 
- soil_qc_final <- if(layers ==' A'){
+ soil_qc_final <- if(layers == 'A'){
    soil_qc5 %>% filter(Horizon == 'A') %>% droplevels()
  } else if (layers == 'O'){
    soil_qc5 %>% filter(Horizon == 'O') %>% droplevels()
