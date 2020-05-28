@@ -17,8 +17,8 @@
 #' \item{"SAGA"}{Saint-Gaudens NHS only}
 #' \item{"SARA"}{Saratoga NHP only}
 #' \item{"WEFA"}{Weir Farm NHS only}}
-#' @param from Year to start analysis, ranging from 2006-2018
-#' @param to Year to stop analysis, ranging from 2006-2018
+#' @param from Year to start analysis, ranging from 2006-2019
+#' @param to Year to stop analysis, ranging from 2006-2019
 #' @param QAQC Allows you to remove or include QAQC events.
 #' \describe{
 #' \item{FALSE}{Default. Only returns visits that are not QAQC visits}
@@ -60,7 +60,7 @@
 #------------------------
 # Joins tbl_Locations and tbl_Events tables and filters by park, year, and plot/visit type
 #------------------------
-joinLocEvent<-function(park="all", from=2006,to=2018, QAQC=FALSE, rejected=FALSE, panels=1:4,
+joinLocEvent<-function(park="all", from=2006,to=2019, QAQC=FALSE, rejected=FALSE, panels=1:4,
                        locType='VS', eventType=c('complete','all'), output='short', ...){
 
   eventType<-match.arg(eventType)
@@ -92,7 +92,7 @@ joinLocEvent<-function(park="all", from=2006,to=2018, QAQC=FALSE, rejected=FALSE
   } else {park.ev2}
 
   park.ev4<- park.ev3 %>% filter(Panel %in% panels) %>% droplevels()
-  park.ev4$Year <- format(as.Date(park.ev4$Start_Date, format = "%Y-%m-%d"), "%Y")
+  park.ev4$Year <- as.numeric(format(as.Date(park.ev4$Start_Date, format = "%Y-%m-%d"), "%Y"))
 
   park.ev5<- park.ev4 %>% mutate(cycle=ifelse(Year<=2009,1,
     ifelse(Year>=2010 & Year<=2013,2,
