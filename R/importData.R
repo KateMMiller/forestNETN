@@ -39,6 +39,9 @@ importData<- function(type=c('DSN','file'), odbc='NETNFVM', path=NA,
   type<-match.arg(type)
   import_tables<-match.arg(import_tables)
 
+  if(import_tables == 'single' && all(is.na(table_name))==TRUE){
+    stop("Must specify a table_name that matches a table in the database to use this option.")}
+
   # set up dataframe linking object name for global environment and table name in access
   objectnames<-c("loc", "parknames", "event", "treedata", "trees", "treecond", "xrtreecond", "cwd", "plants",
                  "saps", "micro", "sdlg", "shrub", "quadsamp", "quadchr", "quadchrtlu", "quads", "addspp",
@@ -56,7 +59,7 @@ importData<- function(type=c('DSN','file'), odbc='NETNFVM', path=NA,
 
   namesdf<-data.frame(cbind(objectnames,tablenames))
 
-  if(any(!(is.na(table_name)) & !(table_name %in% tablenames))){
+  if(any(!(is.na(table_name)) && !(table_name %in% tablenames))){
     stop('At least one table_name does not match table name listed in the backend.')
   }
 
@@ -147,7 +150,7 @@ importData<- function(type=c('DSN','file'), odbc='NETNFVM', path=NA,
   if(import_tables=='single'){
     table_select<-namesdf %>% filter(tablenames %in% table_name) %>% data.frame() %>% droplevels()
 
-    lapply(seq_along(table_select), function(i){
+    lapply(seq_along(dim(table_select)[1]), function(i){
       pb = txtProgressBar(min = 0, max = length(table_select), style = 3)
       assign(as.character(table_select[i,1]),
              DBI::dbReadTable(db, as.character(table_select[i,2])), envir=.GlobalEnv)
