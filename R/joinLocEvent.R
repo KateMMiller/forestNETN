@@ -2,7 +2,6 @@
 #'
 #' @importFrom dplyr select filter arrange mutate summarise group_by between
 #' @importFrom magrittr %>%
-#' @importFrom lubridate year
 #' @importFrom stringr str_pad str_sub
 #'
 #' @description This function combines location and event data. Must run importData first.
@@ -93,8 +92,9 @@ joinLocEvent<-function(park="all", from=2006,to=2018, QAQC=FALSE, rejected=FALSE
   } else {park.ev2}
 
   park.ev4<- park.ev3 %>% filter(Panel %in% panels) %>% droplevels()
+  park.ev4$Year <- format(as.Date(park.ev4$Start_Date, format = "%Y-%m-%d"), "%Y")
 
-  park.ev5<- park.ev4 %>% mutate(Year=lubridate::year(Start_Date), cycle=ifelse(Year<=2009,1,
+  park.ev5<- park.ev4 %>% mutate(cycle=ifelse(Year<=2009,1,
     ifelse(Year>=2010 & Year<=2013,2,
       ifelse(between(Year,2014,2017),3,ifelse(between(Year,2018,2021),4,NA))))) %>%
     filter(Year>=from & Year <=to) %>% droplevels()

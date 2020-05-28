@@ -4,8 +4,16 @@
 \alias{joinStandData}
 \title{joinStandData: compile stand data}
 \usage{
-joinStandData(park = "all", QAQC = FALSE, locType = "VS",
-  panels = 1:4, from = 2006, to = 2019, output, ...)
+joinStandData(
+  park = "all",
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  from = 2006,
+  to = 2019,
+  output,
+  ...
+)
 }
 \arguments{
 \item{park}{Combine data from all parks or one park at a time. Acceptable options are:

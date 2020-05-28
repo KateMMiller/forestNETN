@@ -4,9 +4,18 @@
 \alias{sumQuadGuilds}
 \title{sumQuadGuilds: summarizes quadrat species data by guilds}
 \usage{
-sumQuadGuilds(speciesType = c("native", "exotic", "all", "invasive"),
-  park = "all", from = 2006, to = 2018, splitHerb = TRUE,
-  QAQC = FALSE, locType = "VS", panels = 1:4, output, ...)
+sumQuadGuilds(
+  speciesType = c("native", "exotic", "all", "invasive"),
+  park = "all",
+  from = 2006,
+  to = 2018,
+  splitHerb = TRUE,
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  output,
+  ...
+)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.

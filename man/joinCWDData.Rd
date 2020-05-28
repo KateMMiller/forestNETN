@@ -4,9 +4,17 @@
 \alias{joinCWDData}
 \title{joinCWDData: compile coarse woody debris data.}
 \usage{
-joinCWDData(units = c("ha", "acres"), park = "all", from = 2006,
-  to = 2018, QAQC = FALSE, locType = "VS", panels = 1:4, output,
-  ...)
+joinCWDData(
+  units = c("ha", "acres"),
+  park = "all",
+  from = 2006,
+  to = 2018,
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  output,
+  ...
+)
 }
 \arguments{
 \item{units}{Calculates CWD Volume based on different units.

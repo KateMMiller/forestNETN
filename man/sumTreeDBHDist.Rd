@@ -4,10 +4,20 @@
 \alias{sumTreeDBHDist}
 \title{sumTreeDBHDist: calculates DBH distribution of trees}
 \usage{
-sumTreeDBHDist(status = c("all", "live", "dead"),
-  speciesType = c("all", "native", "exotic"), units = c("density",
-  "ba"), park = "all", from = 2006, to = 2019, QAQC = FALSE,
-  locType = "VS", panels = 1:4, dist_m = NA, output, ...)
+sumTreeDBHDist(
+  status = c("all", "live", "dead"),
+  speciesType = c("all", "native", "exotic"),
+  units = c("density", "ba"),
+  park = "all",
+  from = 2006,
+  to = 2019,
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  dist_m = NA,
+  output,
+  ...
+)
 }
 \arguments{
 \item{status}{Filter by live, dead, or all. Acceptable options are:
