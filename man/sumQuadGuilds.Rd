@@ -4,9 +4,18 @@
 \alias{sumQuadGuilds}
 \title{sumQuadGuilds: summarizes quadrat species data by guilds}
 \usage{
-sumQuadGuilds(speciesType = c("native", "exotic", "all", "invasive"),
-  park = "all", from = 2006, to = 2018, splitHerb = TRUE,
-  QAQC = FALSE, locType = "VS", panels = 1:4, output, ...)
+sumQuadGuilds(
+  speciesType = c("native", "exotic", "invasive", "all"),
+  park = "all",
+  from = 2006,
+  to = 2019,
+  splitHerb = TRUE,
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  output,
+  ...
+)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
@@ -14,7 +23,7 @@ sumQuadGuilds(speciesType = c("native", "exotic", "all", "invasive"),
 \item{"all"}{Returns all species.}
 \item{"native"}{Default. Returns native species only}
 \item{"exotic"}{Returns exotic species only}
-\item{"invasive"}{Returns species on the Indicator Invasive List}
+\item{"invasive"}{Returns species on the NETN Indicator Invasive List}
 }}
 
 \item{splitHerb}{TRUE/FALSE. If TRUE (default), allows you to split the herbaceous group into forb and fern. If FALSE,

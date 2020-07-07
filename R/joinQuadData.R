@@ -33,6 +33,10 @@ joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park
                        QAQC=FALSE, locType='VS', panels=1:4, output, ...){
   speciesType<-match.arg(speciesType)
   # Prepare the quadrat data
+
+  plants$Latin_Name[plants$TSN == 27372] <- paste("Oenothera perennis") # Fixes weird issue with that spp
+  plants$Accepted_Latin_Name[plants$TSN == 27372] <- paste("Oenothera perennis")
+
   quadsamp$numHerbPlots<-apply(quadsamp[,c(15:22)], 1,sum)
   park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, panels=panels,output='short'))
 

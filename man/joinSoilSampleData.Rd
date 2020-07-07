@@ -4,9 +4,17 @@
 \alias{joinSoilSampleData}
 \title{joinSoilSampleData: compile corrected soil sample data.}
 \usage{
-joinSoilSampleData(park = "all", from = 2007, to = 2018,
-  QAQC = FALSE, locType = "VS", panels = 1:4, output,
-  layers = "all", ...)
+joinSoilSampleData(
+  park = "all",
+  from = 2007,
+  to = 2018,
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  output,
+  layers = "all",
+  ...
+)
 }
 \value{
 returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of O and A sampled.

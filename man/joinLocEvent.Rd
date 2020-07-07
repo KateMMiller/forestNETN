@@ -4,9 +4,18 @@
 \alias{joinLocEvent}
 \title{joinLocEvent: merges Location and Event level data with options for filtering.}
 \usage{
-joinLocEvent(park = "all", from = 2006, to = 2018, QAQC = FALSE,
-  rejected = FALSE, panels = 1:4, locType = "VS",
-  eventType = c("complete", "all"), output = "short", ...)
+joinLocEvent(
+  park = "all",
+  from = 2006,
+  to = 2019,
+  QAQC = FALSE,
+  rejected = FALSE,
+  panels = 1:4,
+  locType = "VS",
+  eventType = c("complete", "all"),
+  output = "short",
+  ...
+)
 }
 \arguments{
 \item{park}{Combine data from all parks or one park at a time. Acceptable options are:
@@ -21,9 +30,9 @@ joinLocEvent(park = "all", from = 2006, to = 2018, QAQC = FALSE,
 \item{"SARA"}{Saratoga NHP only}
 \item{"WEFA"}{Weir Farm NHS only}}}
 
-\item{from}{Year to start analysis, ranging from 2006-2018}
+\item{from}{Year to start analysis, ranging from 2006-2019}
 
-\item{to}{Year to stop analysis, ranging from 2006-2018}
+\item{to}{Year to stop analysis, ranging from 2006-2019}
 
 \item{QAQC}{Allows you to remove or include QAQC events.
 \describe{

@@ -4,9 +4,17 @@
 \alias{calcStrStage}
 \title{calcStrStage: calculate structural stage for each plot}
 \usage{
-calcStrStage(park = "all", QAQC = FALSE, locType = "VS",
-  panels = 1:4, from = 2006, to = 2019, output,
-  speciesType = c("all", "native", "exotic"), ...)
+calcStrStage(
+  park = "all",
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  from = 2006,
+  to = 2019,
+  output,
+  speciesType = c("all", "native", "exotic"),
+  ...
+)
 }
 \arguments{
 \item{park}{Combine data from all parks or one park at a time. Acceptable options are:

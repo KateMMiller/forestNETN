@@ -4,10 +4,20 @@
 \alias{joinRegenData}
 \title{joinRegenData: compiles seedling and sapling data}
 \usage{
-joinRegenData(speciesType = c("all", "native", "exotic"),
-  canopyForm = c("canopy", "all"), numMicros = 3, units = c("micro",
-  "ha", "acres"), park = "all", from = 2006, to = 2018,
-  QAQC = FALSE, locType = "VS", panels = 1:4, output, ...)
+joinRegenData(
+  speciesType = c("all", "native", "exotic"),
+  canopyForm = c("canopy", "all"),
+  numMicros = 3,
+  units = c("micro", "ha", "acres"),
+  park = "all",
+  from = 2006,
+  to = 2018,
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  output,
+  ...
+)
 }
 \arguments{
 \item{speciesType}{Allows you to filter on native, exotic or include all species.

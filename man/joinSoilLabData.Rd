@@ -4,9 +4,17 @@
 \alias{joinSoilLabData}
 \title{joinSoilLabData: compile soil chemistry data by horizon.}
 \usage{
-joinSoilLabData(park = "all", from = 2007, to = 2018,
-  layers = c("all", "O", "A"), QAQC = FALSE, locType = "VS",
-  panels = 1:4, output, ...)
+joinSoilLabData(
+  park = "all",
+  from = 2007,
+  to = 2018,
+  layers = c("all", "O", "A"),
+  QAQC = FALSE,
+  locType = "VS",
+  panels = 1:4,
+  output,
+  ...
+)
 }
 \value{
 returns a dataframe containing each plot and visit with soil chemistry data for each horizon on a plot
