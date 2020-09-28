@@ -25,6 +25,7 @@ Collate:
     'makeSppList.R'
     'sumQuadGuilds.R'
     'sumTreeDBHDist.R'
+    'theme_FHM.R'
     'treeMapPrep.R'
     'treeMap.R'
 Encoding: UTF-8
