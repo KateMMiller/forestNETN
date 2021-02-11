@@ -97,14 +97,19 @@ makeSppList<-function(speciesType=c('all', 'native','exotic', 'invasive'), park=
   } else if (speciesType=='all'){comb6
   }
 
-  comb8<-merge(park.plots,comb7,by="Event_ID",all.x=T,all.y=F)
+  comb8<-merge(park.plots,comb7,by="Event_ID",all.x=T,all.y=F) %>%
+    mutate(present = ifelse(TSN != -9999999951, 1, 0))
 
   colnames(comb8)<-c("Event_ID","Location_ID","Unit_Code","Plot_Name","Plot_Number","X_Coord","Y_Coord","Panel",
     "Year","Event_QAQC","cycle","TSN","tree.stems","tree.BAcm2","seed.den","sap.den","stocking.index","avg.quad.cover",
     "avg.quad.freq",'avg.germ.cover','avg.germ.freq',"shrub.present.old","shrub.cover","addspp.present",
-    "Latin_Name","Common","Exotic","Indicator_Invasive_NETN","Tree","Shrub","Herbaceous","Graminoid","Fern_Ally")
+    "Latin_Name","Common","Exotic","Indicator_Invasive_NETN","Tree","Shrub","Herbaceous","Graminoid","Fern_Ally", "present")
 
-  comb8[,c(13:21,24)][is.na(comb8[,c(13:21,24)])]<-0
+  numcols <- c("tree.stems", "tree.BAcm2", "seed.den", "sap.den", "stocking.index", "avg.quad.cover", "avg.quad.freq",
+              "avg.germ.cover", "avg.germ.freq", "addspp.present", "present")
+
+  comb8[,numcols][is.na(comb8[,numcols])]<-0
+
   comb9<-comb8 %>% mutate(shrub.cover=ifelse(Year>2009 & is.na(shrub.cover),0,shrub.cover),
     shrub.present.old=ifelse(Year<=2009 & is.na(shrub.present.old),0,shrub.present.old))
 
