@@ -5,48 +5,39 @@
 \title{importData: Import tables directly from NETN forest database}
 \usage{
 importData(
-  type = c("DSN", "file"),
-  odbc = "NETNFVM",
-  path = NA,
-  import_tables = c("all", "single"),
-  table_name = NA
+  server = "localhost",
+  instance = c("local", "server"),
+  new_env = TRUE
 )
 }
 \arguments{
-\item{type}{Select whether to use the default DSN to import data or a different database
+\item{server}{Quoted name of the server to connect to, either your computer name or "localhost" (default).}
+
+\item{instance}{Specify whether you are connecting to the local instance or server.
 \describe{
-\item{"DSN"}{Default. DSN database. If not specified, will use "NETNFVM" .}
-\item{"file"}{A different database than default DSN}
-}}
+\item{"local"}{Default. Connects to local install of backend database}
+\item{"server"}{Connects to main backend on server. Note that you must have permission to access the server, and
+connection speeds are likely to be much slower than the local instance.}}}
 
-\item{path}{Quoted path of database backend file, including the name of the backend.}
-
-\item{import_tables}{Specify whether to import all tables or individual tables
+\item{new_env}{Specify which environment to store views in
 \describe{
-\item{"all"}{Default. Imports all relevant tables from the backend database.}
-\item{"single"}{Imports an individual table from the backend database. If single is specified, must then specify the
-exact table name in quotes from the backend database. The table will be given the same object name as if all tables
-were imported so that package functions are still useable.}
+\item{TRUE}{Default. Stores views in VIEWS environment}
+\item{FALSE}{Stores views in global environment}
 }}
-
-\item{table_name}{Specify a quoted list of one or more table names}
-}
-\value{
-Assigns database tables to global environment
 }
 \description{
-This function imports database tables from a named ODBC datasource from
-NETN forest backend databases. Each table is assigned to the global environment with names
-that functions in this package depend on. You must use the 32-bit version of R to work.
+This function imports all views in the ANALYSIS schema of the local instance of the
+NETN_Forest backend. Each view is added to a VIEWS environment in your workspace, or to your
+global environment based on whether new_env = TRUE or FALSE.
 }
 \examples{
-# Import database in specific folder:
-importData(type='file', path='./Data/NETN_Forest_Backend.mdb')
+# Import using default settings that specify server as localhost and add VIEWS environment
+importData()
 
-# Import ODBC named database
-importData(type='DSN', odbc="NETNFVM")
+# Import using computer name (# should have real numbers)
+importData(server = "INPNETN-######", new_env = TRUE)
 
-# Import individual tables
-importData(type='DSN',odbc='NETNFVM',import_tables='single',table_name=c('tlu_Plants','tbl_Tree_Core'))
+# Import to main database on server
+importData(server = "INP2300VTSQL16\\\\IRMADEV1", instance = "server", new_env = TRUE)
 
 }
