@@ -47,7 +47,6 @@ importData <- function(server = "localhost", instance = c("local", "server"), ne
     }
 
   #Setup progress bar
-  pb <- txtProgressBar(min = 0, max = 22, style = 3, width = 88) #22 Views
 
   # Test connection. Stop if connection fails.
   con <- tryCatch({RODBC::odbcDriverConnect(connection = connect)},
@@ -55,21 +54,22 @@ importData <- function(server = "localhost", instance = c("local", "server"), ne
                      paste0(e$message, "\n", "Unable to connect to SQL Server. ", "Check that you have a local instance of ", "\n",
                      "NETN_Forest installed, or use importCSV() to import Views as .csvs")
                      stop(e)},
-                  finally = function(e){e$message <- paste0("Importing NETN_Forest views")})
+                  finally = function(e){e$message <- cat(paste0("Importing NETN_Forest views"))})
 
   # Fetch names of views
   view_list <- as.vector(RODBC::sqlTables(con, schema = "Analysis")$TABLE_NAME)
 
   # Import views using names and show progress bar
-  view_import <- lapply(seq_along(view_list), function(x){
+  view_import <- lapply(view_list, function(x){
     RODBC::sqlQuery(con, paste0("SELECT * FROM ", "[NETN_Forest].[ANALYSIS].[", x, "]"))
-    setTxtProgressBar(pb, x)
     }
     )
 
-  close(pb)
   view_import <- setNames(view_import, view_list)
   RODBC::odbcClose(con)
+
+  print(ifelse(new_env == TRUE, paste0("Import complete. Views are located in VIEWS environment."),
+               paste0("Import complete. Views are located in global environment.")))
 
   if(new_env == TRUE){
     VIEWS <<- new.env()
@@ -77,7 +77,6 @@ importData <- function(server = "localhost", instance = c("local", "server"), ne
   } else {
     list2env(view_import, envir = .GlobalEnv)}
 
-  print(ifelse(new_env == TRUE, paste0("Import complete. Views are located in VIEWS environment."),
-                                paste0("Import complete. Views are located in global environment.")))
+
   }
 

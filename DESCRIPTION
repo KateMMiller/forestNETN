@@ -38,7 +38,6 @@ Imports:
     ggplot2,
     tidyr
 Suggests: 
-    odbc,
-    DBI,
+    RODBC,
     ggrepel,
     cowplot    
