@@ -5,39 +5,41 @@
 \title{importData: Import tables directly from NETN forest database}
 \usage{
 importData(
-  server = "localhost",
   instance = c("local", "server"),
+  server = "localhost",
   new_env = TRUE
 )
 }
 \arguments{
-\item{server}{Quoted name of the server to connect to, either your computer name or "localhost" (default).}
-
 \item{instance}{Specify whether you are connecting to the local instance or server.
 \describe{
 \item{"local"}{Default. Connects to local install of backend database}
 \item{"server"}{Connects to main backend on server. Note that you must have permission to access the server, and
-connection speeds are likely to be much slower than the local instance.}}}
+connection speeds are likely to be much slower than the local instance. You must also be connected to VPN or NPS network.}}}
+
+\item{server}{Quoted name of the server to connect to. Valid inputs are your computer name or
+"localhost" (default) for the local instance, or the server address (currently "INP2300VTSQL16\\IRMADEV1")
+to connect to the main database.}
 
 \item{new_env}{Specify which environment to store views in
 \describe{
-\item{TRUE}{Default. Stores views in VIEWS environment}
+\item{TRUE}{Default. Stores views in VIEWS_NETN environment}
 \item{FALSE}{Stores views in global environment}
 }}
 }
 \description{
-This function imports all views in the ANALYSIS schema of the local instance of the
-NETN_Forest backend. Each view is added to a VIEWS environment in your workspace, or to your
-global environment based on whether new_env = TRUE or FALSE.
+This function imports all views in the ANALYSIS schema of the NETN_Forest backend. Each view
+is added to a VIEWS_NETN environment in your workspace, or to your global environment based on whether
+new_env = TRUE or FALSE.
 }
 \examples{
-# Import using default settings that specify server as localhost and add VIEWS environment
+# Import using default settings of local instance, server = 'localhost' and add VIEWS_NETN environment
 importData()
 
-# Import using computer name (# should have real numbers)
+# Import using computer name (# should be real numbers)
 importData(server = "INPNETN-######", new_env = TRUE)
 
-# Import to main database on server
+# Import from main database on server
 importData(server = "INP2300VTSQL16\\\\IRMADEV1", instance = "server", new_env = TRUE)
 
 }
