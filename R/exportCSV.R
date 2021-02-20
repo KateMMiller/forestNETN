@@ -47,9 +47,9 @@ exportCSV<- function(path = NA, zip = FALSE){
 
   missing <- setdiff(view_list, files)
 
-  if(length(missing) > 0 & length(missing) < 22){
+  if(length(missing) > 0 & length(missing) < length(view_list)){
     stop(paste0("Missing the following views: ", paste0(missing, collapse = ", ")))
-  } else if (length(missing) >= 22){
+  } else if (length(missing) == length(view_list)){
     stop("Views were not detected in your workspace. Please import the data first.")}
 
   # Error handling for path
