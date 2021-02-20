@@ -11,16 +11,19 @@ exportCSV(path = NA, zip = FALSE)
 
 \item{zip}{Logical. If TRUE, exports a zip file. If FALSE (Default), exports individual csvs.}
 }
+\value{
+NETN database views exported to specified path
+}
 \description{
-This function either exports database views to individual .csv files, or exports them as a zip file
-with the database name (NETN_Forest), and the date it was zipped. The exported .csv files can then be imported
-via importCSV. This function is primarily for internal use to create flat files that users can import to run
+This function exports NETN_Forest database views either to individual .csv files, or as a zip file
+with the database name (NETN_Forest), and the date it was zipped. The exported .csv or .zip files can then be imported
+via importCSV(). This function is primarily for internal use to create flat files that users can import to run
 functions in this package without having a connection to the database server. This is particularly useful for external
 users who don't have access to NPS servers.
 }
 \examples{
 # RUN FIRST
-library(forestMIDN)
+library(forestNETN)
 importData()
 
 # Export csvs to working directory
@@ -29,7 +32,7 @@ exportCSV()
 # Export a zip to the path specified
 exportCSV(path = "C:/Forest_Health/exports/NETN", zip = TRUE)
 
-# Export views as .csvs to working directory
-exportCSV()
+# Export views as .csvs to specified path
+exportCSV(path = "C:/Forest_Health/exports/NETN")
 
 }
