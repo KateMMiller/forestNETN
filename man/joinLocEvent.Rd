@@ -9,9 +9,9 @@ joinLocEvent(
   from = 2006,
   to = 2019,
   QAQC = FALSE,
-  rejected = FALSE,
+  abandoned = FALSE,
   panels = 1:4,
-  locType = "VS",
+  locType = c("VS", "all"),
   eventType = c("complete", "all"),
   output = "short",
   ...
@@ -39,24 +39,25 @@ joinLocEvent(
 \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 \item{TRUE}{Returns all visits, including QAQC visits}}}
 
-\item{rejected}{Allows you to remove (FALSE) or include (TRUE) rejected plots.
-\describe{
-\item{FALSE}{Default. Only returns plots that were not rejected.}
-\item{TRUE}{returns all records}}}
-
 \item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 If more than one panel is selected, specify by c(1,3), for example.}
 
 \item{locType}{Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
 \describe{
 \item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
-\item{"all"}{Include all plots, such as deer exclosures and bonus plots}}}
+\item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}}
 
-\item{eventType}{Allows you to only include complete sampling events, or to include all sampling events
+\item{eventType}{Allows you to include only complete sampling events or all sampling events
 \describe{
-\item{"complete"}{Only include sampling events for a plot that are complete.}
-\item{"all}{Include all plots with an Event_ID, including plots that are missing all data associated with that event (eg ACAD-029.2010).}
+\item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+\item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}
 }}
+
+\item{abandonded}{Allows you to remove (FALSE; Default.) or include (TRUE) abandoned plots.
+\describe{
+\item{FALSE}{Default. Only returns plots that were not rejected.}
+\item{TRUE}{returns all records}}}
 }
 \value{
 returns a dataframe with location and visit events
