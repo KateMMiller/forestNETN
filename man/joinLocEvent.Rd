@@ -18,7 +18,7 @@ joinLocEvent(
 )
 }
 \arguments{
-\item{park}{Combine data from all parks or one or more parks at a time. Acceptable options:
+\item{park}{Combine data from all parks or one or more parks at a time. Valid inputs:
 \describe{
 \item{"all"}{Includes all parks in the network}
 \item{"ACAD"}{Acadia NP only}
@@ -70,12 +70,12 @@ importCSV('./forest_csvs')
 # Select most recent survey of data from WEFA
 WEFA_data <- joinLocEvent(park = 'WEFA', panels = c(2,4), from = 2015, to = 2018)
 
-# Select data from cycle 3
-cycle3 <- joinLocEvent(from = 2014, to = 2017) # all parks is default
+# Select data from cycle 3 for MABI and SAGA
+cycle3 <- joinLocEvent(park = c("MABI", "SAGA"), from = 2014, to = 2017) # all parks is default
 
 # Select data from plots that had a QA/QC event in ACAD in 2018
-ACAD_data <- joinLocEvent(park = 'ACAD', QAQC = T, from = 2018)
+ACAD_data <- joinLocEvent(park = 'ACAD', QAQC = TRUE, from = 2018)
 QAQC_plots <- ACAD_data$Plot_Name[which(ACAD_data$Event_QAQC == TRUE)]
-ACAD_QAQC <- ACAD_data \%>\% filter(Plot_Name \%in\% QAQC_plots) \%>\% droplevels()
+ACAD_QAQC <- ACAD_data \%>\% filter(Plot_Name \%in\% QAQC_plots)
 
 }
