@@ -46,10 +46,7 @@ pe_merge <- merge(plot_events, plot_events_old, by.x = c("Event.LegacyID", "Plot
 names(pe_merge)
 
 # Function to check that the rows in each col. 1 and 2 are identical
-# for the pe_merge df. Will return 0 if none, or the values that differ
-# check_plotev <- function(col1, col2){
-#  setdiff(pe_merge[,col1], pe_merge[,col2])
-# }
+# Will return 0 if none, or the values that differ
 
 check_data <- function(df, col1, col2){
   lapply(1:nrow(df), function(x) (
@@ -171,6 +168,7 @@ stand_dist <- get("COMN_StandDisturbances", envir = VIEWS_NETN)[,-c(23:29)]
 stand_dist$Plot_Name <- paste(stand_dist$Park.Unit, sprintf("%03d", stand_dist$Plot.Code), sep = "-")
 stand_dist$Event_QAQC <- ifelse(stand_dist$Event.IsQAQC == 0, FALSE, TRUE)
 head(stand_dist)
+
 
 # Didn't summarize this in forestNETN yet, so have to do some importing/joining
 library(RODBC)
