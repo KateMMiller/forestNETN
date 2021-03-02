@@ -11,6 +11,7 @@ exportCSV(zip = T) # Should fail with useful error message
 #---------------------
 importData() # Import with defaults. Should work if you have a local instance installed
 head(VIEWS_NETN$COMN_CWD) # should see the CWD data
+names(VIEWS_NETN)
 importData(instance = "local2") # will fail quickly if you specify anything but local or server
 importData(instance = "local", server = "localhsot") # misspelled server- will fail with useful
   # error message, but has to try the odbc driver connection before it fails, so takes longer to fail.
@@ -40,13 +41,14 @@ exportCSV(path = path, zip = TRUE) # outputs a zip with csvs with date at the en
 importCSV() # Will fail quickly, because requires a path to import csvs or zip
 importCSV(path = ptah) # Will fail quickly, because path misspelled/doesn't exist
 importCSV(path = path) # Default import puts views into VIEWS_NETN
+importCSV(path = path, zip_name = "NETN_Forest_20210302.zip")
 importCSV(path = path, new_env = FALSE) # import individual csvs and put in global environment
 # Testing that if a view is missing from the path folder, importCSV will throw an error
-file.remove(paste0(path, "/", "COMN_AddtionalSpecies.csv"))
+file.remove(paste0(path, "/", "COMN_AdditionalSpecies.csv"))
 importCSV(path = path) # Default import puts views into VIEWS_NETN
 importCSV(path = path, zip_name =
             paste0("NETN_Forest_",  format(Sys.Date(), "%Y%m%d"), ".zip")) # If you exported zip on a day,
 # change file name to the YYYYMMDD of your zip file.
-importCSV(path = path, zip_name = "NETN_Froest_20210220.zip") # Will fail quickly b/c zip_name misspelled
+importCSV(path = path, zip_name = "NETN_Froest_20210302.zip") # Will fail quickly b/c zip_name misspelled
 
 

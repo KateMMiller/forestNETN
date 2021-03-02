@@ -36,12 +36,13 @@ exportCSV<- function(path = NA, zip = FALSE){
   }
 
   # Make sure all the views are loaded. If anything is missing, function stops.
-  view_list <- c("NETN_StandInfoPhotos", "NETN_MicroplotSeedlings", "COMN_TreesByEvent", "COMN_QuadCharacter",
-                 "COMN_TreesFoliageCondFlat", "COMN_StandPlantCoverStrata", "COMN_StandDisturbances", "COMN_CWD",
-                 "COMN_StandTreeHeights", "COMN_StandForestFloor", "COMN_MicroplotShrubs", "COMN_TreesConditionsFlat",
-                 "COMN_QuadNotes", "NETN_MicroplotSaplings", "COMN_StandSlopes", "COMN_AddtionalSpecies",
-                 "NETN_MicroplotSaplingsCount", "dsTreeByCondition", "NETN_QuadSpecies", "COMN_Plots",
-                 "COMN_Events", "COMN_TreesVine")
+  view_list <- c("COMN_AdditionalSpecies", "COMN_CWD", "COMN_EventObservers", "COMN_Events",
+                 "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter", "COMN_QuadNotes",
+                 "COMN_StandDisturbances", "COMN_StandForestFloor", "COMN_StandPlantCoverStrata",
+                 "COMN_StandSlopes", "COMN_StandTreeHeights", "COMN_Taxa", "COMN_TreesByEvent",
+                 "COMN_TreesConditionsFlat", "COMN_TreesFoliageCondFlat", "COMN_TreesVine",
+                 "dsTreeByCondition", "NETN_MicroplotSaplings", "NETN_MicroplotSaplingsCount",
+                 "NETN_MicroplotSeedlings", "NETN_QuadSpecies", "NETN_StandInfoPhotos")
 
   files <- if(exists("VIEWS_NETN")){ls(envir = VIEWS_NETN)} else {ls()}
 

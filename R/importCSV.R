@@ -33,12 +33,13 @@ importCSV<- function(path = NA, new_env = TRUE, zip_name = NA){
   # Add / to end of path if it wasn't specified.
   path <- if(substr(path, nchar(path), nchar(path)) != "/"){paste0(path, "/")} else {(paste0(path))}
 
-  view_list <- sort(c("NETN_StandInfoPhotos", "NETN_MicroplotSeedlings", "COMN_TreesByEvent", "COMN_QuadCharacter",
-                 "COMN_TreesFoliageCondFlat", "COMN_StandPlantCoverStrata", "COMN_StandDisturbances", "COMN_CWD",
-                 "COMN_StandTreeHeights", "COMN_StandForestFloor", "COMN_MicroplotShrubs", "COMN_TreesConditionsFlat",
-                 "COMN_QuadNotes", "NETN_MicroplotSaplings", "COMN_StandSlopes", "COMN_AddtionalSpecies",
-                 "NETN_MicroplotSaplingsCount", "dsTreeByCondition", "NETN_QuadSpecies", "COMN_Plots",
-                 "COMN_Events", "COMN_TreesVine"))
+  view_list <- c("COMN_AdditionalSpecies", "COMN_CWD", "COMN_EventObservers", "COMN_Events",
+                 "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter", "COMN_QuadNotes",
+                 "COMN_StandDisturbances", "COMN_StandForestFloor", "COMN_StandPlantCoverStrata",
+                 "COMN_StandSlopes", "COMN_StandTreeHeights", "COMN_Taxa", "COMN_TreesByEvent",
+                 "COMN_TreesConditionsFlat", "COMN_TreesFoliageCondFlat", "COMN_TreesVine",
+                 "dsTreeByCondition", "NETN_MicroplotSaplings", "NETN_MicroplotSaplingsCount",
+                 "NETN_MicroplotSeedlings", "NETN_QuadSpecies", "NETN_StandInfoPhotos")
 
   # Make sure zip file exists and all the views are included
   if(!is.na(zip_name)){
@@ -54,9 +55,9 @@ importCSV<- function(path = NA, new_env = TRUE, zip_name = NA){
 
   missing <- setdiff(view_list, files)
 
-  if(length(missing) > 0 & length(missing) < 22){
+  if(length(missing) > 0 & length(missing) < length(view_list)){
     stop(paste0("Missing the following views: ", paste0(missing, collapse = ", ")))
-  } else if (length(missing) >= 22){
+  } else if (length(missing) == length(view_list)){
       stop(paste0("Views were not detected in specified ", ifelse(is.na(zip_name), "path.", "zip file.")))}
 
   # Since the missing test passed, clean up files so only includes names in view_list, but
