@@ -57,7 +57,7 @@
 #'
 
 #------------------------
-# Joins tbl_Locations and tbl_Events tables and filters by park, year, and plot/visit type
+# Joins Plots and Events views and filters by park, year, and plot/visit type
 #------------------------
 joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, abandoned = FALSE, panels = 1:4,
                        locType = c('VS', 'all'), eventType = c('complete', 'all'), output = 'short', ...){
@@ -67,6 +67,8 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   eventType <- match.arg(eventType)
   park <- match.arg(park, several.ok = TRUE,
                      c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))
+  stopifnot(class(from) == "integer", from >= 2006)
+  stopifnot(class(to) == "integer", to >= 2006)
   stopifnot(class(QAQC) == 'logical')
   stopifnot(class(abandoned) == 'logical')
   stopifnot(class(panels) == "integer", panels %in% c(1, 2, 3, 4))
