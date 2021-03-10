@@ -40,8 +40,8 @@ exportCSV<- function(path = NA, zip = FALSE){
                  "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter", "COMN_QuadNotes",
                  "COMN_StandDisturbances", "COMN_StandForestFloor", "COMN_StandPlantCoverStrata",
                  "COMN_StandSlopes", "COMN_StandTreeHeights", "COMN_Taxa", "COMN_TreesByEvent",
-                 "COMN_TreesConditionsFlat", "COMN_TreesFoliageCondFlat", "COMN_TreesVine",
-                 "dsTreeByCondition", "NETN_MicroplotSaplings", "NETN_MicroplotSaplingsCount",
+                 "COMN_TreesConditions", "COMN_TreesFoliageCond", "COMN_TreesVine",
+                 "NETN_MicroplotSaplings", "NETN_MicroplotSaplingsCount",
                  "NETN_MicroplotSeedlings", "NETN_QuadSpecies", "NETN_StandInfoPhotos")
 
   files <- if(exists("VIEWS_NETN")){ls(envir = VIEWS_NETN)} else {ls()}
