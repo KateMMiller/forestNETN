@@ -46,10 +46,12 @@
 #------------------------
 # Join stand table
 #------------------------
-joinStandData<-function(park='all', QAQC=FALSE, locType='VS', panels=1:4, from=2006, to=2019, output, ...){
+joinStandData<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4,
+                        from = 2006, to = 2019, output, ...){
 
   park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,
                                  locType=locType, panels=panels, output='short'))
+
   stand2<-stand %>% select(Event_ID:Crown_Closure_ID, Deer_Browse_Line_ID,
                            Microtopography_ID:Forest_Floor_Trampled_Cover_Class_ID,
                            Stunted_Woodland,Derived_Plot_Slope, Height_Tree_1_Codom:Height_Tree_3_Inter)
