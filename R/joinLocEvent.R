@@ -67,11 +67,11 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   eventType <- match.arg(eventType)
   park <- match.arg(park, several.ok = TRUE,
                      c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))
-  stopifnot(class(from) == "integer", from >= 2006)
-  stopifnot(class(to) == "integer", to >= 2006)
+  stopifnot(class(from) == "numeric", from >= 2006)
+  stopifnot(class(to) == "numeric", to >= 2006)
   stopifnot(class(QAQC) == 'logical')
   stopifnot(class(abandoned) == 'logical')
-  stopifnot(class(panels) == "integer", panels %in% c(1, 2, 3, 4))
+  stopifnot(panels %in% c(1, 2, 3, 4))
   output <- match.arg(output, c("short", "verbose"))
 
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
@@ -86,52 +86,54 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   )
 
   # Merge COMN_Plots and COMN_Events
+  plots <- subset(plots, select = -ExportDate)
+  events <- subset(events, select = -ExportDate)
   merge_names <- intersect(names(plots), names(events))
-    # merge_names: "Park.Network", "Park.Unit", "Park.SubUnit", "PlotType.Code", "PlotType.Label",
-    # "Panel.Code", "Panel.Label", "Plot.Code", "Plot.IsAbandoned", ExportDate
-  merge_names <- merge_names[merge_names != "ExportDate"]
+    # merge_names: "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PlotTypeLabel",
+    # "PanelCode", "PanelLabel", "PlotCode", "IsAbandoned"
+
   plot_events <- merge(plots, events, by = merge_names, all.x = TRUE, all.y = TRUE)
 
   # Filter output based on function arguments
   plot_events <- if(output == 'short'){
-    plot_events[, c("Park.Network", "Park.Unit", "Park.SubUnit", "PlotType.Code", "Panel.Code", "Plot.Code",
-                    "Plot.IsAbandoned", "Plot.ID", "Plot.LegacyID", "Plot.xCoordinate", "Plot.yCoordinate", "Zone.Code",
-                    "Physiography.Code", "Physiography.Label", "Physiography.Summary", "Plot.Aspect", "Plot.Orientation",
-                    "Plot.GRTS", "Plot.IsOrientationChanged", "Plot.IsStuntedWoodland",
-                    "Event.ID", "Event.LegacyID", "Event.StartDate", "Event.IsQAQC", "Event.StartYear",
-                    "Plot.Notes", "Plot.Directions", "Event.Notes", "Event.StandNotes")]} else {plot_events}
+    plot_events[, c("Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
+                    "IsAbandoned", "PlotID", "PlotLegacyID", "xCoordinate", "yCoordinate", "ZoneCode",
+                    "PhysiographyCode", "PhysiographyLabel", "PhysiographySummary", "Aspect",
+                    "Orientation", "GRTS", "IsOrientationChanged", "IsStuntedWoodland",
+                    "EventID", "EventLegacyID", "StartDate", "IsQAQC", "StartYear",
+                    "PlotNotes", "Directions", "EventNotes", "StandNotes")]} else {plot_events}
 
 
   # microbenchmark::microbenchmarl(plot_events$Plot_Name <- paste(plot_events$Park.Unit,
-  #                                sprintf("%03d", plot_events$Plot.Code), sep = "-"), #sprintf was 2x slower
-  plot_events$Plot_Name <- paste(plot_events$Park.Unit,
-                                  stringr::str_pad(plot_events$Plot.Code, 3, side = 'left', "0"),
+  #                                sprintf("%03d", plot_events$PlotCode), sep = "-"), #sprintf was 2x slower
+  plot_events$Plot_Name <- paste(plot_events$ParkUnit,
+                                 stringr::str_pad(plot_events$PlotCode, 3, side = 'left', "0"),
                                  sep = "-")
 
-  plot_events1 <- if(locType == 'VS'){subset(plot_events, PlotType.Code == "VS")
+  plot_events1 <- if(locType == 'VS'){subset(plot_events, PlotTypeCode == "VS")
   } else if (locType=='all') {(plot_events)}
 
-  plot_events2 <- if(abandoned == FALSE){subset(plot_events1, Plot.IsAbandoned == FALSE)
+  plot_events2 <- if(abandoned == FALSE){subset(plot_events1, IsAbandoned == FALSE)
   } else if (abandoned == TRUE) {(plot_events1)}
 
   plot_events3 <- if(all(park == "all")){plot_events2
-    } else {subset(plot_events2, Park.Unit %in% park)}
+    } else {subset(plot_events2, ParkUnit %in% park)}
 
-  plot_events4 <- if(QAQC == FALSE){subset(plot_events3, Event.IsQAQC == 0)
+  plot_events4 <- if(QAQC == FALSE){subset(plot_events3, IsQAQC == 0)
     } else {plot_events3}
 
   plot_events5 <- if(eventType == "complete"){
-    subset(plot_events4, !(Plot_Name == 'ACAD-029' & Event.StartDate == '2010-07-07'))
+    subset(plot_events4, !(Plot_Name == 'ACAD-029' & StartDate == '2010-07-07'))
     } else {plot_events4}
 
-  plot_events6 <- plot_events5[plot_events5$Panel.Code %in% c(panels), ]
-  plot_events7 <- plot_events6[plot_events6$Event.StartYear %in% c(from:to), ]
+  plot_events6 <- plot_events5[plot_events5$PanelCode %in% c(panels), ]
+  plot_events7 <- plot_events6[plot_events6$StartYear %in% c(from:to), ]
 
-  plot_events7$cycle[plot_events7$Event.StartYear %in% c(2006:2009)] <- 1
-  plot_events7$cycle[plot_events7$Event.StartYear %in% c(2010:2013)] <- 2
-  plot_events7$cycle[plot_events7$Event.StartYear %in% c(2014:2017)] <- 3
-  plot_events7$cycle[plot_events7$Event.StartYear %in% c(2018:2022)] <- 4
-
+  plot_events7$cycle[plot_events7$StartYear %in% c(2006:2009)] <- 1
+  plot_events7$cycle[plot_events7$StartYear %in% c(2010:2013)] <- 2
+  plot_events7$cycle[plot_events7$StartYear %in% c(2014:2017)] <- 3
+  plot_events7$cycle[plot_events7$StartYear %in% c(2018:2021)] <- 4
+    # need to update for 2022
   return(plot_events7)
 } # end of function
 
