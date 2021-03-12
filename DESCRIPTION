@@ -33,9 +33,9 @@ LazyData: true
 RoxygenNote: 7.1.1
 Imports: 
     dplyr,
+    ggplot2,
     magrittr,
     stringr,
-    ggplot2,
     tidyr
 Suggests: 
     cowplot,
