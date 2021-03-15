@@ -1,9 +1,9 @@
 #' @include joinLocEvent.R
 #'
-#' @importFrom dplyr case_when mutate
+#' @importFrom dplyr case_when group_by mutate select summarize
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_pad
-#' @importFrom tidyr spread
+#' @importFrom tidyr pivot_wider
 #'
 #' @title joinStandData: compile stand data
 #'
@@ -39,20 +39,22 @@
 #' If more than one panel is selected, specify by c(1,3), for example.
 #'
 #' @return returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
-#' between cover class ranges (e.g., 62.5 is the midpoint for 50-75%).
+#' between cover class ranges (e.g., 62.5 is the midpoint for 50-75%). Field names starting with "Txt" define the cover classes.
 #'
 #' @examples
-#' importData() #imports using default odbc
+#' importData()
+#' # import 4 years of MABI stand data
 #' stand_df <- joinStandData(park = 'MABI', from = 2015, to = 2019)
 #'
-#'
+#' # import all visits, including QAQC, from 2019 in ACAD. Only return important data fields.
+#' acad_stand <- joinStandData(park = ACAD, from = 2019, to = 2019, QAQC = TRUE, output = 'short')
 #' @export
 #'
 #------------------------
 # Join stand data
 #------------------------
 joinStandData<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4,
-                        from = 2006, to = 2021, output = 'short', ...){
+                        from = 2006, to = 2021, output = 'verbose', ...){
 
     # Match args and class
     park <- match.arg(park, several.ok = TRUE,
@@ -86,9 +88,9 @@ joinStandData<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4
              error = function(e){stop("COMN_StandForestFloor view not found. Please import view.")}
     )
 
-    tryCatch(treeheights <- subset(get("COMN_StandTreeHeights", envir = env),
-                                   select = c(PlotID, EventID, ParkUnit, PlotCode, IsQAQC, StartYear,
-                                              CrownClassCode, CrownClassLabel, TagCode, Height)),
+    tryCatch(treeht <- subset(get("COMN_StandTreeHeights", envir = env),
+                              select = c(PlotID, EventID, ParkUnit, PlotCode, IsQAQC, StartYear,
+                                         CrownClassCode, CrownClassLabel, TagCode, Height)),
              error = function(e){stop("COMN_StandTreeHeights view not found. Please import view.")}
     )
 
@@ -125,14 +127,13 @@ joinStandData<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4
                                       Earthworms = ifelse(EarthwormCode == "PM", NA, EarthwormCode),
                                       Microtopography = ifelse(MicrotopographyCode == "PM", NA, MicrotopographyCode)) %>%
                                select(PlotID:StartYear, Plot_Name, Stand_Structure, Stand_Structure_Code,
-                                      Pct_Crown_Closure, CrownClosureLabel, Deer_Browse_Index, Microtopography,
+                                      Pct_Crown_Closure, CrownClosureLabel, Deer_Browse_Index, DeerBrowseLabel, Microtopography,
                                       Earthworms, WaterPlotCode, WaterPlotLabel, WeatherLabel, PhotoNotes)
 
-    old_scol <- c("CrownClosureLabel", "WaterPlotCode", "WaterPlotLabel", "WeatherLabel")
-    new_scol <- c("Txt_Crown_Closure", "Water_on_Plot_Code", "Water_on_Plot", "Weather_Photo")
+    old_scol <- c("CrownClosureLabel", "DeerBrowseLabel", "WaterPlotCode", "WaterPlotLabel", "WeatherLabel")
+    new_scol <- c("Txt_Crown_Closure", "Deer_Browse_Label", "Water_on_Plot_Code", "Water_on_Plot", "Weather_Photo")
 
     names(standinfo)[match(old_scol, names(standinfo))] <- new_scol # change col names to match prev. analyses
-
 
     # reshape pstrata and ffloor so 1 row per event and add midpoint cover fields
     # pstrata- had to reshape in 2 steps, so PMs didn't get converted to NA in teh txt fields
@@ -201,67 +202,68 @@ joinStandData<-function(park = 'all', QAQC = FALSE, locType = 'VS', panels = 1:4
                          by = intersect(names(ffloor_pct_wide), names(ffloor_txt_wide)),
                          all.x = TRUE, all.y = TRUE)
 
-    head(ffloor_wide)
-
     ffloor_wide <- ffloor_wide[, c("PlotID", "EventID", "ParkUnit", "PlotCode", "IsQAQC", "StartYear",
                                    "Pct_Bare_Soil", "Txt_Bare_Soil", "Pct_Bryophyte", "Txt_Bryophyte",
                                    "Pct_Lichen", "Txt_Lichen", "Pct_Rock", "Txt_Rock", "Pct_Trampled",
                                    "Txt_Trampled", "Pct_Water", "Txt_Water")]
 
-    merge_cols <- Reduce(intersect, list(names(standinfo), names(pstrata_wide), names(ffloor_wide)), names(slopes))
+    # stand height
+      # Consider making a new function that pulls in the stand heights and leaves individuals
+    treeht_sum <- treeht %>% mutate(crown = ifelse(CrownClassCode == 4, "Inter", "Codom")) %>%
+                             group_by(PlotID, EventID, ParkUnit, PlotCode, IsQAQC, StartYear,
+                                      crown) %>%
+                             summarize(avg_ht = mean(Height, na.rm = TRUE), .groups = 'drop') %>%
+                             pivot_wider(names_from = crown, values_from = avg_ht,
+                                         names_prefix = "Avg_height_") %>%
+                             select(PlotID:StartYear, Avg_height_Codom, Avg_height_Inter)
+
+    # slopes- need to pull in slopes for QAQC, like for CWD
+    slopes$Plot_Name <- paste(slopes$ParkUnit,
+                              stringr::str_pad(slopes$PlotCode, 3, side = 'left', "0"), sep = "-")
+
+    slopes_QAQC1 <- slopes[slopes$IsQAQC == TRUE,
+                           c("PlotID", "EventID", "ParkUnit", "PlotCode","IsQAQC", "StartYear", "Plot_Name",
+                             "PlotSlope")]
+
+    slopes_init <- slopes[slopes$IsQAQC == FALSE,
+                          c("PlotID", "EventID", "ParkUnit", "PlotCode","IsQAQC", "StartYear", "Plot_Name",
+                            "PlotSlope")]
+
+    slopes_QAQC <- merge(subset(slopes_QAQC1, select = c(-PlotSlope)),
+                         subset(slopes, slopes$IsQAQC == FALSE, select = c(-PlotID, -EventID, -IsQAQC)),
+                         by = c("ParkUnit", "PlotCode", "Plot_Name", "StartYear"), all.x = T, all.y = F)
+
+    slopes_QAQC <- slopes_QAQC[, c("PlotID", "EventID", "ParkUnit", "PlotCode", "IsQAQC", "StartYear", "PlotSlope")]
+    slopes_init <- slopes_init[, c("PlotID", "EventID", "ParkUnit", "PlotCode", "IsQAQC", "StartYear", "PlotSlope")]
+
+    slopes_final <- rbind(slopes_init, slopes_QAQC)
+
+    merge_cols <- Reduce(intersect, list(names(standinfo), names(pstrata_wide), names(ffloor_wide),
+                                         names(slopes_final), names(treeht_sum)))
 
     stand_comb <- Reduce(function(x, y) merge (x = x, y = y, by = merge_cols, all.x = T, all.y = T),
-                         list(standinfo, slopes, pstrata_wide, ffloor_wide)) %>% unique()
+                         list(standinfo, slopes_final, pstrata_wide, ffloor_wide, treeht_sum)) %>% unique()
 
+    #table(complete.cases(stand_comb[, merge_cols])) #All TRUE
     #stand_comb[which(duplicated(stand_comb$EventID)),] #no dups
 
-#++++++ ENDED HERE +++++ Tree heights are all that are left
-# Consider making a new function that pulls in the stand heights and leaves individuals
+    plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
+                                      panels = panels, locType = locType, eventType = "complete",
+                                      abandoned = FALSE, output = 'short')) %>%
+                   select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+                     xCoordinate, yCoordinate, EventID, StartDate, StartYear, cycle, IsQAQC)
 
-  stand_long <- stand_df3 %>% select(Event_ID, Plot_Name, Height_Tree_1_Codom, Height_Tree_2_Codom,
-                                    Height_Tree_3_Codom, Height_Tree_1_Inter,
-                                    Height_Tree_2_Inter, Height_Tree_3_Inter) %>%
-    gather('tree_number', 'height', -Event_ID, -Plot_Name) %>%
-    arrange(Plot_Name)
+    stand_merge <- merge(plot_events, stand_comb,
+                         intersect(names(plot_events), names(stand_comb)),
+                         all.x = TRUE, all.y = FALSE)
 
-  stand_long2<-na.omit(stand_long)
-  stand_long2<-stand_long2 %>% mutate(CrownType= ifelse(grepl("Codom", tree_number), "Avg_Codom_HT",'Avg_Inter_HT'))
+    stand_final <- if(output == 'short'){
+      stand_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, StartYear, cycle, IsQAQC,
+                             Stand_Structure, Pct_Crown_Closure, Deer_Browse_Index, Microtopography, Earthworms,
+                             Water_on_Plot, PlotSlope, Pct_Understory_Low, Pct_Understory_Mid, Pct_Understory_High,
+                             Pct_Bare_Soil, Pct_Bryophyte, Pct_Lichen, Pct_Rock, Pct_Trampled, Pct_Water,
+                             Avg_height_Codom, Avg_height_Inter)
+      } else if(output == 'verbose'){stand_merge}
 
-  stand_sum <- stand_long2 %>% group_by(Event_ID,Plot_Name, CrownType) %>%
-    summarise(avg_height = round(mean(height, na.rm=T),2)) %>%
-    spread(CrownType, avg_height, fill=NA) %>%
-    arrange(Plot_Name)
-
-  stand_comb<- merge(stand_df3, stand_sum, by=c("Event_ID","Plot_Name"), all.x=T)
-names(stand_comb)
-
-stand_df4<-stand_comb %>% select(Location_ID, Event_ID, Unit_Code, Plot_Name,Plot_Number:cycle, Stand_Structure_ID, Stand_Structure,
-                                 Crown_Closure_ID, Pct_Crown_Closure, Avg_Codom_HT, Avg_Inter_HT,
-                                 Deer_Browse_Line_ID, Microtopography_ID,
-                                 Groundstory_Cover_Class_ID:Derived_Plot_Slope) %>% arrange(Plot_Name,cycle)
-
- names(stand_df4)[names(stand_df4)=='Groundstory_Cover_Class_ID']<-"Pct_Understory_Low"
- names(stand_df4)[names(stand_df4)=='Mid_Understory_Cover_Class_ID']<-"Pct_Understory_Mid"
- names(stand_df4)[names(stand_df4)=='High_Understory_Cover_Class_ID']<-"Pct_Understory_High"
- names(stand_df4)[names(stand_df4)=='Lichen_Cover_Class_ID']<-"Pct_Lichen_Cover"
- names(stand_df4)[names(stand_df4)=='Non_Vascular_Cover_Class_ID']<-"Pct_Bryophyte_Cover"
- names(stand_df4)[names(stand_df4)=='Forest_Floor_Bare_Soil_Cover_Class_ID']<-"Pct_Bare_Soil_Cover"
- names(stand_df4)[names(stand_df4)=='Forest_Floor_Rock_Cover_Class_ID']<-"Pct_Rock_Cover"
- names(stand_df4)[names(stand_df4)=='Forest_Floor_Water_Cover_Class_ID']<-"Pct_Surface_Water_Cover"
- names(stand_df4)[names(stand_df4)=='Forest_Floor_Trampled_Cover_Class_ID']<-"Pct_Trampled_Cover"
- names(stand_df4)[names(stand_df4)=='Derived_Plot_Slope']<-"Plot_Slope_Deg"
-
- worms<-soildata %>% select(Event_ID, Earthworms) %>% unique()
-
- #----
- plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
-                                   panels = panels, locType = locType, eventType = "complete",
-                                   abandoned = FALSE, output = 'short')) %>%
-   select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-          xCoordinate, yCoordinate, EventID, StartDate, StartYear, cycle, IsQAQC)
-
- #----
- stand_df5<- merge(stand_df4, worms, by='Event_ID', all.x=T, all.y=F)
-
-   return(stand_df5)
+   return(stand_final)
 }

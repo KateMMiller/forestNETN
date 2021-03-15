@@ -10,8 +10,8 @@ joinStandData(
   locType = "VS",
   panels = 1:4,
   from = 2006,
-  to = 2019,
-  output,
+  to = 2021,
+  output = "verbose",
   ...
 )
 }
@@ -41,21 +41,23 @@ joinStandData(
 \item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 If more than one panel is selected, specify by c(1,3), for example.}
 
-\item{from}{Year to start analysis, ranging from 2006-2019}
+\item{from}{Year to start analysis}
 
-\item{to}{Year to stop analysis, ranging from 2006-2019}
+\item{to}{Year to stop analysis}
 }
 \value{
 returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
-between cover class ranges (e.g., 62.5 is the midpoint for 50-75%).
+between cover class ranges (e.g., 62.5 is the midpoint for 50-75%). Field names starting with "Txt" define the cover classes.
 }
 \description{
 This function combines stand-level data for each plot, including cover by strata,
 earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
 }
 \examples{
-importData() #imports using default odbc
+importData()
+# import 4 years of MABI stand data
 stand_df <- joinStandData(park = 'MABI', from = 2015, to = 2019)
 
-
+# import all visits, including QAQC, from 2019 in ACAD. Only return important data fields.
+acad_stand <- joinStandData(park = ACAD, from = 2019, to = 2019, QAQC = TRUE, output = 'short')
 }
