@@ -22,6 +22,7 @@ Collate:
     'joinRegenData.R'
     'joinSoilLabData.R'
     'joinSoilSampleData.R'
+    'joinTreeFoliageCond.R'
     'makeSppList.R'
     'sumQuadGuilds.R'
     'sumTreeDBHDist.R'
