@@ -7,7 +7,7 @@
 joinStandData(
   park = "all",
   QAQC = FALSE,
-  locType = "VS",
+  locType = c("VS", "all"),
   panels = 1:4,
   from = 2006,
   to = 2021,
@@ -16,7 +16,41 @@ joinStandData(
 )
 }
 \arguments{
-\item{park}{Combine data from all parks or one park at a time. Acceptable options are:
+\item{QAQC}{Allows you to remove or include QAQC events.
+\describe{
+\item{FALSE}{Default. Only returns visits that are not QAQC visits}
+\item{TRUE}{Returns all visits, including QAQC visits}}}
+
+\item{locType}{Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
+\describe{
+\item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+\item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}}
+
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
+\item{from}{Year to start analysis, ranging from 2006 to current year}
+
+\item{to}{Year to stop analysis, ranging from 2006 to current year}
+
+\item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
+inputs are "short" and "verbose".}
+
+\item{eventType}{Allows you to include only complete sampling events or all sampling events
+\describe{
+\item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+\item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+}
+\value{
+returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
+between cover class ranges (e.g., 62.5 is the midpoint for 50-75%). Field names starting with "Txt" define the cover classes.
+}
+\description{
+This function combines stand-level data for each plot, including cover by strata,
+earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
+
+#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 \describe{
 \item{"all"}{Includes all parks in the network}
 \item{"ACAD"}{Acadia NP only}
@@ -26,32 +60,7 @@ joinStandData(
 \item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
 \item{"SAGA"}{Saint-Gaudens NHS only}
 \item{"SARA"}{Saratoga NHP only}
-\item{"WEFA"}{Weir Farm NHS only}}}
-
-\item{QAQC}{Allows you to remove or include QAQC events.
-\describe{
-\item{FALSE}{Default. Only returns visits that are not QAQC visits}
-\item{TRUE}{Returns all visits, including QAQC visits}}}
-
-\item{locType}{Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
-\describe{
-\item{"VS"}{Default. Only include plots that are part of the Vital Signs GRTS sample design}
-\item{"all"}{Include all plots, such as deer exclosures and bonus plots}}}
-
-\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
-If more than one panel is selected, specify by c(1,3), for example.}
-
-\item{from}{Year to start analysis}
-
-\item{to}{Year to stop analysis}
-}
-\value{
-returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
-between cover class ranges (e.g., 62.5 is the midpoint for 50-75%). Field names starting with "Txt" define the cover classes.
-}
-\description{
-This function combines stand-level data for each plot, including cover by strata,
-earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
+\item{"WEFA"}{Weir Farm NHS only}}
 }
 \examples{
 importData()
