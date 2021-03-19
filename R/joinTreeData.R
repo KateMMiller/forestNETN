@@ -131,7 +131,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
                                        IsExotic, TaxonGroupLabel)),
            error = function(e){stop("COMN_Taxa view not found. Please import view.")})
 
-  # left join with EventID from plot_events to make tree data as small as possible to speed up function
+  # subset with EventID from plot_events to make tree data as small as possible to speed up function
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
@@ -155,7 +155,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   # Drop unwanted events before merging
   tree_fol1 <- subset(foliage_vw, EventID %in% pe_list)
   tree_fol <- merge(tree_stat, tree_fol1, by = intersect(names(tree_vw), names(foliage_vw)),
-                    all.x = TRUE, all.y = TRUE)
+                    all.x = TRUE, all.y = FALSE)
 
   tree_taxa <- merge(tree_fol,
                      taxa[,c('TSN','ScientificName','CommonName','Family', 'Genus', 'IsExotic')],
@@ -199,8 +199,9 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   tree_merge$BA_cm2[is.na(tree_merge$TagCode)] <- 0 # for plots missing live or dead trees
   # Plots will have a record, but species, condition, DBH info will be NA.
 
+
   tree_final <- if(output == 'short'){
-      tree_merge[, c("Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
+      tree_merge[, c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
                      "PlotID", "EventID", "IsQAQC", "StartYear", "TSN", "ScientificName",
                      "TagCode", "Fork", "Azimuth", "Distance", "DBHcm", "IsDBHVerified", "TreeStatusCode",
                      "CrownClassCode", "DecayClassCode", "Pct_Tot_Foliage_Cond",
