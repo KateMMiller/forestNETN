@@ -6,7 +6,7 @@ library(tidyverse)
 #importData()
 
 path = "C:/Forest_Health/exports/NETN"
-importCSV(path = path, zip_name = "NETN_Forest_20210310.zip")
+importCSV(path = path)#, zip_name = "NETN_Forest_20210318.zip")
 # microbenchmark::microbenchmark(importData(),
 #                                importCSV("C:/Forest_Health/exports/NETN"),
 #                                times = 1) #importCSV is 4+ times faster
@@ -15,6 +15,15 @@ importCSV(path = path, zip_name = "NETN_Forest_20210310.zip")
 #                                importData(server = "INPNETN-078644"),
 #                                times = 1) #no difference; not surprising
 
+# Function to check that the rows in each col. 1 and 2 are identical
+# Will return 0 if none, or the values that differ
+
+check_data <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", col1, col2)]}
+  )) %>% bind_rows()
+}
 
 #------------------------
 # Plot and Visit data views
@@ -47,15 +56,6 @@ pe_merge <- merge(plot_events, plot_events_old, by.x = c("EventLegacyID", "Plot_
                    by.y = c("Event_ID", "Plot_Name"), all.x = T, all.y = T)
 names(pe_merge)
 
-# Function to check that the rows in each col. 1 and 2 are identical
-# Will return 0 if none, or the values that differ
-
-check_data <- function(df, col1, col2){
-  lapply(1:nrow(df), function(x) (
-    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
-      df[x, c("Plot_Name", "StartYear", col1, col2)]}
-    )) %>% bind_rows()
-}
 
 names(pe_merge)
 check_data(pe_merge, "ParkSubUnit", "Unit_ID")
@@ -212,6 +212,7 @@ slopes <- get("COMN_StandSlopes", envir = VIEWS_NETN) %>% filter(StartDate < 202
 slopes$Plot_Name <- paste(slopes$ParkUnit, sprintf("%03d", slopes$PlotCode), sep = "-")
 slopes$Event_QAQC <- ifelse(slopes$IsQAQC == 0, FALSE, TRUE)
 
+library(RODBC)
 db <-odbcConnect("NETNFVM") #
 stand_d<-sqlFetch(db,"tbl_Stand_Data")
 odbcClose(db)
@@ -295,7 +296,7 @@ tree_height_comps <- merge(tr_ht_vw,
                            tr_ht3,
                            by.x = c("Plot_Name", "StartYear", "Event_QAQC", "TagCode"),
                            by.y = c("Plot_Name", "Year", "Event_QAQC", "Tree_Number"),
-                     all.x = F, all.y = F) %>%
+                     all.x = T, all.y = T) %>%
                      select(Plot_Name:Event_QAQC, Stand_Structure_ID, Stunted_Woodland,
                             CrownClassCode, CrownClassLabel, CrownClassSummary,
                             TagCode, Height, Height_m, Crown, Samp_Num) %>% filter(StartYear < 2020)
@@ -312,6 +313,78 @@ check_data(trht_comps, "Height", "Height_m") %>%
   mutate(diff = Height - Height_m) %>% filter(abs(diff)>0.1)
 
 table(trht_comps$Crown, trht_comps$CrownClassLabel) #all good
+
+#----- joinStandData -----
+names(VIEWS_NETN)
+# stand views: NETN_StandInfoPhotos, COMN_StandPlantCoverStrata, COMN_StandDisturbances,
+# COMN_StandForestFloor, COMN_StandSlopes, COMN_StandTreeHeights
+#forestNETNarch::importData()
+stand_old <- forestNETNarch::joinStandData(from = 2006, to = 2019, QAQC = T)
+head(stand_old)
+stand_old2 <- merge(stand_old, stand[,c("Event_ID", "Deer_Browse_Line_pre09_ID")],
+                    by = "Event_ID", all.x = T, all.y = T)
+
+dbi_check <- merge(stand_old2[,c("Plot_Name", "Year", "Event_QAQC", "Deer_Browse_Line_ID", "Deer_Browse_Line_pre09_ID")],
+                   standinfo[,c("Plot_Name", "StartYear", "IsQAQC", "Deer_Browse_Index")],
+                   by.x = c("Plot_Name", "Year", "Event_QAQC"),
+                   by.y = c("Plot_Name", "StartYear", "IsQAQC"),
+                   all.x = T, all.y = T) # checks out.
+names(standinfo)
+head(standinfo)
+head(stand_old)
+names(stand_old)
+trht_old <- stand_old %>% select(Plot_Name, Year, Event_QAQC, Avg_Codom_HT, Avg_Inter_HT)
+#pulled in from joinStandData.R strand ht calcs.
+treeht_sum$Event_QAQC <- ifelse(treeht_sum$IsQAQC == 1, TRUE, FALSE)
+treeht_sum$Plot_Name <- paste(treeht_sum$ParkUnit, str_pad(treeht_sum$PlotCode, 3, side = 'left', "0"), sep = "-")
+treeht_sum$StartYear <- as.numeric(treeht_sum$StartYear)
+
+treeht_check <- merge(stand_old[, c("Plot_Name", "Year", "Event_QAQC", "Avg_Codom_HT", "Avg_Inter_HT")],
+                      treeht_sum,
+                      by.x = c("Plot_Name", "Year", "Event_QAQC"),
+                      by.y = c("Plot_Name", "StartYear", "Event_QAQC"),
+                      all.x = T,
+                      all.y = T
+                      )
+
+treeht_check2 <- treeht_check %>% mutate(diff_cod = abs(Avg_Codom_HT - Avg_height_Codom),
+                                        diff_int = abs(Avg_Inter_HT - Avg_height_Inter)) %>%
+                                 filter(diff_cod > 0.1 | diff_int > 0.1) # ACAD-083-2012; MORR-009-2011
+
+slope_check <- stand_comb %>% filter(is.na(PlotSlope)) # it's all the QAQC visits
+
+stand_new <- joinStandData(park = 'all', from = 2006, to = 2019, output = 'short', QAQC = T)
+table(complete.cases(stand_new[,c(1:16, 19)])) # all TRUE
+table(complete.cases(stand_new[,17])) # 1
+table(complete.cases(stand_new[,18])) # 4
+table(complete.cases(stand_new[,20])) # DBI- lots NC/PM
+table(stand_new$ParkUnit, stand_new$StartYear)
+stand_new$Plot_Name[stand_new$StartYear == 2012 & stand_new$ParkUnit == "ACAD"] # ACAD-088 is still missing
+
+head(stand_new)
+head(stand_old)
+names(stand_new)
+
+stand_check <- merge(stand_new,
+                     stand_old, all.x = T, all.y = T,
+                     by.x = c("Plot_Name", "StartYear", "IsQAQC"),
+                     by.y = c("Plot_Name", "Year", "Event_QAQC"))
+names(stand_check)
+
+table(stand_check$Stand_Structure.x, stand_check$Stand_Structure.y)
+check_data(stand_check, "Earthworms.x", "Earthworms.y") #ACAD-088
+check_data(stand_check, "Microtopography", "Microtopography_ID") #ACAD-088
+check_data(stand_check, "Deer_Browse_Index", "Deer_Browse_Line_ID") #missing <2009
+table(stand_check$Deer_Browse_Index, stand_check$Deer_Browse_Line_ID)
+check_data(stand_check, "Pct_Understory_Low.x", "Pct_Understory_Low.y")#ACAD-088
+check_data(stand_check, "Pct_Understory_Mid.x", "Pct_Understory_Mid.y")#ACAD-088
+check_data(stand_check, "Pct_Understory_High.x", "Pct_Understory_High.y")#ACAD-088
+check_data(stand_check, "Pct_Bare_Soil", "Pct_Bare_Soil_Cover")#ACAD-088
+check_data(stand_check, "Pct_Bryophyte", "Pct_Bryophyte_Cover")#ACAD-088
+check_data(stand_check, "Pct_Rock", "Pct_Rock_Cover")#ACAD-088
+check_data(stand_check, "Pct_Water", "Pct_Surface_Water_Cover")#ACAD-088
+check_data(stand_check, "Pct_Trampled", "Pct_Trampled_Cover")#ACAD-088
+check_data(stand_check, "Pct_Crown_Closure.x", "Pct_Crown_Closure.y")#ACAD-088
 
 #---------------------------
 #  CWD views
@@ -385,3 +458,215 @@ cwd_check <- cwd_merge %>% mutate(diff = CWD_Vol.x - CWD_Vol.y) %>% filter(abs(d
  # so it didn't introduce any issues. Otherwise, the only 2 plots with diff. b/t old and new are
  # missing a NP in 1 transect, so denominator is diff. b/t old and new.
 
+#---------------------------
+# Tree Data
+#---------------------------
+forestNETNarch::importData()
+
+# library(RODBC)
+# db <-odbcConnect("NETNFVM") #
+# plants <- sqlFetch(db,"tlu_Plants")
+# odbcClose(db)
+
+netn_tree <- forestNETNarch::joinTreeData(from = 2006, to = 2019, locType = 'all', QAQC = TRUE) %>%
+             mutate(TagCode = as.numeric(Tree_Number_NETN))
+
+#++++ AFTER MIGRATION RERUN CHECKS WITH THIS tree_new INSTEAD OF THE ONE GENERATED BY THE FUNCTION
+# tree_new <- VIEWS_NETN$COMN_TreesByEvent %>%
+#   select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, TreeLegacyID,
+#          TagCode, TaxonID, TSN, ScientificName, Fork, Azimuth, Distance, DBHcm, IsDBHVerified,
+#          IsDBHUnusual, TreeStatusCode, TreeStatusLabel, CrownClassCode, CrownClassLabel,
+#          DecayClassCode, HWACode, BBDCode, TreeEventNote) %>%
+#   filter(StartYear < 2020)
+
+#Subsets and Left joins early makes things a lot faster!
+microbenchmark::microbenchmark(
+tree_new <- joinTreeData(from = 2006, to = 2019, locType = 'all', eventType = 'complete', QAQC = TRUE,
+                         output = 'verbose'),
+tree_new2 <- joinTreeData(from = 2019, to = 2019, locType = 'all', eventType = 'complete', QAQC = TRUE,
+                         output = 'verbose'), times =1)
+
+head(tree_new)
+
+tree_new <- joinTreeData(from = 2006, to = 2019, locType = 'all', eventType = 'complete', QAQC = TRUE,
+                         output = 'verbose', status = 'all')
+
+head(joinTreeData(park = c("MIMA", "WEFA")))
+head(joinTreeData(park = c("MIMA", "WEFA"), from = 2006, to = 2009))
+head(joinTreeData(park = 'all', status = 'active'))
+
+trees_live <- joinTreeData(park = 'all', from = 2006, to = 2019, speciesType = 'all', locType = 'all',
+                           status = 'live', QAQC = T, eventType = 'all')
+trees_all <- joinTreeData(park = 'all', from = 2006, to = 2019, speciesType = 'all', locType = 'all',
+                          status = 'all', QAQC = T, eventType = 'all')
+trees_dead <- joinTreeData(park = 'all', from = 2006, to = 2019, speciesType = 'all', locType = 'all',
+                           status = 'dead', QAQC = T, eventType = 'all')
+trees_active <- joinTreeData(park = 'all', status = 'active', QAQC = T, locType = 'all',
+                              eventType = 'all')
+
+tree_fol_live <- joinTreeFoliageCond(park = 'all', from = 2006, to = 2019, speciesType = 'all',
+                                     locType = 'all', status = 'live', QAQC = T, eventType = 'all')
+
+names(trees_live)
+tree_fol_sm <- joinTreeFoliageCond(park = "WEFA", from = 2016, to = 2019, speciesType = 'native')
+tree_fol_sm <- joinTreeFoliageCond(park = "WEFA", from = 2016, to = 2019, speciesType = 'native',
+                                   valueType = 'classes')
+
+head(tree_fol_sm)
+
+table(tree_new$TreeStatusCode)
+table(netn_tree$Status_ID) # codes 2, DS, EX, NL, XP are slightly different. Need to figure out why
+
+# intermediate step in function
+tree_taxa <- merge(tree_vw,
+                   taxa[,c('TSN','ScientificName','CommonName','Family', 'Genus', 'IsExotic')],
+                   by = c("TSN", "ScientificName"), all.x = TRUE, all.y = FALSE) %>% filter(StartYear < 2020)
+
+tree_taxa$Plot_Name <- paste(tree_taxa$ParkUnit, str_pad(tree_taxa$PlotCode, 3, side = 'left', "0"), sep = "-")
+intersect(names(trees), names(treedata))
+names(trees)
+names(treedata)
+tree_old <- merge(trees[,1:15], treedata[,1:16], by = "Tree_ID", all.x = T, all.y = T)
+plot_events_old <- forestNETNarch::joinLocEvent(from = 2006, to = 2019, QAQC = T, locType = 'all')
+
+#------------
+tree_old2 <- merge(plot_events_old, tree_old, by = c("Event_ID", "Location_ID"), all.x = T, all.y = T)
+tree_old2$TagCode <- as.numeric(tree_old2$Tree_Number_NETN)
+head(tree_old2)
+
+unique(tree_old2$Event_ID[tree_old2$Plot_Name == "ACAD-029" & tree_old2$Year == 2010])
+
+tree_merge <- merge(tree_new, tree_old2[tree_old2$Location_ID !="8CC21CA9-9528-4A1D-A06D-64B95E89886D" &
+  tree_old2$Event_ID != "3BF64BE2-7089-42B6-B610-09B3511BF1B4",],
+                    by.x = c("Plot_Name", "StartYear", "IsQAQC", "TagCode"),
+                    by.y = c("Plot_Name", "Year", "Event_QAQC", "TagCode"),
+                    all.x = T, all.y = T)
+
+check_trees <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "TagCode", "IsQAQC", "ScientificName",
+              "Status_ID", "TreeStatusCode",col1, col2)]}
+  )) %>% bind_rows()
+}
+
+# The old tree join didn't include the fork column. Need to add that for checking
+check_trees(tree_merge, "TSN.x", "TSN.y") #SARA-015-2012. Should be fixed in next migration
+check_trees(tree_merge, "Azimuth.x", "Azimuth.y") #SARA-015-2012
+check_trees(tree_merge, "Fork.x", "Fork.y")
+
+names(tree_merge)
+#check_data(tree_merge, "Distance.x", "Distance.y")
+tree_dist <- tree_merge %>% mutate(dist_diff = abs(Distance.x - Distance.y)) %>%
+  filter(dist_diff > 0.1) # 0 records
+tree_dist
+
+tree_dbh <- tree_merge %>% mutate(dbh_diff = abs(DBH - DBHcm)) %>%
+  filter(dbh_diff > 0) %>%
+  select(Plot_Name, StartYear, IsQAQC, TagCode, ScientificName, DBHcm, DBH, dbh_diff)
+tree_dbh
+# Interestingly there's a ghost tree ACAD-019-2006-QAQC tag 30 that has dbh 17.5.
+# The migration is dropping it, so nothing to be worried about.
+# Documented DBHs that need to be fixed so migration rounding doesn't round up.
+
+names(tree_merge)
+status_check <- check_trees(tree_merge, "TreeStatusCode", "Status_ID")
+status_check2 <- tree_merge %>% select(Plot_Name, StartYear, IsQAQC, TagCode,
+                                       ScientificName, Status_ID, TreeStatusCode)
+status_check2
+names(tree_merge)
+
+crown_check <- check_trees(tree_merge, "Crown_Class_ID", "CrownClassCode")
+crown_check
+
+table(tree_new$TreeStatusCode, tree_new$StartYear)
+table(netn_tree$Crown_Class_ID, netn_tree$Status_ID)
+table(tree_new$CrownClassCode, tree_new$TreeStatusCode)
+
+table(tree_merge$TreeStatusCode, tree_merge$CrownClassCode, useNA = "always")
+#5+9+221+169+102 #506
+#CrownClassCode for trees <2010 aren't migrating correctly.
+#It's partially our fault, because we inconsistently recorded crown classes
+#for trees with status_ID = 2 (dead trees). Trees with Status_ID = 2 and NULL
+#Crown_Class_ID are migrating in as "PM", but should be NULL (605 records).
+#Trees with Status_ID = 2 and a value in Crown_Class_ID should also be set to NULL
+#(506 records) to be consistent.
+
+
+decay_check<-check_trees(tree_merge, "Decay_Class_ID", "DecayClassCode")
+# Status codes for live trees (1) from first cycle are coming in as NC.
+# but should be NULL
+#The TreeEventDecayClass_Insert.sql script logic isn't quite right. We've always
+#collected Decay_Class_ID, so any missing values on dead trees should be "PM".
+#But PM should only be used for dead trees (not live trees). Currently the script
+#is assigning PM for decay class for live trees <2010. In case it helps:
+#Status_ID from 2006-2009 was 0 (unk), 1 (live), 2 (dead), then switched to 2-letter
+#system (eg AS, AB, DS, DF, etc) starting in 2010.
+# THere are several DFs that had a decay class in original db, that are NA now. That's good.
+
+
+hwa_check <- check_trees(tree_merge, "HWACode", "HWA_Status")
+hwa_check
+table(tree_old2$HWA_Status, tree_old2$Year, useNA = 'always')
+# Cycle one not treated correctly
+hwa_check <- tree_merge %>% filter(#ScientificName == "Tsuga canadensis" &
+                                     is.na(HWACode))
+table(tree_merge$ScientificName, tree_merge$HWALabel, useNA = 'always')
+# TSUCAN Not Applicables are all on dead trees
+#The TreeEventHWA_Insert.sql script logic isn't quite right.
+#The start date in the CASE WHEN should be 1/1/2010 instead of 1/1/2009 (will change 48 PMs in 2009 to NC).
+#There are also a 46 records of HWACodes that are NA in 2010 and 2 for 2011 for non-hemlock trees.
+#I think these are supposed to be 0 instead of NA, based on the rest of the data in the xref.
+
+tree10 <- tree_merge %>% filter(StartYear == 2010)
+table(tree10$ScientificName, tree10$HWACode, useNA = 'always')
+tree11 <- tree_merge %>% filter(StartYear == 2011)
+table(tree11$ScientificName, tree11$HWACode, useNA = 'always')
+#8+37+1+2 #48
+#The TreeEventHWA_Insert.sql script logic isn't quite right. The start date in the
+#CASE WHEN should be 1/1/2010 instead of 1/1/2009 (will change 48 PMs in 2009 to NC).
+#There are also a 46 records of HWACodes that are NA in 2010 and 2 for 2011 for non-hemlock trees.
+#I think these are supposed to be 0 instead of NA, based on the rest of the data in the xref.
+
+check_trees(tree_merge, "BBDCode", "BBD_Status")
+# BBD is migrating correctly
+
+names(tree_merge)
+dbh_ver <- check_trees(tree_merge, "IsDBHVerified", "DBH_Verified")
+
+table(tree_merge$IsDBHVerified, tree_merge$TreeStatusCode, tree_merge$StartYear, useNA = 'always')
+# differences in whether 0 or NA are for dead or excluded trees. Looks okay.
+
+names(VIEWS_NETN$COMN_TreesFoliageCond)
+
+# totfol <- VIEWS_NETN$COMN_TreesFoliageCond %>%
+#   mutate(Plot_Name = paste(ParkUnit, str_pad(PlotCode, 3, side = 'left', "0"), sep = "-")) %>%
+#   select(Plot_Name, StartYear, IsQAQC, TagCode, TotalFoliageCondition.Label) %>% unique()
+
+# head(totfol)
+# head(tree_merge)
+# tree_merge2 <- merge(tree_merge, totfol, by = c("Plot_Name", "StartYear", "IsQAQC", "TagCode"),
+#                      all.x = T, all.y = T)
+# head(tree_merge2)
+table(tree_merge$Txt_Tot_Foliage_Cond, tree_merge$Total_Foliage_Condition, useNA = 'always')
+
+fol_check <- tree_merge %>% select(Plot_Name, StartYear, IsQAQC, TagCode, ScientificName, TreeStatusCode,
+                                    Status_ID, Txt_Tot_Foliage_Cond, Total_Foliage_Condition)
+# Lots of NC where should be NO or NULL (dead). Camilla captured this in the legacy tracker. Will check
+# this again after Stephen makes the changes.
+
+# Done checking records that only have 1/tree/visit. Now to check foliage and tree conditions
+
+#---------------------
+# Foliage Conditions
+#---------------------
+
+fol_cond <- joinTreeFoliageCond()
+fol_test <- joinTreeFoliageCond(park = "ACAD", from = 2016, to = 2019, speciesType = 'native',
+                                valueType = 'classes')
+head(fol_test)
+
+# Will wait to test the actual values until after Stephen's fixes
+#---------------------
+# Tree Conditions
+#---------------------
