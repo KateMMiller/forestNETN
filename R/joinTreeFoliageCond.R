@@ -59,21 +59,12 @@
 #'
 #' @examples
 #' importData()
-#' +++++++++++ COME BACK TO THIS +++++++
-#' # compile tree data in all parks for live trees only in cycle 3, excluding QAQC visits
-#' live_trees <- joinTreeData(status = 'live', from = 2014, to = 2017)
+#' # compile numeric tree foliage condition data in all parks in cycle 3, excluding QAQC visits
+#' fol_c3 <- joinTreeFoliageCond(from = 2014, to = 2017, valueType = 'midpoint', QAQC = FALSE)
 #'
-#' # compile ACAD trees within 100m^2 circle in cycle 3
-#' ACAD_100m <- joinTreeData(park = 'ACAD', from = 2014, to = 2017, dist_m = 5.64)
-#'
-#' # compile dead trees in MABI for cycle 3
-#' MABI_dead <- joinTreeData(park = 'MABI', from = 2014, to = 2017, status = 'dead')
-#'
-#' # compile exotic trees in MIMA in all years
-#' MIMA_exotic <- joinTreeData(park = 'MIMA', speciesType = 'exotic')
-#'
-#' # compile all visits in ROVA for 2019, including QAQC visits
-#' ROVA_trees <- joinTreeData(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE)
+#' # compile foliage condition cover classes for ROVA in 2019, including QAQC visits
+#' ROVA_trees <- joinTreeFoliageCond(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE,
+#'                                   valueType = 'classes')
 #'
 #' @export
 #'
@@ -109,8 +100,8 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
 
   # subset with EventID from tree_events to make tree data as small as possible to speed up function
   tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC,
-                                    locType = locType, panels = panels, eventType = eventType,
-                                    abandoned = FALSE, status = status, speciesType = speciesType,
+                                    locType = locType, panels = panels, eventType = 'complete',
+                                    abandoned = FALSE, status = 'live', speciesType = speciesType,
                                     dist_m = dist_m, output = 'verbose')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                         PlotCode, PlotID, EventID, IsQAQC, StartYear, TSN, ScientificName,

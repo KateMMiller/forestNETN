@@ -75,20 +75,11 @@ Abandoned plots are excluded from function.
 }
 \examples{
 importData()
-+++++++++++ COME BACK TO THIS +++++++
-# compile tree data in all parks for live trees only in cycle 3, excluding QAQC visits
-live_trees <- joinTreeData(status = 'live', from = 2014, to = 2017)
+# compile numeric tree foliage condition data in all parks in cycle 3, excluding QAQC visits
+fol_c3 <- joinTreeFoliageCond(from = 2014, to = 2017, valueType = 'midpoint', QAQC = FALSE)
 
-# compile ACAD trees within 100m^2 circle in cycle 3
-ACAD_100m <- joinTreeData(park = 'ACAD', from = 2014, to = 2017, dist_m = 5.64)
-
-# compile dead trees in MABI for cycle 3
-MABI_dead <- joinTreeData(park = 'MABI', from = 2014, to = 2017, status = 'dead')
-
-# compile exotic trees in MIMA in all years
-MIMA_exotic <- joinTreeData(park = 'MIMA', speciesType = 'exotic')
-
-# compile all visits in ROVA for 2019, including QAQC visits
-ROVA_trees <- joinTreeData(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE)
+# compile foliage condition cover classes for ROVA in 2019, including QAQC visits
+ROVA_trees <- joinTreeFoliageCond(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE,
+                                  valueType = 'classes')
 
 }
