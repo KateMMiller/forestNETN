@@ -80,7 +80,9 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 inputs are "short" and "verbose".}
 }
 \value{
-returns a dataframe with plot-level and visit-level tree data
+returns a dataframe with plot-level and visit-level tree data. Returns records for all specified
+plots and events, even if no trees meet the specified arguments (eg dead or exotic trees), although all
+associated data (eg TagCode, DBH), will be NA for those plot/events. ScientificName will be "None present".
 }
 \description{
 This function combines tree location and visit data for measurements that have only 1 record per visit.
