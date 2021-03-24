@@ -1,13 +1,13 @@
 #' @include joinLocEvent.R
 #' @title joinTreeFoliageCond: compiles live tree foliage data
 #'
-#' @importFrom dplyr case_when filter mutate mutate_at select
+#' @importFrom dplyr arrange case_when filter full_join left_join mutate mutate_at select
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
 #'
-#' @description This function compiles tree foliage condition data into a wide format with
+#' @description This function compiles live tree foliage condition data into a wide format with
 #' one row per tree visit and a column for each foliage condition type. Must run importData first.
-#' Abandoned plots are excluded from function.
+#' Abandoned plots and incomplete visits are excluded from function.
 #'
 #' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 #' \describe{
@@ -55,7 +55,7 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
-#' @return returns a wide dataframe with one row for each tree visit and foliage conditions as columns.
+#' @return returns a wide dataframe with one row for each live tree visit and foliage conditions as columns.
 #'
 #' @examples
 #' importData()
@@ -89,7 +89,7 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
 
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
-  # Prepare the CWD data
+  # Prepare the foliage data
   tryCatch(foliage_vw <- unique(subset(get("COMN_TreesFoliageCond", envir = env),
                          select = c(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                                     TreeLegacyID, TagCode, TreeStatusCode,
@@ -109,11 +109,11 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
 
   te_list <- unique(tree_events$EventID)
 
-  fol_evs <- subset(foliage_vw, EventID %in% te_list)
+  fol_evs <- filter(foliage_vw, EventID %in% te_list)
 
   # left join
-  fol_evs2 <- merge(tree_events, fol_evs, by = intersect(names(tree_events), names(fol_evs)),
-                    all.x = TRUE, all.y = FALSE) # should drop unwanted trees
+  fol_evs2 <- left_join(tree_events, fol_evs, by = intersect(names(tree_events), names(fol_evs)))
+    # should drop unwanted trees
 
   fol_evs3 <- fol_evs2 %>% mutate(Pct_Leaves_Aff = as.numeric(
                                   case_when(PercentLeavesCode == "0" ~ 0,
@@ -139,14 +139,18 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
   # have to add all possible codes before pivot
   full_conds <- data.frame(FoliageConditionCode = c("C", "H", "L", "N", "S", "W", "O"))
 
-  fol_evs4 <- merge(fol_evs3, full_conds, by = "FoliageConditionCode", all.x = TRUE, all.y = TRUE)
+  fol_evs4 <- full_join(fol_evs3, full_conds, by = "FoliageConditionCode")
 
   fol_wide <- if(valueType == "midpoint"){
-    fol_evs4 %>% pivot_wider(id_cols = c(ParkUnit:Txt_Tot_Foliage_Cond),
+    fol_evs4 %>% pivot_wider(id_cols = c(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+                                         PlotCode, PlotID, EventID, IsQAQC, StartYear, TSN, ScientificName,
+                                         TagCode, Pct_Tot_Foliage_Cond, Txt_Tot_Foliage_Cond),
                              names_from = FoliageConditionCode,
                              values_from = c(Pct_Leaves_Aff, Pct_Leaf_Area))
   } else if(valueType == "classes"){
-    fol_evs4 %>% pivot_wider(id_cols = c(ParkUnit:Txt_Tot_Foliage_Cond),
+    fol_evs4 %>% pivot_wider(id_cols = c(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+                                         PlotCode, PlotID, EventID, IsQAQC, StartYear, TSN, ScientificName,
+                                         TagCode, Pct_Tot_Foliage_Cond, Txt_Tot_Foliage_Cond),
                              names_from = FoliageConditionCode,
                              values_from = c(Txt_Leaves_Aff, Txt_Leaf_Area))
   }
@@ -174,7 +178,9 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
                         Txt_Leaves_Aff_S, Txt_Leaves_Aff_W, Txt_Leaves_Aff_O,
                         Txt_Leaf_Area_C, Txt_Leaf_Area_H, Txt_Leaf_Area_N)}
 
-  fol_final <- subset(fol_wide2, subset = !is.na(Plot_Name)) # NA row added if cond code missing
+  fol_final <- filter(fol_wide2, !is.na(Plot_Name)) %>% # NA row added if cond code missing
+               arrange(Plot_Name, StartYear, IsQAQC, TagCode)
+
   return(fol_final)
 } # end of function
 
