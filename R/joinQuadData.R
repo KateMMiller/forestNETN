@@ -51,11 +51,11 @@
 #'
 #' @examples
 #' importData()
-#' # compile quadrat data for invasive species in SARA for all years
-#' SARA_quads <- joinQuadData(park = 'SARA', speciesType = 'invasive')
+#' # compile quadrat data cover class midpoints in SARA for all years
+#' SARA_quads <- joinQuadData(park = 'SARA', valueType = 'midpoint')
 #'
-#' # compile native species only for all parks in most recent survey
-#' native_quads <- joinQuadData(speciesType = 'native', from = 2015, to = 2018)
+#' # compile quadrat data for cycle 3
+#' native_quads <- joinQuadData(from = 2014, to = 2017)
 #'
 #' @export
 #'
@@ -82,8 +82,8 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
 
   # Prepare the quad data
   tryCatch(quadchr <- get("COMN_QuadCharacter", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQQuadCharCode,
-                    IsTrampled, QuadratCode, CharacterLabel, CoverClassCode, CoverClassLabel),
+                      select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQQuadCharCode,
+                             IsTrampled, QuadratCode, CharacterLabel, CoverClassCode, CoverClassLabel),
            error = function(e){stop("COMN_QuadCharacter view not found. Please import view.")}
   )
 
@@ -91,8 +91,8 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
-    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           xCoordinate, yCoordinate, EventID, StartDate, StartYear, cycle, IsQAQC)
+                 select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+                        xCoordinate, yCoordinate, EventID, StartDate, StartYear, cycle, IsQAQC)
 
   pe_list <- unique(plot_events$EventID)
 
