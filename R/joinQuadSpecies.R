@@ -3,7 +3,7 @@
 #'
 #' @title joinQuadSpecies: compiles quadrat species data
 #'
-#' @importFrom dplyr group_by filter full_join select summarize ungroup
+#' @importFrom dplyr group_by filter full_join row_number select summarize ungroup
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_wider
 #'
@@ -98,7 +98,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                     ConfidenceClassCode, IsCollected, QuadSppNote),
            error = function(e){stop("NETN_QuadSpecies view not found. Please import view.")})
 
-  taxa_wide <- force(prepTaxa())[, c("TSN", "ScientificName", "Exotic", "InvasiveNETN")]
+  taxa_wide <- force(prepTaxa())
 
   # subset with EventID from plot_events to make function faster
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
@@ -113,7 +113,8 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   names(quadspp_evs)[names(quadspp_evs) == "ConfidenceClassCode"] <- "Confidence"
 
   # join with taxa data, so can filter for smaller dataset early
-  quadspp_tax <- left_join(quadspp_evs, taxa_wide, by = c("TSN", "ScientificName"))
+  quadspp_tax <- left_join(quadspp_evs, taxa_wide[, c("TSN", "ScientificName", "Exotic", "InvasiveNETN")],
+                           by = c("TSN", "ScientificName"))
 
   quadspp_filt <- if(speciesType == 'native'){
     filter(quadspp_tax, Exotic == FALSE)
@@ -125,55 +126,53 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
     quadspp_tax
   }
 
-  quad_check <- quadspp_filt %>% group_by(ParkUnit, PlotCode, StartYear, IsQAQC,
-                                          TSN, ScientificName, IsGerminant,
-                                          QuadSppNote) %>%
+  quad_check <- quadspp_filt %>% group_by(PlotID, EventID, ParkUnit, PlotCode, StartYear, IsQAQC,
+                                          TSN, ScientificName, IsGerminant) %>%
                                  summarize(num_quads = sum(SQQuadSppCode == "SS", na.rm = T),
-                                 .groups = 'drop') %>%
+                                           .groups = 'drop') %>%
                                  filter(num_quads > 8) %>% select(-num_quads)
+
   if(nrow(quad_check) > 0){
     warning(paste("There are", nrow(quad_check),
-                  "duplicate species records. Function dropped 2nd occurrance of duplicate species: \n"),
+                  "duplicate species records. Function added '2' to 2nd occurrance of duplicate species: \n"),
             paste(capture.output(data.frame(quad_check)), collapse = "\n"))
     }
 
-  # Clean this up after data are fixed in next release... code is seriously slow
-  quadspp_fix <- if(nrow(quad_check) > 0){
-    quadspp_filt %>% group_by(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                             SQQuadSppCode, QuadratCode, TSN, ScientificName, IsGerminant, QuadSppNote) %>%
-                             slice(1)
-    } else {quadspp_filt}
+  # Set up midpoints- this approach was much faster than case_when/dplyr
+  quadspp_filt$CovClass_num <- suppressWarnings(as.numeric(quadspp_filt$CoverClassCode))
+  quadspp_filt$Pct_Cov <- as.numeric(NA)
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 0] <- 0
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 1] <- 0.1
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 2] <- 1.5
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 3] <- 3.5
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 4] <- 7.5
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 5] <- 17.5
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 6] <- 37.5
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 7] <- 62.5
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 8] <- 85
+  quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 9] <- 97.5
+  quadspp_filt$Txt_Cov <- NA
+  quadspp_filt$Txt_Cov <- ifelse(quadspp_filt$CoverClassCode == "-<1%", "<1%", quadspp_filt$CoverClassCode)
+  quadspp_filt$Txt_Cov[is.na(quadspp_filt$ScientificName)] <- "Permanently Missing"
+  quadspp_filt$Sampled <- ifelse(quadspp_filt$SQQuadSppCode == "SS", 1, 0)
 
-  quadspp_fix <- quadspp_fix[, names(quadspp_filt)]
+  # Split dataset into the records that need to be fixed and the records that are okay, so only performing
+  # operations on smaller dataset
+  spp_fixes <- left_join(quad_check, quadspp_filt, by = intersect(names(quad_check), names(quadspp_filt)))
+  spp_fine <- anti_join(quadspp_filt, quad_check, by = intersect(names(quadspp_filt), names(quad_check)))
 
-  # Pick back up here after release is fixed
-  quadspp_fix$CovClass_num <- suppressWarnings(as.numeric(quadspp_fix$CoverClassCode))
-  quadspp_fix$Pct_Cov <- as.numeric(NA)
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 0] <- 0
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 1] <- 0.1
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 2] <- 1.5
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 3] <- 3.5
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 4] <- 7.5
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 5] <- 17.5
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 6] <- 37.5
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 7] <- 62.5
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 8] <- 85
-  quadspp_fix$Pct_Cov[quadspp_fix$CovClass_num == 9] <- 97.5
-  quadspp_fix$Txt_Cov <- NA
-  quadspp_fix$Txt_Cov <- ifelse(quadspp_fix$CoverClassCode == "-<1%", "<1%", quadspp_fix$CoverClassCode)
-  quadspp_fix$Txt_Cov[is.na(quadspp_fix$ScientificName)] <- "Permanently Missing"
-  quadspp_fix$Sampled <- ifelse(quadspp_fix$SQQuadSppCode == "SS", 1, 0)
+  spp_fixes <- spp_fixes %>% group_by(PlotID, EventID, TSN, QuadratCode) %>%
+                              mutate(ScientificName = ifelse(row_number() > 1,
+                                                             paste0(ScientificName, "_", row_number()),
+                                                             paste(ScientificName)))
+  quadspp_fix <- rbind(spp_fine, spp_fixes)
 
-  names(quadspp_fix)
-  # Calculate average % cover and frequency
-  quad_sum <- quadspp_fix %>% group_by(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear,
-                                        IsQAQC, TSN, ScientificName, IsGerminant, QuadSppNote) %>%
-                               summarize(num_quads = sum(Sampled, na.rm = T),
-                                         quad_avg_cov = sum(Pct_Cov, na.rm = T)/num_quads,
-                                         quad_pct_freq = (sum(Pct_Cov > 0, na.rm = T)/num_quads)*100,
-                                         .groups = 'drop') %>%
-                               ungroup()
-
+  quad_sum <- quadspp_fix %>% group_by(PlotID, EventID, TSN, ScientificName, IsGerminant) %>%
+                              summarize(num_quads = sum(Sampled, na.rm = T),
+                                        quad_avg_cov = sum(Pct_Cov, na.rm = T)/num_quads,
+                                        quad_pct_freq = (sum(Pct_Cov > 0, na.rm = T)/num_quads)*100,
+                                        .groups = 'drop') %>%
+                                        ungroup()
   # Spread quadrats wide
   quadspp_wide <- quadspp_fix %>% pivot_wider(names_from = QuadratCode,
                                                values_from = c(Pct_Cov, Txt_Cov),
@@ -184,6 +183,16 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
 
   quadspp_comb2 <- left_join(plot_events, quadspp_comb,
                              by = intersect(names(plot_events), names(quadspp_comb)))
+
+  quadspp_comb3 <- left_join(quadspp_comb2,
+                             taxa_wide %>% select(TSN, Tree, TreeShrub, Shrub, Vine, Herbaceous,
+                                                 Graminoid, FernAlly),
+                             by = c("TSN"))
+
+  quadspp_comb3$ScientificName[is.na(quadspp_comb3$ScientificName)] <- "None present"
+  na_cols <- c("Exotic", "InvasiveNETN", "quad_avg_cov", "quad_pct_freq")
+  quadspp_comb3[ , na_cols][is.na(quadspp_comb3[, na_cols])] <- 0
+
 
   # select columns based on specified valueType
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
@@ -197,26 +206,17 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   txt_cols <- c("Txt_Cov_UC", "Txt_Cov_UR", "Txt_Cov_MR", "Txt_Cov_BR",
                 "Txt_Cov_BC", "Txt_Cov_BL", "Txt_Cov_ML", "Txt_Cov_UL")
 
-  # Need to reset PMs to NA after pivot_wider
-  # invisible(lapply(seq_along(pct_cols), function(x){
-  #   quadchr_comb2[,pct_cols[[x]]][quadchr_comb2[,txt_cols[[x]]] == "Permanently Missing"] <- NA
-  # }))
-  #
-  # quadchr_comb2$Pct_Cov_UC[quadchr_comb2$Txt_Cov_UC == "Permanently Missing"] <- NA
-
-  quadspp_comb2$ScientificName[is.na(quadspp_comb2$ScientificName)] <- "None present"
-
-  #++++++++++++++++++++++++++++++
-  # ENDED HERE- need to add 0s to % cover and average/freq in the None present
+  taxa_cols <- c("Exotic", "InvasiveNETN", "Tree", "TreeShrub", "Shrub", "Vine", "Herbaceous",
+                 "Graminoid", "FernAlly")
 
   quadspp_final <- if(valueType == "midpoint"){
-    quadspp_comb2[, c(req_cols, pct_cols, "QuadSppNote")]
+    quadspp_comb3[, c(req_cols, pct_cols, taxa_cols, "QuadSppNote")]
   } else if(valueType == "classes"){
-    quadspp_comb2[, c(req_cols, txt_cols, "QuadSppNote")]
+    quadspp_comb3[, c(req_cols, txt_cols, taxa_cols, "QuadSppNote")]
   } else if(valueType == "all"){
-    quadspp_comb2[, c(req_cols, pct_cols, txt_cols, "QuadSppNote")]
+    quadspp_comb3[, c(req_cols, pct_cols, txt_cols, taxa_cols, "QuadSppNote")]
   }
 
-
+  return(quadspp_final)
   } # end of function
 
