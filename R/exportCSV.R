@@ -35,7 +35,7 @@ exportCSV<- function(path = NA, zip = FALSE){
     stop("Package 'zip' needed to export to zip file. Please install it.", call. = FALSE)
   }
 
-  options(scipen = 100, digits = 20) # For TSNs
+  options(scipen = 100) # For TSNs
 
   # Make sure all the views are loaded. If anything is missing, function stops.
   view_list <- c("COMN_AdditionalSpecies", "COMN_CWD", "COMN_EventObservers", "COMN_Events",

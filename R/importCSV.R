@@ -33,7 +33,7 @@ importCSV<- function(path = NA, new_env = TRUE, zip_name = NA){
   # Add / to end of path if it wasn't specified.
   path <- if(substr(path, nchar(path), nchar(path)) != "/"){paste0(path, "/")} else {(paste0(path))}
 
-  options(scipen = 100, digits = 20) # For TSNs
+  options(scipen = 100) # For TSNs
 
   view_list <- c("COMN_AdditionalSpecies", "COMN_CWD", "COMN_EventObservers", "COMN_Events",
                  "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter", "COMN_QuadNotes",
