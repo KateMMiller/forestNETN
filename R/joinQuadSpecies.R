@@ -3,7 +3,7 @@
 #'
 #' @title joinQuadSpecies: compiles quadrat species data
 #'
-#' @importFrom dplyr group_by filter full_join row_number select summarize ungroup
+#' @importFrom dplyr anti_join group_by filter full_join left_join row_number select summarize ungroup
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_wider
 #'
@@ -89,6 +89,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   speciesType <- match.arg(speciesType)
   valueType <- match.arg(valueType)
 
+  options(scipen = 100)
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the quadrat data
@@ -165,18 +166,24 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                               mutate(ScientificName = ifelse(row_number() > 1,
                                                              paste0(ScientificName, "_", row_number()),
                                                              paste(ScientificName)))
-  quadspp_fix <- rbind(spp_fine, spp_fixes)
+  spp_fixes <- spp_fixes[, names(spp_fine)] # fixes col order
+
+  quadspp_fix <- rbind(spp_fine, spp_fixes) %>% select(-CoverClassCode, - CoverClassLabel,
+                                                       -SQQuadSppCode, -CovClass_num)
+
+  quadspp_fix$freq <- ifelse(quadspp_fix$Pct_Cov > 0, 1, 0) # If Pct_Cov is NA, returns NA
 
   quad_sum <- quadspp_fix %>% group_by(PlotID, EventID, TSN, ScientificName, IsGerminant) %>%
                               summarize(num_quads = sum(Sampled, na.rm = T),
                                         quad_avg_cov = sum(Pct_Cov, na.rm = T)/num_quads,
-                                        quad_pct_freq = (sum(Pct_Cov > 0, na.rm = T)/num_quads)*100,
+                                        quad_pct_freq = (sum(freq, na.rm = T)/num_quads)*100,
                                         .groups = 'drop') %>%
                                         ungroup()
   # Spread quadrats wide
-  quadspp_wide <- quadspp_fix %>% pivot_wider(names_from = QuadratCode,
-                                               values_from = c(Pct_Cov, Txt_Cov),
-                                               values_fill = list(Pct_Cov = 0, Txt_Cov = "0%"))
+  quadspp_wide <- quadspp_fix %>% select(-freq) %>%
+                                  pivot_wider(names_from = QuadratCode,
+                                              values_from = c(Pct_Cov, Txt_Cov),
+                                              values_fill = list(Pct_Cov = 0, Txt_Cov = "0%"))
 
   quadspp_comb <- full_join(quadspp_wide, quad_sum,
                             intersect(names(quadspp_wide), names(quad_sum)))
@@ -190,9 +197,12 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                              by = c("TSN"))
 
   quadspp_comb3$ScientificName[is.na(quadspp_comb3$ScientificName)] <- "None present"
-  na_cols <- c("Exotic", "InvasiveNETN", "quad_avg_cov", "quad_pct_freq")
-  quadspp_comb3[ , na_cols][is.na(quadspp_comb3[, na_cols])] <- 0
 
+  na_cols <- c("Exotic", "InvasiveNETN", "quad_avg_cov", "quad_pct_freq",
+               "Tree", "TreeShrub", "Shrub", "Vine", "Herbaceous",
+               "Graminoid", "FernAlly")
+
+  quadspp_comb3[ , na_cols][is.na(quadspp_comb3[, na_cols])] <- 0
 
   # select columns based on specified valueType
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
