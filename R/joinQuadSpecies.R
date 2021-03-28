@@ -180,7 +180,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                                         .groups = 'drop') %>%
                                         ungroup()
   # Spread quadrats wide
-  quadspp_wide <- quadspp_fix %>% select(-freq) %>%
+  quadspp_wide <- quadspp_fix %>% select(-freq, -Sampled) %>%
                                   pivot_wider(names_from = QuadratCode,
                                               values_from = c(Pct_Cov, Txt_Cov),
                                               values_fill = list(Pct_Cov = 0, Txt_Cov = "0%"))
