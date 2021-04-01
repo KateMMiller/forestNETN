@@ -157,13 +157,10 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
 
   quadchr_comb2$Pct_Cov_UC[quadchr_comb2$Txt_Cov_UC == "Permanently Missing"] <- NA
 
-  quadchr_final <- if(valueType == "midpoint"){
-    quadchr_comb2[, c(req_cols, pct_cols)]
-  } else if(valueType == "classes"){
-    quadchr_comb2[, c(req_cols, txt_cols)]
-  } else if(valueType == "all"){
-    quadchr_comb2[, c(req_cols, pct_cols, txt_cols)]
-  }
+  quadchr_final <- switch(valueType,
+                          "midpoint" = quadchr_comb2[, c(req_cols, pct_cols)],
+                          "classes" = quadchr_comb2[, c(req_cols, txt_cols)],
+                          "all" = quadchr_comb2[, c(req_cols, pct_cols, txt_cols)])
 
   return(quadchr_final)
 
