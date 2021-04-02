@@ -73,9 +73,13 @@ species combination.}
 returns a dataframe with shrub data collected in microplots
 }
 \description{
-This function compiles shrub data collected in the microplots. Note that in 2006, only 1 microplot
-was sampled. Note that from 2006 to 2009, stem tallies were recorded instead of % cover. For records < 2010,
-microplot percent frequency is summarized by species, but average percent cover is NA. Must run importData() first.
+This function compiles shrub data collected in the microplots. For microplot or species-level notes
+run the joinMicroNotes function. Note that in 2006, only 1 microplot was sampled. Note that from 2006 to 2009,
+stem tallies were recorded instead of % cover. For records < 2010, microplot percent frequency is summarized by
+species, but average percent cover is NA. For more information on how methods evolved for shrubs in NETN,
+refer to the Summary of Major Protocol Changes and Deviations document located in the Long-Term Forest Monitoring
+Protocol IRMA Project:
+   https://irma.nps.gov/Datastore/Reference/Profile/2189101.
 }
 \examples{
 importData()
