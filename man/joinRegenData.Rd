@@ -5,29 +5,54 @@
 \title{joinRegenData: compiles seedling and sapling data}
 \usage{
 joinRegenData(
-  speciesType = c("all", "native", "exotic"),
+  park = "all",
+  from = 2006,
+  to = 2021,
+  QAQC = FALSE,
+  panels = 1:4,
+  locType = c("VS", "all"),
+  eventType = c("complete", "all"),
+  speciesType = c("all", "native", "exotic", "invasive"),
   canopyForm = c("canopy", "all"),
   numMicros = 3,
   units = c("micro", "ha", "acres"),
-  park = "all",
-  from = 2006,
-  to = 2018,
-  QAQC = FALSE,
-  locType = "VS",
-  panels = 1:4,
-  output,
   ...
 )
 }
 \arguments{
+\item{from}{Year to start analysis, ranging from 2006 to current year}
+
+\item{to}{Year to stop analysis, ranging from 2006 to current year}
+
+\item{QAQC}{Allows you to remove or include QAQC events.
+\describe{
+\item{FALSE}{Default. Only returns visits that are not QAQC visits}
+\item{TRUE}{Returns all visits, including QAQC visits}}}
+
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
+\item{locType}{Allows you to only include plots that are part of the GRTS sample design or
+include all plots, such as deer exclosures.
+\describe{
+\item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+\item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}}
+
+\item{eventType}{Allows you to include only complete sampling events or all sampling events
+\describe{
+\item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+\item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
 \describe{
 \item{"all"}{Default. Returns all species.}
 \item{"native"}{Returns native species only}
 \item{"exotic"}{Returns exotic species only}
+\item{"invasive"}{Returns species on the Indicator Invasive List}
 }}
 
-\item{canopyForm}{Allows you to filter on native, exotic or include all species.
+\item{canopyForm}{Allows you to filter on species growth form
 \describe{
 \item{"all"}{Returns all species, including low canopy species.}
 \item{"canopy"}{Default. Returns canopy-forming species only}
@@ -43,15 +68,33 @@ joinRegenData(
 }}
 }
 \value{
-returns a dataframe with seedling and sapling densities, and stocking index
+returns a dataframe with seedling and sapling densities, and stocking index metrics
+for each species observed per visit.
 }
 \description{
-This function combines seedling and sapling data, and calculates stocking index. Must run importData first.
+This function combines seedling and sapling data collected in microplots, and
+calculates the stocking index. Each row represents a species observed per visit. If no seedlings
+or saplings were observed, function returns "None present" for ScientificName and 0 for densities.
+If a record has a blank ScientificName and associated data, it means it's a missing value. These are
+rare, but mostly occur in data <2011. Note that the stocking index only includes saplings < 2.5cm DBH,
+but the sapling density returned is all saplings > 1cm and <10cm DBH. Must run importData first.
+
+#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
+\describe{
+\item{"all"}{Includes all parks in the network}
+\item{"ACAD"}{Acadia NP only}
+\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+\item{"MIMA"}{Minute Man NHP only}
+\item{"MORR"}{Morristown NHP only}
+\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+\item{"SAGA"}{Saint-Gaudens NHS only}
+\item{"SARA"}{Saratoga NHP only}
+\item{"WEFA"}{Weir Farm NHS only}}
 }
 \examples{
 importCSV('./forest_csvs/')
-# compile seedling and sapling data for all parks and all species in most recent cycle
-regen_data <- joinRegenData(canopyForm = 'all', from = 2015, to = 2018)
+# compile seedling and sapling data for all parks and all species in cycle 3
+regen_data <- joinRegenData(canopyForm = 'all', from = 2014, to = 2017)
 
 # compile regen data for only canopy-forming (default) and native species in SAGA for all years
 SAGA_regen <- joinRegenData(park = 'SAGA', speciesType = 'native')
