@@ -41,6 +41,9 @@
 #' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
 #' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
 #'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
 #' @param speciesType Allows you to filter on native, exotic or include all species.
 #' \describe{
 #' \item{"all"}{Default. Returns all species.}
@@ -49,7 +52,7 @@
 #' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
-#' @param canopyForm Allows you to filter on native, exotic or include all species.
+#' @param canopyForm Allows you to filter on species growth form
 #' \describe{
 #' \item{"all"}{Returns all species, including low canopy species.}
 #' \item{"canopy"}{Default. Returns canopy-forming species only}
@@ -57,7 +60,7 @@
 #'
 #' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
 #'
-#' @return returns a dataframe with seedling and sapling densities, and stocking index
+#' @return returns a dataframe with seedling densities
 #'
 #' @examples
 #' importCSV('./forest_csvs/')
@@ -98,10 +101,10 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the microplot data
-  tryCatch(seeds_vs <- get("NETN_MicroplotSeedlings", envir = env) %>%
+  tryCatch(seeds_vw <- get("NETN_MicroplotSeedlings", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQSeedlingCode,
                     MicroplotCode, TSN, ScientificName, SizeClassCode, SizeClassLabel, Count),
-           error = function(e){stop("COMN_MicroplotShrubs view not found. Please import view.")})
+           error = function(e){stop("NETN_MicroplotSeedlings view not found. Please import view.")})
 
   taxa_wide <- force(prepTaxa())
 
@@ -114,13 +117,13 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
   pe_list <- unique(plot_events$EventID)
 
-  seed_evs <- filter(seeds_vs, EventID %in% pe_list) %>%
+  seed_evs <- filter(seeds_vw, EventID %in% pe_list) %>%
               left_join(plot_events, ., by = intersect(names(plot_events), names(.))) %>%
               filter(!(StartYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
 
   seed_tax <- left_join(seed_evs,
                         taxa_wide[, c("TSN", "ScientificName", "CanopyExclusion", "Exotic",
-                                      "InvasiveNETN", "Shrub", "Vine")],
+                                      "InvasiveNETN")],
                         by = c("TSN", "ScientificName"))
 
   seed_tax$sizeclass <- NA

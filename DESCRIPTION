@@ -17,6 +17,7 @@ Collate:
     'importCSV.R'
     'importData.R'
     'joinCWDData.R'
+    'joinMicroSaplings.R'
     'joinMicroSeedlings.R'
     'prepTaxa.R'
     'joinMicroShrubData.R'

@@ -23,7 +23,7 @@ prepTaxa <- function(){
 
   tryCatch(taxa <- get("COMN_Taxa", envir = env) %>%
              select(TaxonID, TSN, ScientificName, CommonName, Order, Family,
-                    Genus, Species, SubSpecies, IsExotic, InvasiveNETN, IsFernAlly,
+                    Genus, Species, SubSpecies, IsExotic, InvasiveNETN, IsCanopyExclusion, IsFernAlly,
                     TaxonGroupLabel, DeerIndicatorTree, DeerIndicatorHerb), # add FilterMIDN for MIDN
            error = function(e){stop("COMN_Taxa view not found. Please import view.")})
 
@@ -34,6 +34,7 @@ prepTaxa <- function(){
   # Clean up taxa table so easier to work with
   names(taxa)[names(taxa) == "IsFernAlly"] <- "FernAlly"
   names(taxa)[names(taxa) == "IsExotic"] <- "Exotic"
+  names(taxa)[names(taxa) == "IsCanopyExclusion"] <- "CanopyExclusion"
 
   cols <- c("Order", "Family", "Genus", "Species", "SubSpecies")
   taxa[, cols] <- invisible(lapply(taxa[, cols], gsub, pattern = "NOT DETERMINED", replacement = NA))
@@ -48,29 +49,8 @@ prepTaxa <- function(){
                 values_from = guild,
                 values_fill = 0) %>%
     select(TaxonID, TSN, ScientificName, CommonName, Order, Family, Genus, Species, SubSpecies,
-           Tree, TreeShrub, Shrub, Vine, Herbaceous, Graminoid, FernAlly, MossLichen, Exotic,
-           InvasiveNETN, DeerIndicatorTree, DeerIndicatorHerb)
-
-  # Clean this up after taxa table is fixed
-  unk_aster <- data.frame(TaxonID = 1307, TSN = -9999999952, ScientificName = "Unknown Asteraceae - 01",
-                          CommonName = "Unknown Asteraceae", Order = "Asterales", Family = 'Asteraceae',
-                          Genus = NA, Species = NA, SubSpecies = NA, Tree = 0, TreeShrub = 0, Shrub = 0, Vine = 0,
-                          Herbaceous = 1, Graminoid = 0, FernAlly = 0, MossLichen = 0, Exotic = 0,
-                          InvasiveNETN = 0, DeerIndicatorTree = 0, DeerIndicatorHerb = 0)
-
-  unk_symph <- data.frame(TaxonID = 1308, TSN = -9999999953, ScientificName = "Unknown Symphyotrichum - 01",
-                          CommonName = "Unknown Asteraceae", Order = "Asterales", Family = 'Asteraceae',
-                          Genus = "Symphyotrichum", Species = NA, SubSpecies = NA, Tree = 0,TreeShrub = 0, Shrub = 0, Vine = 0,
-                          Herbaceous = 1, Graminoid = 0, FernAlly = 0, MossLichen = 0, Exotic = 0,
-                          InvasiveNETN = 0, DeerIndicatorTree = 0, DeerIndicatorHerb = 0)
-
-  unk_rubus <- data.frame(TaxonID = 1309, TSN = -9999999949, ScientificName = "Unknown Rubus - 01",
-                          CommonName = "Unknown Rubus", Order = "Rosales", Family = 'Rosaceae',
-                          Genus = "Rubus", Species = NA, SubSpecies = NA, Tree = 0,TreeShrub = 0, Shrub = 1, Vine = 0,
-                          Herbaceous = 0, Graminoid = 0, FernAlly = 0, MossLichen = 0, Exotic = 0,
-                          InvasiveNETN = 0, DeerIndicatorTree = 0, DeerIndicatorHerb = 0)
-
-  taxa_wide <- rbind(taxa_wide, unk_aster, unk_symph, unk_rubus)
+           Tree, TreeShrub, Shrub, Vine, Herbaceous, Graminoid, FernAlly, MossLichen,
+           CanopyExclusion, Exotic, InvasiveNETN, DeerIndicatorTree, DeerIndicatorHerb)
 
   return(taxa_wide)
 }
