@@ -77,7 +77,10 @@ calculates the stocking index. Each row represents a species observed per visit.
 or saplings were observed, function returns "None present" for ScientificName and 0 for densities.
 If a record has a blank ScientificName and associated data, it means it's a missing value. These are
 rare, but mostly occur in data <2011. Note that the stocking index only includes saplings < 2.5cm DBH,
-but the sapling density returned is all saplings > 1cm and <10cm DBH. Must run importData first.
+but the sapling density returned is all saplings > 1cm and <10cm DBH. For the few plots with > 10
+saplings of a given species in a microplot, their counts are included in the stocking index only if
+the average DBH of saplings measured is <=2.5 cm. This may underestimate the stocking index for those
+plots, but their index values are still way higher than most plots. Must run importData first.
 
 #' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 \describe{
