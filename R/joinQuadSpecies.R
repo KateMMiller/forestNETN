@@ -110,7 +110,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           xCoordinate, yCoordinate, EventID, StartDate, StartYear, cycle, IsQAQC)
+           EventID, StartDate, StartYear, cycle, IsQAQC)
 
   pe_list <- unique(plot_events$EventID)
 
@@ -154,7 +154,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 8] <- 85
   quadspp_filt$Pct_Cov[quadspp_filt$CovClass_num == 9] <- 97.5
   quadspp_filt$Txt_Cov <- NA
-  quadspp_filt$Txt_Cov <- ifelse(quadspp_filt$CoverClassCode == "-<1%", "<1%", quadspp_filt$CoverClassCode)
+  quadspp_filt$Txt_Cov <- ifelse(quadspp_filt$CoverClassLabel == "-<1%", "<1%", quadspp_filt$CoverClassLabel)
   quadspp_filt$Txt_Cov[is.na(quadspp_filt$ScientificName)] <- "Permanently Missing"
   quadspp_filt$Sampled <- ifelse(quadspp_filt$SQQuadSppCode == "SS", 1, 0)
 

@@ -27,10 +27,6 @@ prepTaxa <- function(){
                     TaxonGroupLabel, DeerIndicatorTree, DeerIndicatorHerb), # add FilterMIDN for MIDN
            error = function(e){stop("COMN_Taxa view not found. Please import view.")})
 
-  #+++++++++++++++++++++++++
-  # When the canopy exclusion column is added back, need to include in this function
-  #+++++++++++++++++++++++++
-
   # Clean up taxa table so easier to work with
   names(taxa)[names(taxa) == "IsFernAlly"] <- "FernAlly"
   names(taxa)[names(taxa) == "IsExotic"] <- "Exotic"
