@@ -113,7 +113,7 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        xCoordinate, yCoordinate, EventID, StartDate, StartYear, cycle, IsQAQC)
+                        EventID, StartDate, StartYear, cycle, IsQAQC)
 
   pe_list <- unique(plot_events$EventID)
 
@@ -200,7 +200,7 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
   seed_exp2 <- full_join(seed_nat %>% filter((!SQSeedlingCode %in% c("ND", "NS")) &
                                                (!is.na(tot_seeds))),
-                         exp_df2, by = intersect(names(seed_nat), names(exp_df2)))
+                         exp_df2, by = intersect(names(seed_nat), names(exp_df2))) %>% unique()
 
   seed_exp2$SQSeedlingCode[is.na(seed_exp2$SQSeedlingCode)] <- "NP"
   seed_exp2$ScientificName[is.na(seed_exp2$ScientificName)] = "None present"
