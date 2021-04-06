@@ -162,7 +162,7 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
                           "classes" = quadchr_comb2[, c(req_cols, txt_cols)],
                           "all" = quadchr_comb2[, c(req_cols, pct_cols, txt_cols)])
 
-  return(quadchr_final)
+  return(data.frame(quadchr_final))
 
   } # end of function
 

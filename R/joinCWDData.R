@@ -186,5 +186,5 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
                          IsQAQC, TSN, ScientificName, DecayClassCode, CWD_Vol)
   } else {cwd_merge}
 
-  return(cwd_final)
+  return(data.frame(cwd_final))
 } # end of function

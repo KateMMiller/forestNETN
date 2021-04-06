@@ -216,7 +216,7 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   seed_comb <- rbind(seed_exp2, bad_visits)
   seed_final <- seed_comb %>% arrange(Plot_Name, StartYear, IsQAQC, MicroplotCode, ScientificName)
 
-  return(seed_final)
+  return(data.frame(seed_final))
 } # end of function
 
 

@@ -217,7 +217,7 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
 
   sap_final <- rbind(sap_comb, sap_cnt1) %>% arrange(Plot_Name, StartYear, IsQAQC, MicroplotCode, ScientificName)
 
-  return(sap_final)
+  return(data.frame(sap_final))
 } # end of function
 
 

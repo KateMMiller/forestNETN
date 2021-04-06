@@ -226,6 +226,6 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                          "all" = quadspp_comb3[, c(req_cols, pct_cols, txt_cols, taxa_cols, "QuadSppNote")],
                          "averages" = quadspp_comb3[, c(req_cols, taxa_cols)])
 
-  return(quadspp_final)
+  return(data.frame(quadspp_final))
   } # end of function
 

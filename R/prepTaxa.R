@@ -52,5 +52,5 @@ prepTaxa <- function(){
            Tree, TreeShrub, Shrub, Vine, Herbaceous, Graminoid, FernAlly, MossLichen,
            CanopyExclusion, Exotic, InvasiveNETN, DeerIndicatorTree, DeerIndicatorHerb)
 
-  return(taxa_wide)
+  return(data.frame(taxa_wide))
 }

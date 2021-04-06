@@ -243,7 +243,7 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                         "averages" = shrub_clean[, c(req_cols, avg_cols, taxa_cols)])
 
 
-  return(shrub_final)
+  return(data.frame(shrub_final))
 } # end of function
 
 

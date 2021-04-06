@@ -145,6 +145,6 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   plot_events7$cycle[plot_events7$StartYear %in% c(2014:2017)] <- 3
   plot_events7$cycle[plot_events7$StartYear %in% c(2018:2021)] <- 4
     # need to update for 2022
-  return(plot_events7)
+  return(data.frame(plot_events7))
 } # end of function
 

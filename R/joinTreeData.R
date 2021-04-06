@@ -211,6 +211,6 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
       } else {tree_merge}
   #table(complete.cases(tree_merge[,intersect(names(plot_events), names(tree_dist))])) #All T
 
-  return(tree_final)
+  return(data.frame(tree_final))
 } # end of function
 
