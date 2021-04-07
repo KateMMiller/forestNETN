@@ -1,6 +1,7 @@
 #' @include joinLocEvent.R
 #' @include joinMicroSaplings.R
 #' @include joinMicroSeedlings.R
+#'
 #' @title joinRegenData: compiles seedling and sapling data
 #'
 #' @importFrom dplyr  anti_join left_join filter select
@@ -10,14 +11,15 @@
 #' @description This function combines seedling and sapling data collected in microplots, and
 #' calculates the stocking index. Each row represents a species observed per visit. If no seedlings
 #' or saplings were observed, function returns "None present" for ScientificName and 0 for densities.
-#' If a record has a blank ScientificName and associated data, it means it's a missing value. These are
-#' rare, but mostly occur in data <2011. Note that the stocking index only includes saplings < 2.5cm DBH,
-#' but the sapling density returned is all saplings > 1cm and <10cm DBH. For the few plots with > 10
-#' saplings of a given species in a microplot, their counts are included in the stocking index only if
-#' the average DBH of saplings measured is <=2.5 cm. This may underestimate the stocking index for those
-#' plots, but their index values are still way higher than most plots. Must run importData first.
+#' Permanently Missing species tallies for species or whole plots have NAs. These are rare, have always been
+#' low canopy species initially recorded as shrubs, and mostly occur in data <2011. Note that the stocking
+#' index only includes saplings < 2.5cm DBH, but the sapling density returned is all saplings > 1cm and
+#' <10cm DBH. For the few plots with > 10 saplings of a given species in a microplot, their counts are
+#' included in the stocking index only if the average DBH of saplings measured is <=2.5 cm. This may
+#' underestimate the stocking index for those plots, but their index values are still way higher than
+#' most plots. Must run importData first.
 #'
-#'#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
+#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 #' \describe{
 #' \item{"all"}{Includes all parks in the network}
 #' \item{"ACAD"}{Acadia NP only}
@@ -71,6 +73,7 @@
 #' @param units Calculates seedling and sapling densities based on different units.
 #' \describe{
 #' \item{"micro"}{Default. Returns seedling and sapling densities per microplot.}
+#' \item{"sq.m"}{Returns seedling and sapling densities per square meter}
 #' \item{"ha"}{Returns seedling and sapling densities per hectare}
 #' \item{"acres"}{Returns densities per acre}
 #'}
@@ -98,7 +101,7 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                           locType = c('VS', 'all'), eventType = c('complete', 'all'),
                           speciesType = c('all', 'native', 'exotic', 'invasive'),
                           canopyForm = c('all', 'canopy'), numMicros = 3,
-                          units = c("micro", "ha", "acres"), ...){
+                          units = c("micro", "sq.m", "ha", "acres"), ...){
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
@@ -118,9 +121,12 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   seeds_raw <- joinMicroSeedlings(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                                   locType = locType, eventType = eventType, speciesType = speciesType,
                                   canopyForm = canopyForm, numMicros = numMicros) %>%
-               select(-tot_seeds, -SQSeedlingCode, -StartDate) %>% filter(!ScientificName %in% "None present")
+               select(-tot_seeds) %>% filter(!ScientificName %in% "None present")
 
-  seeds_long <- seeds_raw %>% pivot_longer(cols = c(sd_15_30cm, sd_30_100cm, sd_100_150cm, sd_p150cm),
+  not_sampled_sds <- seeds_raw %>% filter(SQSeedlingCode %in% c("ND", "NS")) %>% select(EventID)
+
+  seeds_long <- seeds_raw %>% select(-SQSeedlingCode) %>%
+                              pivot_longer(cols = c(sd_15_30cm, sd_30_100cm, sd_100_150cm, sd_p150cm),
                                        names_to = "SizeClass",
                                        values_to = "Count")
 
@@ -128,13 +134,16 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   saps_raw <- joinMicroSaplings(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                                locType = locType, eventType = eventType, speciesType = speciesType,
                                canopyForm = canopyForm, numMicros = numMicros) %>%
-              select(-SQSaplingCode) %>% filter(!ScientificName %in% "None present") %>%
+              filter(!ScientificName %in% "None present") %>%
               mutate(SizeClass = ifelse(DBHcm <= 2.5, "Sapling_SI", "Sapling"))
 
-  sap_sum <- saps_raw %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+  not_sampled_saps <- saps_raw %>% filter(SQSaplingCode %in% c("ND", "NS")) %>% select(EventID)
+
+  sap_sum <- saps_raw %>% select(-SQSaplingCode) %>%
+                          group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                                PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle, MicroplotCode,
                                TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, SizeClass)  %>%
-                      summarize(Count = sum(Count), .groups = 'drop')
+                          summarize(Count = sum(Count), .groups = 'drop')
 
 
   reg_long <- rbind(seeds_long, sap_sum)
@@ -143,55 +152,48 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                        values_from = "Count",
                                        values_fill = NA_real_) %>% select(-MicroplotCode)
 
-  # Fill 0s for plots without issues. In this case, if the ScientificName isn't NA, 0s are safe.
-  reg_wide$sd_15_30cm[(!is.na(reg_wide$ScientificName)) & is.na(reg_wide$sd_15_30cm)] <- 0
-  reg_wide$sd_30_100cm[(!is.na(reg_wide$ScientificName)) & is.na(reg_wide$sd_30_100cm)] <- 0
-  reg_wide$sd_100_150cm[(!is.na(reg_wide$ScientificName)) & is.na(reg_wide$sd_100_150cm)] <- 0
-  reg_wide$sd_p150cm[(!is.na(reg_wide$ScientificName)) & is.na(reg_wide$sd_p150cm)] <- 0
-  reg_wide$Sapling[(!is.na(reg_wide$ScientificName)) & is.na(reg_wide$Sapling)] <- 0
-  reg_wide$Sapling_SI[(!is.na(reg_wide$ScientificName)) & is.na(reg_wide$Sapling_SI)] <- 0
-  reg_wide$num_micros <- ifelse(reg_wide$StartYear == 2006, 1, numMicros)
-
-  # Summarise data at plot level. We lose the Microplot name, but average over # microplots selected in next step
-  reg_sum <- reg_wide %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                                   PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle,
-                                   TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN) %>%
-                          summarize(num_micros = first(num_micros),
-                                    seed_15_30cm = sum(sd_15_30cm), # leaving na.rm = F, so problem plots return NA
-                                    seed_30_100cm = sum(sd_30_100cm),
-                                    seed_100_150cm = sum(sd_100_150cm),
-                                    seed_p150cm = sum(sd_p150cm),
-                                    sap_stems = sum(Sapling) + sum(Sapling_SI),
-                                    sap_stems_SI = sum(Sapling_SI),
-                                    .groups = 'drop')
-
-  # Had to go this route because sapling and seedlings can have a combination of none present and spp.
-  # on the same plot. Have to first bind the species data, then reintroduce None present if none present
-  # in both seedling and saplings
+  # Helps to add all events back for MIDN (didn't need this for NETN)
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
-                 select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, StartYear, cycle, IsQAQC)
+    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+           EventID, StartYear, cycle, IsQAQC)
 
-  missing_evs <- anti_join(plot_events, reg_sum, by = intersect(names(plot_events), names(reg_sum)))
+  reg_wide2 <- left_join(plot_events, reg_wide, by = intersect(names(plot_events), names(reg_wide)))
 
-  missing_evs <- missing_evs %>% mutate(TSN = NA,
-                                        ScientificName = "None present",
-                                        CanopyExclusion = FALSE,
-                                        Exotic = FALSE,
-                                        InvasiveNETN = FALSE,
-                                        num_micros = ifelse(StartYear == 2006, 1, 3),
-                                        seed_15_30cm = 0,
-                                        seed_30_100cm = 0,
-                                        seed_100_150cm = 0,
-                                        seed_p150cm = 0,
-                                        sap_stems = 0,
-                                        sap_stems_SI = 0)
+  # Fill 0s for plots without issues using the not_sampled_evs
+  # Also safe because we counted the number of quadrats and microplots already. Some 0s
+  # might be here that shouldn't, but the summary metrics will be correct
+  not_sampled_evs <- unique(rbind(not_sampled_sds, not_sampled_saps))
 
-  reg_all <- rbind(reg_sum, missing_evs)
+  reg_wide2$sd_15_30cm[(!reg_wide2$EventID %in% not_sampled_evs$EventID) & is.na(reg_wide2$sd_15_30cm)] <- 0
+  reg_wide2$sd_30_100cm[(!reg_wide2$EventID %in% not_sampled_evs$EventID) & is.na(reg_wide2$sd_30_100cm)] <- 0
+  reg_wide2$sd_100_150cm[(!reg_wide2$EventID %in% not_sampled_evs$EventID) & is.na(reg_wide2$sd_100_150cm)] <- 0
+  reg_wide2$sd_p150cm[(!reg_wide2$EventID %in% not_sampled_evs$EventID) & is.na(reg_wide2$sd_p150cm)] <- 0
+  reg_wide2$Sapling[(!reg_wide2$EventID %in% not_sampled_evs$EventID)  & is.na(reg_wide2$Sapling)] <- 0
+  reg_wide2$Sapling_SI[(!reg_wide2$EventID %in% not_sampled_evs$EventID) & is.na(reg_wide2$Sapling_SI)] <- 0
+  reg_wide2$ScientificName[(!reg_wide2$EventID %in% not_sampled_evs$EventID)
+                           & is.na(reg_wide2$ScientificName)] <- "None present"
+  reg_wide2$ScientificName[(reg_wide2$EventID %in% not_sampled_evs$EventID)
+                           & is.na(reg_wide2$ScientificName)] <- "Not Sampled"
+  reg_wide2$num_micros <- ifelse(reg_wide2$StartYear == 2006, 1, numMicros)
 
-  reg_stock <- reg_all %>% mutate(stock = ((1*seed_15_30cm) + (2*seed_30_100cm) + (20*seed_100_150cm) +
+  # Summarise data at plot level. We lose the Microplot name, but average over # microplots selected in next step
+  reg_sum <- reg_wide2 %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+                                    PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle,
+                                    TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN) %>%
+                           summarize(num_micros = first(num_micros),
+                                     seed_15_30cm = sum(sd_15_30cm), # leaving na.rm = F, so problem plots return NA
+                                     seed_30_100cm = sum(sd_30_100cm),
+                                     seed_100_150cm = sum(sd_100_150cm),
+                                     seed_p150cm = sum(sd_p150cm),
+                                     sap_stems = sum(Sapling) + sum(Sapling_SI),
+                                     sap_stems_SI = sum(Sapling_SI),
+                                     .groups = 'drop')
+
+  #length(unique(reg_sum$EventID)) #1280
+
+  reg_stock <- reg_sum %>% mutate(stock = ((1*seed_15_30cm) + (2*seed_30_100cm) + (20*seed_100_150cm) +
                                             (50*seed_p150cm) + (50*sap_stems_SI))/num_micros,
                                   seed_15_30cm = seed_15_30cm/num_micros,
                                   seed_30_100cm = seed_30_100cm/num_micros,
@@ -200,10 +202,20 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                   seed_den = ((seed_15_30cm + seed_30_100cm + seed_100_150cm +
                                                 seed_p150cm))/num_micros,
                                   sap_den = sap_stems/num_micros,
-                                  regen_den = (seed_den + sap_den))
+                                  sap_den_SI = sap_stems_SI/num_micros,
+                                  regen_den = (seed_den + sap_den)) %>% select(-sap_stems, -sap_stems_SI)
 
   reg_units <- switch(units,
                       "micro" = reg_stock,
+                      "sq.m" = reg_stock %>%
+                          mutate(seed_15_30cm = (seed_15_30cm)/(pi*4),
+                                 seed_30_100cm = (seed_30_100cm)/(pi*4),
+                                 seed_100_150cm = (seed_100_150cm)/(pi*4),
+                                 seed_p150cm = (seed_p150cm)/(pi*4),
+                                 seed_den = (seed_den)/(pi*4),
+                                 sap_den = (sap_den)/(pi*4),
+                                 sap_den_SI = (sap_den_SI)/(pi*4),
+                                 regen_den = (regen_den)/(pi*4)),
                       "ha" = reg_stock %>%
                           mutate(seed_15_30cm = (seed_15_30cm * 10000)/(pi*4),
                                  seed_30_100cm = (seed_30_100cm * 10000)/(pi*4),
@@ -211,7 +223,8 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                  seed_p150cm = (seed_p150cm * 10000)/(pi*4),
                                  seed_den = (seed_den * 10000)/(pi*4),
                                  sap_den = (sap_den * 10000)/(pi*4),
-                                 regen_den = (rege_den * 10000)/(pi*4)),
+                                 sap_den_SI = (sap_den_SI * 10000)/(pi*4),
+                                 regen_den = (regen_den * 10000)/(pi*4)),
                       'acres' = reg_stock %>%
                           mutate(seed_15_30cm = (seed_15_30cm * 4046.856)/(pi*4),
                                  seed_30_100cm = (seed_30_100cm * 4046.856)/(pi*4),
@@ -219,9 +232,14 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                  seed_p150cm = (seed_p150cm * 4046.856)/(pi*4),
                                  seed_den = (seed_den * 4046.856)/(pi*4),
                                  sap_den = (sap_den * 4046.856)/(pi*4),
-                                 regen_den = (rege_den * 4046.856)/(pi*4))
+                                 sap_den_SI = (sap_den_SI * 4046.856)/(pi*4),
+                                 regen_den = (regen_den * 4046.856)/(pi*4))
   )
 
+  cols_to_NA <- c("num_micros", "seed_15_30cm", "seed_30_100cm", "seed_100_150cm", "seed_p150cm",
+                  "stock", "seed_den", "sap_den", "sap_den_SI", "regen_den")
+
+  reg_units[reg_units$ScientificName == "Permanently Missing", cols_to_NA] <- NA
 
   reg_final <- reg_units %>% arrange(Plot_Name, StartYear, IsQAQC, ScientificName)
 
