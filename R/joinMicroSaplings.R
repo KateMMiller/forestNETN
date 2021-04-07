@@ -57,8 +57,8 @@
 #'
 #' @param canopyForm Allows you to filter on species growth form
 #' \describe{
-#' \item{"all"}{Returns all species, including low canopy species.}
-#' \item{"canopy"}{Default. Returns canopy-forming species only}
+#' \item{"all"}{Default. Returns all species, including low canopy species.}
+#' \item{"canopy"}{Returns canopy-forming species only}
 #'}
 #'
 #' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
@@ -84,7 +84,7 @@
 joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
                                locType = c('VS', 'all'), eventType = c('complete', 'all'),
                                speciesType = c('all', 'native', 'exotic', 'invasive'),
-                               canopyForm = c('canopy', 'all'), numMicros = 3, ...){
+                               canopyForm = c('all', 'canopy'), numMicros = 3, ...){
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
@@ -141,13 +141,24 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
                             NA_real_))
   sap_tax$ScientificName[is.na(sap_tax$ScientificName) & !is.na(sap_tax$Count)] <- "None present"
 
-
   sap_tax$ScientificName[sap_tax$SQSaplingCode == "NP"] <- "None present"
   sap_tax$Count[sap_tax$SQSaplingCode == "NP"] <- 0
 
   sap_tax$CanopyExclusion[sap_tax$ScientificName == "None present"] <- FALSE
   sap_tax$Exotic[sap_tax$ScientificName == "None present"] <- FALSE
   sap_tax$InvasiveNETN[sap_tax$ScientificName == "None present"] <- FALSE
+
+  # Create the left data.frame to join back to after filtering species types
+  sap_left <- sap_tax %>% select(Plot_Name:MicroplotCode) %>% unique() #%>%
+  # group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode,
+  #          PlotID, EventID, StartDate, StartYear, cycle, IsQAQC) %>%
+  # mutate(numquads = length(MicroplotCode)) # All plots have expected # micros
+
+  sap_tax$ScientificName[is.na(sap_tax$ScientificName) &
+                             (sap_tax$SQSeedlingCode == "SS")] = "Permanently Missing"
+  sap_tax$CanopyExclusion[is.na(sap_tax$CanopyExclusion)] <- FALSE # so next filtering steps don't drop PMs
+  sap_tax$Exotic[is.na(sap_tax$Exotic)] <- ifelse(speciesType == "native", FALSE, TRUE)
+  sap_tax$InvasiveNETN[is.na(sap_tax$InvasiveNETN)] <- ifelse(speciesType == 'invasive', TRUE, FALSE)
 
   sap_mic <- if(numMicros == 3) {sap_tax
   } else if(numMicros == 2) {filter(sap_tax, MicroplotCode %in% c('UR','B')) #randomly determined this
@@ -165,43 +176,19 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
            PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle, SQSaplingCode, MicroplotCode,
            TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, DBHcm, Count)
 
+  # join filtered data back to full plot/visit/microplot list
+  sap_comb <- left_join(sap_left, sap_nat, by = intersect(names(sap_left), names(sap_nat))) %>%
+              select(-StartDate)
+  # table(complete.cases(sap_comb[,17])) 75 rows with missing SN values.
+  # table(complete.cases(sap_comb[,21])) 75 rows with missing SN values.
 
-  # Find plot visits that were filtered out based on nummicros, canopy form or nativity to rbind with seed_nat
-  # for full dataset
-  exp_df <- data.frame(MicroplotCode = rep(c("UR", "UL", "B"), times = length(from:to)),
-                       StartYear = rep(from:to, times = 3))
+  # Use SQs to fill blank ScientificNames after filtering
+  sap_comb$ScientificName[is.na(sap_comb$ScientificName) &
+                             (sap_comb$SQSaplingCode %in% c("SS", "NP"))] = "None present"
+  sap_comb$ScientificName[is.na(sap_comb$ScientificName) &
+                             (sap_comb$SQSaplingCode %in% c("ND", "NS"))] = "Not Sampled"
+  sap_comb$Count[(sap_comb$ScientificName == "None present") & is.na(sap_comb$Count)] <- 0
 
-  visits <- plot_events %>% select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                                   PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle) %>% unique() %>%
-    filter(!(EventID %in% c(257, 710))) # dropping ACAD-029-2010 & SAGA-008-2008
-
-  bad_visits <- sap_tax %>% filter(SQSaplingCode %in% c("ND", "NS") |
-                                       is.na(Count)) %>%
-    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-           PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle, SQSaplingCode, MicroplotCode,
-           TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, DBHcm, Count)
-
-
-  # Need to properly add back in the visits with issues
-  # First, none of the early species records without counts were exotic or invasive
-  # ACAD-029-2010 (eID 710) and SAGA-008-2010 (eID 257) have SQs of ND (should be NS)
-
-  exp_df2 <- full_join(visits, exp_df, by = "StartYear") %>%
-    filter(!(StartYear == 2006 & MicroplotCode %in% c("UL", "B"))) %>%
-    filter(!(EventID %in% bad_visits$EventID))
-
-  sap_exp2 <- full_join(sap_nat %>% filter((!SQSaplingCode %in% c("ND", "NS")) &
-                                               (!is.na(Count))),
-                         exp_df2, by = intersect(names(sap_nat), names(exp_df2)))
-
-  sap_exp2$SQSaplingCode[is.na(sap_exp2$SQSaplingCode)] <- "NP"
-  sap_exp2$ScientificName[is.na(sap_exp2$ScientificName)] = "None present"
-  sap_exp2$CanopyExclusion[is.na(sap_exp2$CanopyExclusion)] = FALSE
-  sap_exp2$Exotic[is.na(sap_exp2$Exotic)] = FALSE
-  sap_exp2$InvasiveNETN[is.na(sap_exp2$InvasiveNETN)] = FALSE
-  sap_exp2$Count[is.na(sap_exp2$Count)] <- 0
-
-  sap_comb <- rbind(sap_exp2, bad_visits)
   # Need to add the sapling count data to full dataset. Will average DBH of saplings recorded
   # for that plot/visit/species/microplot combination and make that the DBHcm
   sap_cnt_u <- unique(sap_cnt_evs[, c("EventID", "MicroplotCode", "TSN", "ScientificName", "SaplingCount")])
@@ -214,8 +201,24 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
                         Count = first(SaplingCount),
                         .groups = 'drop')
 
+  sap_cmic <- if(numMicros == 3) {sap_cnt1
+  } else if(numMicros == 2) {filter(sap_cnt1, MicroplotCode %in% c('UR','B')) #randomly determined this
+  } else if(numMicros == 1) {filter(sap_cnt1, MicroplotCode == "UR")}
 
-  sap_final <- rbind(sap_comb, sap_cnt1) %>% arrange(Plot_Name, StartYear, IsQAQC, MicroplotCode, ScientificName)
+  sap_ccan <- if(canopyForm == "canopy"){filter(sap_cmic, CanopyExclusion == FALSE)
+  } else {sap_cmic}
+
+  sap_cnat <- switch(speciesType,
+                    "all" = sap_ccan,
+                    "native" = filter(sap_ccan, Exotic == FALSE),
+                    "exotic" = filter(sap_ccan, Exotic == TRUE),
+                    "invasive" = filter(sap_ccan, InvasiveNETN == TRUE)) %>%
+    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+           PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle, SQSaplingCode, MicroplotCode,
+           TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, DBHcm, Count)
+
+
+  sap_final <- rbind(sap_comb, sap_cnat) %>% arrange(Plot_Name, StartYear, IsQAQC, MicroplotCode, ScientificName)
 
   return(data.frame(sap_final))
 } # end of function

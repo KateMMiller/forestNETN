@@ -62,8 +62,8 @@
 #'
 #' @param canopyForm Allows you to filter on species growth form
 #' \describe{
-#' \item{"all"}{Returns all species, including low canopy species.}
-#' \item{"canopy"}{Default. Returns canopy-forming species only}
+#' \item{"all"}{Default. Returns all species, including low canopy species.}
+#' \item{"canopy"}{Returns canopy-forming species only}
 #'}
 #'
 #' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
@@ -97,7 +97,7 @@
 joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
                           locType = c('VS', 'all'), eventType = c('complete', 'all'),
                           speciesType = c('all', 'native', 'exotic', 'invasive'),
-                          canopyForm = c('canopy', 'all'), numMicros = 3,
+                          canopyForm = c('all', 'canopy'), numMicros = 3,
                           units = c("micro", "ha", "acres"), ...){
 
   # Match args and class
@@ -118,7 +118,7 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   seeds_raw <- joinMicroSeedlings(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                                   locType = locType, eventType = eventType, speciesType = speciesType,
                                   canopyForm = canopyForm, numMicros = numMicros) %>%
-               select(-tot_seeds, -SQSeedlingCode) %>% filter(!ScientificName %in% "None present")
+               select(-tot_seeds, -SQSeedlingCode, -StartDate) %>% filter(!ScientificName %in% "None present")
 
   seeds_long <- seeds_raw %>% pivot_longer(cols = c(sd_15_30cm, sd_30_100cm, sd_100_150cm, sd_p150cm),
                                        names_to = "SizeClass",
@@ -165,13 +165,17 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                     sap_stems_SI = sum(Sapling_SI),
                                     .groups = 'drop')
 
+  # Had to go this route because sapling and seedlings can have a combination of none present and spp.
+  # on the same plot. Have to first bind the species data, then reintroduce None present if none present
+  # in both seedling and saplings
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, StartDate, StartYear, cycle, IsQAQC)
+                        EventID, StartYear, cycle, IsQAQC)
 
-  missing_evs <- anti_join(plot_events, reg_sum, by = intersect(names(plot_events), names(reg_sum))) %>% select(-StartDate)
+  missing_evs <- anti_join(plot_events, reg_sum, by = intersect(names(plot_events), names(reg_sum)))
+
   missing_evs <- missing_evs %>% mutate(TSN = NA,
                                         ScientificName = "None present",
                                         CanopyExclusion = FALSE,
