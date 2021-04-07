@@ -105,7 +105,6 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   stopifnot(class(QAQC) == 'logical')
   stopifnot(panels %in% c(1, 2, 3, 4))
   output <- match.arg(output, c("short", "verbose"))
-  status <- match.arg(status)
   speciesType <- match.arg(speciesType)
 
 
