@@ -15,11 +15,23 @@ joinRegenData(
   speciesType = c("all", "native", "exotic", "invasive"),
   canopyForm = c("all", "canopy"),
   numMicros = 3,
-  units = c("micro", "ha", "acres"),
+  units = c("micro", "sq.m", "ha", "acres"),
   ...
 )
 }
 \arguments{
+\item{park}{Combine data from all parks or one or more parks at a time. Valid inputs:
+\describe{
+\item{"all"}{Includes all parks in the network}
+\item{"ACAD"}{Acadia NP only}
+\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+\item{"MIMA"}{Minute Man NHP only}
+\item{"MORR"}{Morristown NHP only}
+\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+\item{"SAGA"}{Saint-Gaudens NHS only}
+\item{"SARA"}{Saratoga NHP only}
+\item{"WEFA"}{Weir Farm NHS only}}}
+
 \item{from}{Year to start analysis, ranging from 2006 to current year}
 
 \item{to}{Year to stop analysis, ranging from 2006 to current year}
@@ -63,6 +75,7 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{units}{Calculates seedling and sapling densities based on different units.
 \describe{
 \item{"micro"}{Default. Returns seedling and sapling densities per microplot.}
+\item{"sq.m"}{Returns seedling and sapling densities per square meter}
 \item{"ha"}{Returns seedling and sapling densities per hectare}
 \item{"acres"}{Returns densities per acre}
 }}
@@ -75,24 +88,13 @@ for each species observed per visit.
 This function combines seedling and sapling data collected in microplots, and
 calculates the stocking index. Each row represents a species observed per visit. If no seedlings
 or saplings were observed, function returns "None present" for ScientificName and 0 for densities.
-If a record has a blank ScientificName and associated data, it means it's a missing value. These are
-rare, but mostly occur in data <2011. Note that the stocking index only includes saplings < 2.5cm DBH,
-but the sapling density returned is all saplings > 1cm and <10cm DBH. For the few plots with > 10
-saplings of a given species in a microplot, their counts are included in the stocking index only if
-the average DBH of saplings measured is <=2.5 cm. This may underestimate the stocking index for those
-plots, but their index values are still way higher than most plots. Must run importData first.
-
-#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
-\describe{
-\item{"all"}{Includes all parks in the network}
-\item{"ACAD"}{Acadia NP only}
-\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
-\item{"MIMA"}{Minute Man NHP only}
-\item{"MORR"}{Morristown NHP only}
-\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
-\item{"SAGA"}{Saint-Gaudens NHS only}
-\item{"SARA"}{Saratoga NHP only}
-\item{"WEFA"}{Weir Farm NHS only}}
+Permanently Missing species tallies for species or whole plots have NAs. These are rare, have always been
+low canopy species initially recorded as shrubs, and mostly occur in data <2011. Note that the stocking
+index only includes saplings < 2.5cm DBH, but the sapling density returned is all saplings > 1cm and
+<10cm DBH. For the few plots with > 10 saplings of a given species in a microplot, their counts are
+included in the stocking index only if the average DBH of saplings measured is <=2.5 cm. This may
+underestimate the stocking index for those plots, but their index values are still way higher than
+most plots. Must run importData first.
 }
 \examples{
 importCSV('./forest_csvs/')
