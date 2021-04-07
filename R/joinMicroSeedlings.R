@@ -1,4 +1,6 @@
 #' @include joinLocEvent.R
+#' @include prepTaxa.R
+#'
 #' @title joinMicroSeedlings: compiles seedling data collected in microplots
 #'
 #' @importFrom dplyr arrange filter full_join left_join select
@@ -113,7 +115,7 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, StartDate, StartYear, cycle, IsQAQC)
+                        EventID, StartYear, cycle, IsQAQC)
 
   pe_list <- unique(plot_events$EventID)
 
@@ -143,7 +145,7 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   # Create the left data.frame to join back to after filtering species types
   seed_left <- seed_wide %>% select(Plot_Name:MicroplotCode) %>% unique() #%>%
     # group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode,
-    #          PlotID, EventID, StartDate, StartYear, cycle, IsQAQC) %>%
+    #          PlotID, EventID,  StartYear, cycle, IsQAQC) %>%
     # mutate(numquads = length(MicroplotCode)) # All plots have expected # micros
 
   # Fill seedling size columns with 0, if their ScientificName isn't NA

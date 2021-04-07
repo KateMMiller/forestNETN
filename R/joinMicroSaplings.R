@@ -1,4 +1,6 @@
 #' @include joinLocEvent.R
+#' @include prepTaxa.R
+#'
 #' @title joinMicroSaplings: compiles sapling data collected in microplots
 #'
 #' @importFrom dplyr arrange filter full_join group_by left_join select summarize
@@ -151,11 +153,11 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
   # Create the left data.frame to join back to after filtering species types
   sap_left <- sap_tax %>% select(Plot_Name:MicroplotCode) %>% unique() #%>%
   # group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode,
-  #          PlotID, EventID, StartDate, StartYear, cycle, IsQAQC) %>%
+  #          PlotID, EventID, StartYear, cycle, IsQAQC) %>%
   # mutate(numquads = length(MicroplotCode)) # All plots have expected # micros
 
-  sap_tax$ScientificName[is.na(sap_tax$ScientificName) &
-                             (sap_tax$SQSeedlingCode == "SS")] = "Permanently Missing"
+  # sap_tax$ScientificName[is.na(sap_tax$ScientificName) &
+  #                            (sap_tax$SQSeedlingCode == "SS")] = "Permanently Missing" # don't need this
   sap_tax$CanopyExclusion[is.na(sap_tax$CanopyExclusion)] <- FALSE # so next filtering steps don't drop PMs
   sap_tax$Exotic[is.na(sap_tax$Exotic)] <- ifelse(speciesType == "native", FALSE, TRUE)
   sap_tax$InvasiveNETN[is.na(sap_tax$InvasiveNETN)] <- ifelse(speciesType == 'invasive', TRUE, FALSE)
@@ -179,8 +181,8 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
   # join filtered data back to full plot/visit/microplot list
   sap_comb <- left_join(sap_left, sap_nat, by = intersect(names(sap_left), names(sap_nat))) %>%
               select(-StartDate)
-  # table(complete.cases(sap_comb[,17])) 75 rows with missing SN values.
-  # table(complete.cases(sap_comb[,21])) 75 rows with missing SN values.
+  # table(complete.cases(sap_comb[,17])) #6 rows with missing SN values.
+  # table(complete.cases(sap_comb[,21])) #6 rows with missing SN values.
 
   # Use SQs to fill blank ScientificNames after filtering
   sap_comb$ScientificName[is.na(sap_comb$ScientificName) &
