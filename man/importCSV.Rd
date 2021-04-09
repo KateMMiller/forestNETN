@@ -29,6 +29,7 @@ environment in your workspace, or to your global environment based on whether ne
 importCSV(path = "C:/Forest_Health/exports/NETN", new_env = FALSE)
 
 # Import zipped csvs into VIEWS_NETN environment
-importCSV("C:/Forest_Health/exports/NETN", zip = TRUE)
+path <- "C:/Forest_Health/exports/NETN"
+importCSV(path = path, zip_name = "NETN_Forest_20210406.zip")
 
 }
