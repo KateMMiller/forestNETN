@@ -262,7 +262,7 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
 
     stand_merge <- left_join(plot_events, stand_comb,
                          intersect(names(plot_events), names(stand_comb))) %>%
-                   arrange(Plot_Code, StartYear, IsQAQC)
+                   arrange(PlotCode, StartYear, IsQAQC)
 
     stand_final <- if(output == 'short'){
       stand_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, StartYear, cycle, IsQAQC,
