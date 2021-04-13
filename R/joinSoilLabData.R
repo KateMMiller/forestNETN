@@ -80,7 +80,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the soil data
-  tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = VIEWS_NETN) %>%
+  tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                     SampleTypeLabel, PositionCode, Horizon.Code, # HorizonCode,
                     SoilEventNote, IsArchived) %>%
@@ -88,7 +88,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                     ),
            error = function(e){stop("COMN_SoilHeader view not found. Please import view.")})
 
-  tryCatch(soillab_vw <- get("COMN_SoilLab", envir = VIEWS_NETN) %>%
+  tryCatch(soillab_vw <- get("COMN_SoilLab", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                     LabLayer, LabDateSoilCollected, UMOSample:ECEC, LabNotes, EventID, PlotID) %>%
              filter(!is.na(UMOSample)) %>% # drops soils not sampled
@@ -97,7 +97,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                     ),
            error = function(e){stop("COMN_SoilLab view not found. Please import view.")})
 
-  tryCatch(soilsamp_vw <- get("COMN_SoilSample", envir = VIEWS_NETN) %>%
+  tryCatch(soilsamp_vw <- get("COMN_SoilSample", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                     SQSoilCode, SampleSequenceCode, SoilLayerLabel,
                     Depth_cm, Note) %>%
@@ -236,7 +236,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
   # The summarize across checks if any of the values are NA, and if so, summarizes and ignores the na (i.e. takes the
   # non NA value). If no NAs, then calculates weighted average of chemistry based on depth collected
 
-  soil_dups <- soil_merge2 %>% filter(hor_samps == 2) %>%
+  soil_dups <- suppressWarnings(soil_merge2 %>% filter(hor_samps == 2) %>%
                                group_by(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                                         Horizon_QC) %>%
                                summarize(
@@ -252,10 +252,10 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                                          firstID = first(LabLayer),
                                          lastID = last(LabLayer),
                                          layer_Depth = sum(Sample_Depth),
-                                         num_samps = max(num_samps),
+                                         num_samps = max(num_samps, na.rm = T),
                                          Weighted = 1,
                                          .groups = 'drop'
-                                         )
+                                         )) # Suppress warnings turns of when there are 0 rows returned
 
   soil_dups <- soil_dups %>% rename(Sample_Depth = layer_Depth)
 
