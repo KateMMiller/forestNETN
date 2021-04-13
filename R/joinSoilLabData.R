@@ -189,10 +189,22 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                                         Horizon_QC == "A" & A_Hor_sum == 0 & O_Hor_sum == 0 ~ Total_sum,
                                       LabLayer %in% c("10 cm", "O/A", "10cm - NonVS", "A - NonVS") &
                                         Horizon_QC == "A" & A_Hor_sum == 0 & O_Hor_sum != Total_sum ~ Total_sum - O_Hor_sum,
-                                        TRUE ~ 0)) %>%
+                                        TRUE ~ 0),
+                            # Calc additional metrics to be included in weighted averaging
+                            Ca_Al = (Ca/40.078)/(Al/26.981),
+                            C_N   = pctTC/pctTN,
+                            Ca_meq = Ca/((40.08/2)*10),
+                            K_meq = K/(39.1*10),
+                            Mg_meq = Mg/((24.31/2)*10),
+                            Na_meq = Na/((22.29)*10),
+                            Al_meq = Al/((26.98/3)*10),
+                            Fe_meq = Fe/((55.85/2)*10),
+                            Mn_meq = Mn/((54.94/2)*10),
+                            Zn_meq = Zn/((65.39/2)*10),
+                            BaseSat = if_else(is.na(ECEC), NA_real_, ((Ca_meq + K_meq + Mg_meq + Na_meq)/ECEC)*100),
+                            CaSat = if_else(is.na(ECEC), NA_real_, ((Ca_meq)/ECEC)*100),
+                            AlSat = if_else(is.na(ECEC), NA_real_, ((Al_meq)/ECEC)*100)) %>%
                  select(PlotID:LabLayer, Horizon_QC, hor_samps, layer_misID, O_Hor_sum:Sample_Depth, everything())
-
-  names(soil_merge2)
 
   # Fixing the misIDed (or 10 cm) layers that don't have duplicates
   soil_sing <- soil_merge2 %>% filter(hor_samps == 1) %>%
@@ -203,8 +215,9 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                                select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear,
                                       IsQAQC, Horizon_QC, Field_misID, firstID, lastID, Sample_Depth,
                                       num_samps, soilpH, pctLOI, pctTN, pctTC, Ca, K, Mg, P, Al,
-                                      Fe, Mn, Na, Zn, acidity, ECEC, Weighted)
-  names(soil_sing)
+                                      Fe, Mn, Na, Zn, acidity, ECEC, Ca_Al, C_N, Ca_meq, K_meq, Mg_meq, Na_meq,
+                                      Al_meq, Fe_meq, Mn_meq, Zn_meq, BaseSat, CaSat, AlSat, Weighted)
+
 
   # Duplicate samples are trickier, because I need to identify the depth collected of each attached to original layer ID
   # The summarize across checks if any of the values are NA, and if so, summarizes and ignores the na (i.e. takes the
@@ -218,9 +231,11 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                                          layer_Depth = sum(Sample_Depth),
                                          num_samps = max(num_samps),
                                          across(c(soilpH, pctLOI, pctTN, pctTC, Ca, K, Mg, P, Al, Fe, Mn, Na, Zn,
-                                                acidity, ECEC),
-                                                ~ifelse(any(is.na(.x)), sum(.x, na.rm = T),
-                                                 sum(.x * Sample_Depth)/sum(Sample_Depth))),
+                                                acidity, ECEC, Ca_Al, C_N, Ca_meq, K_meq, Mg_meq, Na_meq,
+                                                Al_meq, Fe_meq, Mn_meq, Zn_meq, BaseSat, CaSat, AlSat),
+                                                ~case_when(all(is.na(.x)) ~ NA_real_,
+                                                           any(is.na(.x)) ~ sum(.x, na.rm = T),
+                                                           all(!is.na(.x)) ~ sum(.x * Sample_Depth)/sum(Sample_Depth))),
                                          Weighted = 1,
                                          .groups = 'drop'
                                          ) %>% rename(Sample_Depth = layer_Depth)
@@ -231,31 +246,9 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear,
                       IsQAQC, Horizon_QC, Field_misID, horizon_depth, Weighted,
                       num_samps, soilpH, pctLOI, pctTN, pctTC, Ca, K, Mg, P, Al,
-                      Fe, Mn, Na, Zn, acidity, ECEC)
-
-  soil_comb <- soil_comb %>% mutate(
-    Ca_Al = (Ca/40.078)/(Al/26.981),
-    C_N   = pctTC/pctTN,
-    Ca_meq = Ca/((40.08/2)*10),
-    K_meq = K/(39.1*10),
-    Mg_meq = Mg/((24.31/2)*10),
-    Na_meq = Na/((22.29)*10),
-    Al_meq = Al/((26.98/3)*10),
-    Fe_meq = Fe/((55.85/2)*10),
-    Mn_meq = Mn/((54.94/2)*10),
-    Zn_meq = Zn/((65.39/2)*10),
-    BaseSat = ((Ca_meq + K_meq + Mg_meq + Na_meq)/ECEC)*100,
-    CaSat = ((Ca_meq)/ECEC)*100,
-    AlSat = ((Al_meq)/ECEC)*100)
-
-  soil_comb$BaseSat <- ifelse(soil_comb$ECEC == 0, NA, soil_comb$BaseSat)
-  soil_comb$CaSat <- ifelse(soil_comb$ECEC == 0, NA, soil_comb$CaSat)
-  soil_comb$AlSat <- ifelse(soil_comb$ECEC == 0, NA, soil_comb$AlSat)
-
-  # Not sure why this is happening. Converting to NA until I figure out the issue
-  soil_comb$BaseSat <- ifelse(soil_comb$BaseSat > 100, NA, soil_comb$BaseSat)
-  soil_comb$CaSat <- ifelse(soil_comb$CaSat > 100, NA, soil_comb$CaSat)
-  soil_comb$AlSat <- ifelse(soil_comb$AlSat > 100, NA, soil_comb$AlSat)
+                      Fe, Mn, Na, Zn, acidity, ECEC,
+                      Ca_Al, C_N, Ca_meq, K_meq, Mg_meq, Na_meq,
+                      Al_meq, Fe_meq, Mn_meq, Zn_meq, BaseSat, CaSat, AlSat)
 
  soil_comb2 <- switch(layer,
                       "all" = soil_comb,
