@@ -4,7 +4,7 @@
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_wider
 #'
-#' @title joinSoilLabData: compile soil chemistry data by horizon.
+#' @title joinSoilLabData: compile and QC soil chemistry data by horizon.
 #'
 #' @description This function verifies whether O and A horizons were named corrected based on % Total Carbon (O = TC >= 20%).
 #' For duplicate horizons on a plot, chemistry variables are corrected using weighted averages, with sample depth
@@ -111,8 +111,19 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
   soilsamp_vw$SoilLayer = gsub(" ", "_", soilsamp_vw$SoilLayerLabel)
   soilsamp_vw$SoilLayer = gsub("Unconsolidated_Litter", "Litter", soilsamp_vw$SoilLayer)
 
+  plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
+                                    panels = panels, locType = locType, eventType = "complete",
+                                    abandoned = FALSE, output = 'short')) %>%
+    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+           EventID, StartDate, StartYear, cycle, IsQAQC)
+
+  pe_list <- unique(plot_events$EventID)
+  soilsamp_evs <- filter(soilsamp_vw, EventID %in% pe_list)
+  soillab_evs <- filter(soillab_vw, EventID %in% pe_list)
+  soilhd_evs <- filter(soilhd_samp, EventID %in% pe_list)
+
     # Change this step after migration switches FF to O
-  soilsamp_wide <- soilsamp_vw %>% select(-SoilLayerLabel) %>%
+  soilsamp_wide <- soilsamp_evs %>% select(-SoilLayerLabel) %>%
                                    filter(SoilLayer %in% c("Litter", "Forest_Floor", "A_Horizon", "Total_Depth")) %>%
                                    pivot_wider(names_from = SoilLayer,
                                                values_from = Depth_cm) %>%
@@ -124,7 +135,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                                                                Total_Depth))
   # Only interested in merging records of sampled soil- results in 2721 rows (8 less than orig. database)
     # actually 2455 rows after deleting excluded layers
-  soil_merge <- left_join(soilsamp_wide, soilhd_samp,
+  soil_merge <- left_join(soilsamp_wide, soilhd_evs,
                           by = c("PlotID", "EventID", "ParkUnit", "ParkSubUnit",
                                  "PlotCode", "StartYear", "IsQAQC")) %>%
                 select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear,
@@ -135,16 +146,16 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
   soil_samp_sum <- soil_merge %>% filter(Litter + O_Horizon + A_Horizon + Total_Depth > 0) %>%
                      group_by(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC) %>%
                      summarize(num_samps = length(!is.na(SampleSequenceCode)),
-                               Litter_sum = sum(Litter),
-                               O_Hor_sum = sum(O_Horizon),
-                               A_Hor_sum = sum(A_Horizon),
-                               Total_sum = sum(Total_Depth),
+                               Litter_sum = as.numeric(sum(Litter)),
+                               O_Hor_sum = as.numeric(sum(O_Horizon)),
+                               A_Hor_sum = as.numeric(sum(A_Horizon)),
+                               Total_sum = as.numeric(sum(Total_Depth)),
                                .groups = 'drop') %>% ungroup()
 
   # Prep the lab data- need to drop reported columns and QC layers
   # Only small number of samples are censored, so shouldn't be a big deal
   # Had to drop any sample missing pctTC, because I can't QC it
-  soillab2 <- soillab_vw %>% select(-contains("Reported")) %>%
+  soillab2 <- soillab_evs %>% select(-contains("Reported")) %>%
                              filter(!is.na(pctTC)) %>%
                              filter(!is.na(LabDateSoilCollected)) %>% # drops 2019 incinerated data
                              mutate(Horizon_QC = ifelse(pctTC >= 20, "O", "A"),
@@ -156,13 +167,14 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
 
   # Identify layers that have 2 O or A horizons after Horizon_QC
   soil_check <- soillab2 %>% group_by(PlotID, EventID, ParkUnit, PlotCode, StartYear, IsQAQC, Horizon_QC) %>%
-                             summarize(hor_samps = n(), .groups = 'drop')
+                             summarize(hor_samps = n(), .groups = 'keep')
 
   soillab3 <- left_join(soillab2, soil_check, by = intersect(names(soillab2), names(soil_check)))
 
 
   # Fixing when crew only collected 1 layer, and only recorded total depth
   # This is not pretty, but it works
+
   soil_merge2 <- soillab3 %>% left_join(., soil_samp_sum, by = intersect(names(.), names(soil_samp_sum))) %>%
                    mutate(Sample_Depth =
                             case_when(LabLayer == "O" & O_Hor_sum == 0 & A_Hor_sum == 0 ~ Total_sum,
@@ -181,6 +193,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                                       LabLayer == "A" & A_Hor_sum == 0 & O_Hor_sum == Total_sum ~ Total_sum,
                                       LabLayer == "A" & A_Hor_sum == 0 & O_Hor_sum != Total_sum ~ Total_sum - O_Hor_sum,
                                       LabLayer == "A" & A_Hor_sum > 0 ~ A_Hor_sum,
+
                                       LabLayer %in% c("10 cm", "O/A", "10cm - NonVS", "A - NonVS") &
                                         Horizon_QC == "A" & A_Hor_sum > 0 ~ A_Hor_sum,
                                       LabLayer %in% c("10 cm", "O/A", "10cm - NonVS", "A - NonVS") &
@@ -222,23 +235,29 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
   # Duplicate samples are trickier, because I need to identify the depth collected of each attached to original layer ID
   # The summarize across checks if any of the values are NA, and if so, summarizes and ignores the na (i.e. takes the
   # non NA value). If no NAs, then calculates weighted average of chemistry based on depth collected
+
   soil_dups <- soil_merge2 %>% filter(hor_samps == 2) %>%
                                group_by(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                                         Horizon_QC) %>%
-                               summarize(Field_misID = sum(layer_misID),
+                               summarize(
+                                 across(c(soilpH, pctLOI, pctTN, pctTC, Ca, K, Mg, P, Al, Fe, Mn, Na, Zn,
+                                          acidity, ECEC, Ca_Al, C_N, Ca_meq, K_meq, Mg_meq, Na_meq,
+                                          Al_meq, Fe_meq, Mn_meq, Zn_meq, BaseSat, CaSat, AlSat),
+
+                                        ~case_when(all(is.na(.x)) ~ NA_real_,
+                                          any(is.na(.x)) ~ sum(.x, na.rm = T),
+                                          all(!is.na(.x)) ~ sum(.x * Sample_Depth)/sum(Sample_Depth))),
+
+                                         Field_misID = sum(layer_misID),
                                          firstID = first(LabLayer),
                                          lastID = last(LabLayer),
                                          layer_Depth = sum(Sample_Depth),
                                          num_samps = max(num_samps),
-                                         across(c(soilpH, pctLOI, pctTN, pctTC, Ca, K, Mg, P, Al, Fe, Mn, Na, Zn,
-                                                acidity, ECEC, Ca_Al, C_N, Ca_meq, K_meq, Mg_meq, Na_meq,
-                                                Al_meq, Fe_meq, Mn_meq, Zn_meq, BaseSat, CaSat, AlSat),
-                                                ~case_when(all(is.na(.x)) ~ NA_real_,
-                                                           any(is.na(.x)) ~ sum(.x, na.rm = T),
-                                                           all(!is.na(.x)) ~ sum(.x * Sample_Depth)/sum(Sample_Depth))),
                                          Weighted = 1,
                                          .groups = 'drop'
-                                         ) %>% rename(Sample_Depth = layer_Depth)
+                                         )
+
+  soil_dups <- soil_dups %>% rename(Sample_Depth = layer_Depth)
 
   # Combine the corrected and QCed soil lab data
   soil_comb <- rbind(soil_sing, soil_dups) %>%
@@ -254,13 +273,6 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
                       "all" = soil_comb,
                       "A" = soil_comb %>% filter(Horizon_QC == 'A'),
                       "O" = soil_comb %>% filter(Horizon_QC == 'O'))
-
- # Filter park and year stuff at the end, because the soil corrections are so complicated
- plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
-                                   panels = panels, locType = locType, eventType = "complete",
-                                   abandoned = FALSE, output = 'short')) %>%
-   select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-          EventID, StartDate, StartYear, cycle, IsQAQC)
 
  soil_final <- inner_join(plot_events, soil_comb2, by = intersect(names(plot_events), names(soil_comb2)))
 

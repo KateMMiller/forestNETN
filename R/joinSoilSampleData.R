@@ -1,76 +1,180 @@
 #' @include joinLocEvent.R
 #' @include joinSoilLabData.R
 #'
-#' @importFrom dplyr select filter arrange mutate summarise group_by case_when summarise_at rename left_join
+#' @importFrom dplyr group_by mutate select summarize
 #' @importFrom magrittr %>%
-#' @importFrom tidyr spread
+#' @importFrom tidyr pivot_wider
 #'
 #' @title joinSoilSampleData: compile corrected soil sample data.
 #'
-#' @description This function verifies whether O and A horizons were named corrected based on % Total Carbon using
-#' the joinSoilLabData() function, then compiles sample depth by horizon. Must run importData first.
-#' Note that Earthworms are summarized in joinStandData(). Note that data starts at 2007 because 2006 methods were pretty different.
+#' @description This function verifies whether O and A horizons were named corrected based on % Total Carbon (O = TC >= 20%) using
+#' the joinSoilLabData() function, then compiles average sample depth by horizon. Must run importData first. Only works for complete
+#' visits and plots that haven't been abandoned. Note that Earthworms are summarized in joinStandData(). This function starts at 2007
+#' because 2006 methods were pretty different.
 #'
-#' @return returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of O and A sampled.
-#' Litter is not included in total depth calculation. Note soil chemistry data are typically a year behind plot data,
-#' so correcteed soil horizon depths will also be a year behind. Plots that weren't sampled during a given cycle are
-#' not returned. Horizon depths are averaged across samples of the same horizon type.
+#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
+#' \describe{
+#' \item{"all"}{Includes all parks in the network}
+#' \item{"ACAD"}{Acadia NP only}
+#' \item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+#' \item{"MIMA"}{Minute Man NHP only}
+#' \item{"MORR"}{Morristown NHP only}
+#' \item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+#' \item{"SAGA"}{Saint-Gaudens NHS only}
+#' \item{"SARA"}{Saratoga NHP only}
+#' \item{"WEFA"}{Weir Farm NHS only}}
+#'
+#' @param from Year to start analysis, ranging from 2007 to current year.
+#' @param to Year to stop analysis, ranging from 2007 to current year
+#'
+#' @param QAQC Allows you to remove or include QAQC events.
+#' \describe{
+#' \item{FALSE}{Default. Only returns visits that are not QAQC visits}
+#' \item{TRUE}{Returns all visits, including QAQC visits}}
+#'
+#' @param locType Allows you to only include plots that are part of the GRTS sample design or
+#' include all plots, such as deer exclosures.
+#' \describe{
+#' \item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+#' \item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}
+#'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param layer Allows you to filter on soil horizons
+#' \describe{
+#' \item{"all"}{Default. Includes O and A horizons.}
+#' \item{"O"}{Return only samples from the O horizon.}
+#' \item{"A"}{Return only samples from the A horizon.}
+#' }
+#'
+#' @param last_lab_year The most recent year lab analyses have been completed for. This will allow non-lab QCed horizon data
+#' to be returned for years following. Otherwise, only QCed data horizon data are returned.
+#'
+#' @return returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of
+#' O and A sampled. Litter is not included in total depth calculation. Note soil chemistry data are typically a year behind
+#' plot data, so corrected soil horizon depths will also be a year behind. Soil horizon data not yet QCed by lab data are
+#' indicated by the Lab_QC (T/F) column. Plots that weren't sampled during a given cycle are not returned. Horizon depths
+#' are averaged across samples of the same horizon type.
 #'
 #' @examples
-#' importData() #imports using default odbc
-#'# join horizon dpeth data for most recent cycle in ACAD.
-#' soil_ACAD_O <- joinSoilSampleData(park = 'ACAD', from = 2015, to = 2018)
+#' importData() #default imports
+#'# join horizon depth data for the third cycle in ACAD.
+#' soil_ACAD_O <- joinSoilSampleData(park = 'ACAD', from = 2014, to = 2017)
 #'
 #' @export
 #'
 #------------------------
-# Join soil lab data
+# Join soil sample data
 #------------------------
-joinSoilSampleData <- function(park = 'all', from = 2007, to = 2018, QAQC = FALSE,
-                               locType = 'VS', panels = 1:4, output, layers = 'all', ...){
+joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, panels = 1:4,
+                               locType = c('VS', 'all'), eventType = c('complete', 'all'),
+                               last_lab_year = 2019,
+                               layer = c("all", "O", "A"), ...){
 
-  layers<-match.arg(layers)
+  # Match args and class
+  park <- match.arg(park, several.ok = TRUE,
+                    c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))
+  stopifnot(class(from) == "numeric", from >= 2006)
+  stopifnot(class(to) == "numeric", to >= 2006)
+  stopifnot(class(QAQC) == 'logical')
+  stopifnot(panels %in% c(1, 2, 3, 4))
+  locType <- match.arg(locType)
+  eventType <- match.arg(eventType)
+  layer <- match.arg(layer)
 
-  park.plots <- force(joinLocEvent(park = park, from = from, to = to, QAQC = QAQC,
-                                   locType = locType, panels = panels, output = 'short'))
+  env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
-  park.plots <- park.plots %>% filter(Plot_Name!='SARA-015') %>% droplevels() #superfund site- we don't sample soils there
+  # Prepare the soil data
+  tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = VIEWS_NETN) %>%
+             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
+                    SampleTypeLabel, PositionCode, Horizon.Code, # HorizonCode,
+                    SoilEventNote, IsArchived) %>%
+             filter(StartYear > 2006 #& StartYear < 2020
+             ),
+           error = function(e){stop("COMN_SoilHeader view not found. Please import view.")})
 
-  soil1 <- merge(park.plots,
-                 soildata[,c('Soil_Data_ID','Event_ID','Sample_Type','Horizon_Type','Archived','Notes')],
-                 by='Event_ID', all.x=T, all.y=F)
+  tryCatch(soilsamp_vw <- get("COMN_SoilSample", envir = VIEWS_NETN) %>%
+             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
+                    SQSoilCode, SampleSequenceCode, SoilLayerLabel,
+                    Depth_cm, Note) %>%
+             filter(StartYear > 2006 & !is.na(SoilLayerLabel) #& StartYear < 2020
+             ),
+           error = function(e){stop("COMN_SoilSample view not found. Please import view.")})
 
-  # drop visits that weren't sampled for soils and make sure 2006 is removed
-  soil2 <- soil1 %>% filter(!grepl('Soil not scheduled for sampling this year', Notes)) %>%
-    filter(Year > 2006) %>% select(-Notes) %>% droplevels()
+  # Pull in the soil lab data with QCed horizons
+  soillab <- joinSoilLabData(park = park, from = from, to = to, QAQC = QAQC,
+                             panels = panels, locType = locType, eventType = 'complete',
+                             abandoned = FALSE, layer = layer) %>%
+             select(Plot_Name, PlotID, EventID, StartYear, IsQAQC, Horizon_QC, Field_misID,
+                    horizon_depth, num_samps)
 
+  soillab_wide <- soillab %>% pivot_wider(names_from = Horizon_QC,
+                                          values_from = c(horizon_depth, Field_misID),
+                                          values_fill = 0)  %>%
+                              mutate(Lab_QC = TRUE)
 
-  # join next level of soil data containing horizon depths
-  soil3 <- merge(soil2, soilsamp[,c('Soil_Sample_Data_ID','Soil_Data_ID','Sample_Number','Litter_Depth',
-                                    'FF_Depth','A_Horizon_Depth', "Total_Excavation_Depth")],
-                 by= 'Soil_Data_ID', all.x=T, all.y=F)
+  names(soillab_wide)[names(soillab_wide) == "horizon_depth_O"] <- "O_Horizon_cm"
+  names(soillab_wide)[names(soillab_wide) == "horizon_depth_A"] <- "A_Horizon_cm"
+  soillab_wide$Total_Depth_cm = soillab_wide$O_Horizon_cm + soillab_wide$A_Horizon_cm
 
-  # summarize horizon depths by event
-  soil4 <- soil3 %>% group_by(Event_ID, Soil_Data_ID, Unit_Code, Plot_Name, Plot_Number, Year, cycle) %>%
-    summarise(Litter_cm = mean(Litter_Depth, na.rm = T)) %>%  arrange(Plot_Name, Year) %>% ungroup() %>%
-    mutate(Horizon = 'Litter') %>% rename(Hor_Depth = Litter_cm)
+  soillab_wide <- soillab_wide %>% select(Plot_Name, PlotID, EventID, StartYear, IsQAQC,
+                                          num_samps, O_Horizon_cm, A_Horizon_cm, Total_Depth_cm, Lab_QC,
+                                          Field_misID_O, Field_misID_A)
 
-  # join soil chem data to have correct horizons based on %TC check
-  soil_chem <- force(joinSoilLabData(park = park, from = from, to = to, layers = 'all',
-                                     QAQC = QAQC, locType = locType, panels = panels, output = 'short'))
+  # Filter soil sample data to speed function
+  plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
+                                    panels = panels, locType = locType, eventType = "complete",
+                                    abandoned = FALSE, output = 'short')) %>%
+    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+           EventID, StartDate, StartYear, cycle, IsQAQC)
 
-  soil_chem2 <- soil_chem %>% select(Event_ID:cycle, Horizon, Hor_Depth)
+  pe_list <- unique(plot_events$EventID)
+  soilsamp_evs <- filter(soilsamp_vw, EventID %in% pe_list)
 
-  # bind depths for litter and O and A layers
-  soil_comb <- rbind(soil4, soil_chem2)
+  # Prepare sample data to pivot the layers wide (clean up after next migration)
+  soilsamp_evs$SoilLayer = gsub(" ", "_", soilsamp_evs$SoilLayerLabel)
+  soilsamp_evs$SoilLayer = gsub("Unconsolidated_Litter", "Litter", soilsamp_evs$SoilLayer)
 
-  soil_comb2 <- soil_comb %>% spread(Horizon, Hor_Depth, fill = 0) %>%
-    rename(A_Hor_cm = A, O_Hor_cm = O, Litter_cm = Litter) %>%
-    select(Event_ID:cycle, Litter_cm, O_Hor_cm, A_Hor_cm) %>% mutate(Tot_Samp_cm = O_Hor_cm + A_Hor_cm)
+  soilsamp_wide <- soilsamp_evs %>% select(-SoilLayerLabel, -SQSoilCode) %>%
+                                    filter(SoilLayer %in% c("Litter", "Forest_Floor", "A_Horizon", "Total_Depth")) %>%
+                                    pivot_wider(names_from = SoilLayer,
+                                                values_from = Depth_cm,
+                                                values_fill = 0) %>%
+                                    group_by(PlotID, EventID, ParkUnit, PlotCode, StartYear,
+                                             IsQAQC) %>%
+                                    summarize(Litter_cm = mean(Litter, na.rm = T),
+                                              O_Horizon_cm = mean(Forest_Floor, na.rm = T),
+                                              A_Horizon_cm = mean(A_Horizon, na.rm = T),
+                                              Total_Depth_cm = mean(Total_Depth, na.rm = T),
+                                              num_samps = length(!is.na(Total_Depth)),
+                                              Lab_QC = FALSE,
+                                              .groups = 'drop')
 
-  soil_comb_final <- soil_comb2 %>% left_join(., park.plots[,c('Location_ID','Event_ID', 'X_Coord','Y_Coord','Panel','Event_QAQC')], by='Event_ID') %>%
-    select(Location_ID, Event_ID, Soil_Data_ID, Unit_Code, Plot_Name, Plot_Number, X_Coord, Y_Coord, Panel, Year, Event_QAQC,
-           cycle, Litter_cm, O_Hor_cm, A_Hor_cm, Tot_Samp_cm) %>% arrange(Plot_Name, cycle)
+  # List of events that have QCed soils
+  events_QC <- unique(soillab_wide$EventID)
 
-  return(soil_comb_final)
+  # Split litter data out from sampled data to add to lab data
+  litter_QC_evs <- soilsamp_wide %>% select(PlotID, EventID, Litter_cm) %>% filter(EventID %in% events_QC)
+  soillab_wide2 <- left_join(soillab_wide, litter_QC_evs, by = intersect(names(soillab_wide), names(litter_QC_evs)))
+
+  # I'm not going to go through all the steps to fix total depth or O vs A based on data entry with non-lab QCed plots
+  soilsamp_new <- soilsamp_wide %>% left_join(., plot_events, by = intersect(names(.), names(plot_events))) %>%
+                                    filter(!EventID %in% events_QC) %>%
+                                    filter(Lab_QC == FALSE & StartYear > last_lab_year) %>%
+                                    mutate(Field_misID_O = NA_real_,
+                                           Field_misID_A = NA_real_) %>%
+                                    select(Plot_Name, PlotID, EventID, StartYear, IsQAQC,
+                                           num_samps, Litter_cm, O_Horizon_cm, A_Horizon_cm, Total_Depth_cm, Lab_QC,
+                                           Field_misID_O, Field_misID_A)
+
+  soil_comb <- rbind(soillab_wide2, soilsamp_new)
+  soil_final <- left_join(soil_comb, plot_events, by = intersect(names(soil_comb), names(plot_events))) %>%
+                select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+                       PlotCode, PlotID, EventID, StartYear, IsQAQC, cycle,
+                       num_samps, Litter_cm, O_Horizon_cm, A_Horizon_cm,
+                       Total_Depth_cm, Lab_QC, Field_misID_O, Field_misID_A)
+
+  return(soil_final)
+
 }

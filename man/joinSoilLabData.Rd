@@ -2,7 +2,7 @@
 % Please edit documentation in R/joinSoilLabData.R
 \name{joinSoilLabData}
 \alias{joinSoilLabData}
-\title{joinSoilLabData: compile soil chemistry data by horizon.}
+\title{joinSoilLabData: compile and QC soil chemistry data by horizon.}
 \usage{
 joinSoilLabData(
   park = "all",
