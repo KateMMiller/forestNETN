@@ -41,13 +41,6 @@
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1, 3), for example.
 #'
-#' @param layer Allows you to filter on soil horizons
-#' \describe{
-#' \item{"all"}{Default. Includes O and A horizons.}
-#' \item{"O"}{Return only samples from the O horizon.}
-#' \item{"A"}{Return only samples from the A horizon.}
-#' }
-#'
 #' @param last_lab_year The most recent year lab analyses have been completed for. This will allow non-lab QCed horizon data
 #' to be returned for years following. Otherwise, only QCed data horizon data are returned.
 #'
@@ -68,9 +61,7 @@
 # Join soil sample data
 #------------------------
 joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, panels = 1:4,
-                               locType = c('VS', 'all'), eventType = c('complete', 'all'),
-                               last_lab_year = 2019,
-                               layer = c("all", "O", "A"), ...){
+                               locType = c('VS', 'all'), last_lab_year = 2019, ...){
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
@@ -80,13 +71,11 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
   stopifnot(class(QAQC) == 'logical')
   stopifnot(panels %in% c(1, 2, 3, 4))
   locType <- match.arg(locType)
-  eventType <- match.arg(eventType)
-  layer <- match.arg(layer)
 
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the soil data
-  tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = VIEWS_NETN) %>%
+  tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                     SampleTypeLabel, PositionCode, Horizon.Code, # HorizonCode,
                     SoilEventNote, IsArchived) %>%
@@ -94,7 +83,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
              ),
            error = function(e){stop("COMN_SoilHeader view not found. Please import view.")})
 
-  tryCatch(soilsamp_vw <- get("COMN_SoilSample", envir = VIEWS_NETN) %>%
+  tryCatch(soilsamp_vw <- get("COMN_SoilSample", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
                     SQSoilCode, SampleSequenceCode, SoilLayerLabel,
                     Depth_cm, Note) %>%
@@ -105,7 +94,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
   # Pull in the soil lab data with QCed horizons
   soillab <- joinSoilLabData(park = park, from = from, to = to, QAQC = QAQC,
                              panels = panels, locType = locType, eventType = 'complete',
-                             abandoned = FALSE, layer = layer) %>%
+                             abandoned = FALSE, layer = 'all') %>%
              select(Plot_Name, PlotID, EventID, StartYear, IsQAQC, Horizon_QC, Field_misID,
                     horizon_depth, num_samps)
 

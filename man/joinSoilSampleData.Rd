@@ -11,9 +11,7 @@ joinSoilSampleData(
   QAQC = FALSE,
   panels = 1:4,
   locType = c("VS", "all"),
-  eventType = c("complete", "all"),
   last_lab_year = 2019,
-  layer = c("all", "O", "A"),
   ...
 )
 }
@@ -50,13 +48,6 @@ include all plots, such as deer exclosures.
 
 \item{last_lab_year}{The most recent year lab analyses have been completed for. This will allow non-lab QCed horizon data
 to be returned for years following. Otherwise, only QCed data horizon data are returned.}
-
-\item{layer}{Allows you to filter on soil horizons
-\describe{
-\item{"all"}{Default. Includes O and A horizons.}
-\item{"O"}{Return only samples from the O horizon.}
-\item{"A"}{Return only samples from the A horizon.}
-}}
 }
 \value{
 returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of
