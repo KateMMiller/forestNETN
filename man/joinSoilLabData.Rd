@@ -56,6 +56,7 @@ include all plots, such as deer exclosures.
 \value{
 returns a dataframe containing each plot and visit with soil chemistry data for each horizon on a plot
 Plots that weren't sampled during a given cycle are not returned. Horizon depths are averaged across samples.
+Note that horizons that were combined after lab QC may be > 10 cm deep.
 }
 \description{
 This function verifies whether O and A horizons were named corrected based on % Total Carbon (O = TC >= 20%).

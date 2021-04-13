@@ -47,9 +47,9 @@
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1, 3), for example.
 #'
-#'
 #' @return returns a dataframe containing each plot and visit with soil chemistry data for each horizon on a plot
 #' Plots that weren't sampled during a given cycle are not returned. Horizon depths are averaged across samples.
+#' Note that horizons that were combined after lab QC may be > 10 cm deep.
 #'
 #' @examples
 #' importData() #imports using default odbc

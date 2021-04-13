@@ -1,7 +1,7 @@
 #' @include joinLocEvent.R
 #' @include joinSoilLabData.R
 #'
-#' @importFrom dplyr group_by mutate select summarize
+#' @importFrom dplyr filter group_by left_join mutate select summarize
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_wider
 #'
