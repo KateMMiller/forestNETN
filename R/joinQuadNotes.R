@@ -5,7 +5,7 @@
 #' @importFrom dplyr arrange filter left_join mutate rename select
 #' @importFrom magrittr %>%
 #'
-#' @description This function combines qudrat-level notes from Quadrat Data and Quadrat Species tabs and
+#' @description This function combines quadrat-level notes from Quadrat Data and Quadrat Species tabs and
 #' species level notes in the Quadrat Species Tab.
 #'
 #' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
@@ -48,8 +48,8 @@
 #'
 #' @examples
 #' importData()
-#' # compile quadrat data for invasive species in SARA for 2019
-#' SARA_quads <- joinQuadNotes(park = 'SARA', from = 2019, to = 2019)
+#' # compile quadrat data for invasive species in WEFA for 2019
+#' WEFA_quadnotes <- joinQuadNotes(park = 'WEFA', from = 2019, to = 2019)
 #'
 #'
 #' @export
@@ -104,19 +104,19 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   # Split quadrat-level notes from species-level notes for easier compiling
   spp_notes <- quadspp_evs %>% select(-SQQuadSppCode, -QuadratCode, -SQQuadSppNotes) %>%
                                filter(!is.na(QuadSppNote)) %>%
-                               mutate(Note_Type = "Species Notes",
+                               mutate(Note_Type = "Quad_Species",
                                       Sample_Info = ifelse(IsCollected == 1, "Collected", NA)) %>%
                                unique() %>% rename(Note_Info = ScientificName,
                                                    Notes = QuadSppNote) %>%
                                select(-IsCollected)
 
   quadspp_notes <- quadspp_evs %>% select(-ScientificName, -IsCollected, -QuadSppNote) %>%
-                                   mutate(Note_Type = "SQQ Species") %>%
+                                   mutate(Note_Type = "Quad_SQ_Species") %>%
                                    filter(!is.na(SQQuadSppNotes)) %>% unique() %>%
                                    rename(Sample_Info = SQQuadSppCode, Notes = SQQuadSppNotes,
                                           Note_Info = QuadratCode)
 
-  quadchr_notes <- quadchr_evs %>% mutate(Note_Type = "SQQ Character") %>%
+  quadchr_notes <- quadchr_evs %>% mutate(Note_Type = "Quad_SQ_Character") %>%
                                    filter(!is.na(SQQuadCharNotes)) %>% unique() %>%
                                    rename(Sample_Info = SQQuadCharCode, Notes = SQQuadCharNotes,
                                           Note_Info = QuadratCode)
