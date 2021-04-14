@@ -50,11 +50,9 @@
 #' \item{"all"}{Return visit and plot-level notes.}
 #' }
 #'
-#' @return Returns a dataframe with all quadrat-related notes. Only returns visits with notes. The Note_Info
-#' column is either the quadrat or the species the note was recorded for. The Sample_Info column is either the
-#' sample qualifier for the quadrat, where SS = successfully sampled, NS = not sampled, NP = no species present,
-#' NC = not collected by protocol, and PM = permanently missing. If the Sample_Info column has "Collected" listed
-#' it means the species with the note was also collected.
+#' @return Returns a dataframe with all notes related to a plot and visit. Only returns records with notes. The Note_Info
+#' column indicates the data type the note relates to. The Sample_Info column includes information about the data that may
+#' help interpret the note.
 #'
 #' @examples
 #' importData()
