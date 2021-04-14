@@ -1,4 +1,6 @@
 #' @include joinLocEvent.R
+#' @include prepTaxa.R
+#'
 #' @title joinTreeData: compiles tree data
 #'
 #' @importFrom dplyr arrange case_when filter left_join mutate select
@@ -58,7 +60,7 @@
 #' \item{"all"}{Default. Returns all species.}
 #' \item{"native"}{Returns native species only}
 #' \item{"exotic"}{Returns exotic species only}
-#'
+#' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
 #' @param dist_m Filter trees by a distance that is less than or equal to the specified distance in meters
@@ -92,7 +94,7 @@
 # Joins tbl_Trees and tbl_Tree_Data tables and filters by park, year, and plot/visit type
 #------------------------
 joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
-                         status = c('active', 'live', 'dead', 'all'), speciesType = c('all', 'native','exotic'),
+                         status = c('active', 'live', 'dead', 'all'), speciesType = c('all', 'native','exotic', 'invasive'),
                          dist_m = NA, eventType = c('complete', 'all'), output = 'short', ...){
 
   # Match args and class
@@ -127,10 +129,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
            error = function(e){stop("COMN_TreeFoliageCond view not found. Please import view.")})
 
 
-  tryCatch(taxa <- get("COMN_Taxa", envir = env) %>%
-                   select(TaxonID, TSN, ScientificName, CommonName, Order, Family, Genus, Species, SubSpecies,
-                                       IsExotic, TaxonGroupLabel),
-           error = function(e){stop("COMN_Taxa view not found. Please import view.")})
+  taxa_wide <- prepTaxa()
 
   # subset with EventID from plot_events to make tree data as small as possible to speed up function
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
@@ -148,17 +147,18 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   dead <- c("2","DB" ,"DF" ,"DL", "DM","DS")
   active <- c(alive, dead, "DC") #inactive-old: 0, ES, EX, inactive-current: NL, PM, XO, XP, XS
 
-  tree_stat <- if(status == 'active'){filter(tree_evs, TreeStatusCode %in% active)
-  } else if(status == 'live'){filter(tree_evs, TreeStatusCode %in% alive)
-  } else if(status == 'dead'){filter(tree_evs, TreeStatusCode %in% dead)
-  } else if(status == 'all'){(tree_evs)}
+  tree_stat <- switch(status,
+                      'all' = tree_evs,
+                      'active' = filter(tree_evs, TreeStatusCode %in% active),
+                      'live' = filter(tree_evs, TreeStatusCode %in% alive),
+                      'dead' = filter(tree_evs, TreeStatusCode %in% dead))
 
   # Drop unwanted events before merging
   tree_fol1 <- filter(foliage_vw, EventID %in% pe_list)
   tree_fol <- left_join(tree_stat, tree_fol1, by = intersect(names(tree_vw), names(foliage_vw)))
 
   tree_taxa <- left_join(tree_fol,
-                     taxa[,c('TSN','ScientificName','CommonName','Family', 'Genus', 'IsExotic')],
+                     taxa_wide[,c('TSN','ScientificName','CommonName','Family', 'Genus', 'Exotic', 'InvasiveNETN')],
                      by = c("TSN", "ScientificName"))
 
   tree_taxa$BA_cm2 <- round(pi*((tree_taxa$DBHcm/2)^2),4)# basal area (cm^2)
@@ -184,9 +184,11 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
                                     Txt_Tot_Foliage_Cond = TotalFoliageCondition.Label) %>%
                              select(-TotalFoliageCondition.Code, -TotalFoliageCondition.Label) # fix . after next release
 
-  tree_nat <- if(speciesType == 'native'){filter(tree_taxa, IsExotic == FALSE)
-       } else if(speciesType == 'exotic'){filter(tree_taxa, IsExotic == TRUE)
-       } else if(speciesType == 'all'){(tree_taxa)}
+  tree_nat <- switch(speciesType,
+                     'all' = tree_taxa,
+                     'native' = filter(tree_taxa, Exotic == FALSE),
+                     'exotic' = filter(tree_taxa, Exotic == TRUE),
+                     'invasive' = filter(tree_taxa, InvasiveNETN == TRUE))
 
   tree_dist <- if(!is.na(dist_m)){filter(tree_nat, Distance <= dist_m)
                } else {tree_nat}
