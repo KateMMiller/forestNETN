@@ -9,6 +9,7 @@ License: Public Domain
 Depends:
     R(>= 4.0)
 Collate: 
+    'prepTaxa.R'
     'joinLocEvent.R'
     'joinTreeData.R'
     'joinStandData.R'
@@ -16,7 +17,6 @@ Collate:
     'exportCSV.R'
     'importCSV.R'
     'importData.R'
-    'prepTaxa.R'
     'joinAdditionalSpecies.R'
     'joinCWDData.R'
     'joinMicroNotes.R'
@@ -35,8 +35,8 @@ Collate:
     'joinTreeNotes.R'
     'joinTreeVineSpecies.R'
     'joinVisitNotes.R'
-    'makeSppList.R'
     'sumQuadGuilds.R'
+    'sumSpeciesList.R'
     'sumTreeDBHDist.R'
     'theme_FHM.R'
     'treeMapPrep.R'
@@ -48,6 +48,7 @@ Imports:
     dplyr,
     ggplot2,
     magrittr,
+    purrr,
     stringr,
     tidyr
 Suggests: 
