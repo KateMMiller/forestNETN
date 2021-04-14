@@ -103,9 +103,9 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
   pe_list <- unique(plot_events$EventID)
 
   addspp_evs <- addspp_vw %>% filter(EventID %in% pe_list) %>%
-                              mutate(present = case_when(SQAddSppCode == "SS" ~ 1,
-                                                         SQAddSppCode == "NP" ~ 0,
-                                                         TRUE ~ NA_real_))
+                              mutate(addspp_present = case_when(SQAddSppCode == "SS" ~ 1,
+                                                                SQAddSppCode == "NP" ~ 0,
+                                                                TRUE ~ NA_real_))
 
   names(addspp_evs)[names(addspp_evs) == "ConfidenceClassCode"] <- "Confidence"
 
@@ -125,12 +125,14 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
 
   addspp_comb$ScientificName[addspp_comb$SQAddSppCode %in% c("ND", "NS")] <- "Not Sampled"
   addspp_comb$ScientificName[addspp_comb$SQAddSppCode == "NP"] <- "None present"
+  addspp_comb$ScientificName[is.na(addspp_comb$ScientificName)] <- "None present" # needed for filtered spp.
 
   addspp_final <- addspp_comb %>% select(Plot_Name, Network, ParkUnit, ParkSubUnit,
                                          PlotTypeCode, PanelCode, PlotCode, PlotID,
                                          EventID, IsQAQC, StartYear, StartDate, cycle, TSN,
-                                         ScientificName, present, Exotic, InvasiveNETN,
+                                         ScientificName, addspp_present, Exotic, InvasiveNETN,
                                          Confidence, IsCollected, Note, SQAddSppNotes)
+
   return(data.frame(addspp_final))
   } # end of function
 
