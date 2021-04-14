@@ -134,14 +134,14 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
 
   # Summarize pieces by transect, distance, species, decay class
   cwd_sum2 <- cwd_sum %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                   StartYear, IsQAQC, PanelCode, TransectCode, hdist,
+                                   StartYear, StartDate, IsQAQC, PanelCode, TransectCode, hdist,
                                    ScientificName, TSN, DecayClassCode) %>%
                           summarize(diam = sum(diam, na.rm = TRUE), slope = first(slope),
                                     .groups = "drop")
 
   # Summarize pieces by transect, species, decay class
   cwd_sum3 <- cwd_sum2 %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                    StartYear, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
+                                    StartYear, StartDate, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
                            summarize(CWD_Vol = ifelse(is.na(sum(diam)), 0, sum(hdist*diam)),
                                      CWD_num = sum(!is.na(diam)),
                                      slope = first(slope),
@@ -150,7 +150,7 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
   # Bring in SQ for events missing at least 1 transect
   cwd_sq <- cwd %>% filter(SQTransectCode != "PM") %>%
                     group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                             StartYear, IsQAQC, PanelCode) %>%
+                             StartYear, StartDate, IsQAQC, PanelCode) %>%
                     summarize(num_trans = length(unique(TransectCode)),
                               .groups = 'drop')
 
@@ -158,7 +158,7 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
   #table(complete.cases(cwd_sum4$CWD_Vol)) # All complete
 
   cwd_vol1 <- cwd_sum4 %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                   StartYear, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
+                                   StartYear, StartDate, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
                           summarize(CWD_Vol = sum(CWD_Vol, na.rm = TRUE)/first(num_trans), .groups = 'drop')
 
 
@@ -182,7 +182,7 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
                arrange(Plot_Name, StartYear, IsQAQC)
 
   cwd_final <- if(output == 'short'){
-    cwd_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, StartYear, cycle,
+    cwd_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, StartYear, StartDate, cycle,
                          IsQAQC, TSN, ScientificName, DecayClassCode, CWD_Vol)
   } else {cwd_merge}
 

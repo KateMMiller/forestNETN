@@ -258,14 +258,14 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
                                       panels = panels, locType = locType, eventType = "complete",
                                       abandoned = FALSE, output = 'short')) %>%
                    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                     xCoordinate, yCoordinate, EventID, StartDate, StartYear, cycle, IsQAQC)
+                     xCoordinate, yCoordinate, EventID, StartYear, StartDate, cycle, IsQAQC)
 
     stand_merge <- left_join(plot_events, stand_comb,
                          intersect(names(plot_events), names(stand_comb))) %>%
                    arrange(PlotCode, StartYear, IsQAQC)
 
     stand_final <- if(output == 'short'){
-      stand_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, StartYear, cycle, IsQAQC,
+      stand_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, StartYear, StartDate, cycle, IsQAQC,
                              Stand_Structure, Pct_Crown_Closure, Deer_Browse_Index, Microtopography, Earthworms,
                              Water_on_Plot, PlotSlope, Pct_Understory_Low, Pct_Understory_Mid, Pct_Understory_High,
                              Pct_Bare_Soil, Pct_Bryophyte, Pct_Lichen, Pct_Rock, Pct_Trampled, Pct_Water,

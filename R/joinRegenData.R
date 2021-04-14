@@ -157,7 +157,7 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartYear, cycle, IsQAQC)
+           EventID, StartYear, StartDate, cycle, IsQAQC)
 
   reg_wide2 <- left_join(plot_events, reg_wide, by = intersect(names(plot_events), names(reg_wide)))
 
@@ -180,7 +180,7 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
 
   # Summarise data at plot level. We lose the Microplot name, but average over # microplots selected in next step
   reg_sum <- reg_wide2 %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                                    PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle,
+                                    PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle,
                                     TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN) %>%
                            summarize(num_micros = first(num_micros),
                                      seed_15_30cm = sum(sd_15_30cm), # leaving na.rm = F, so problem plots return NA

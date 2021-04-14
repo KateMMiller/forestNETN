@@ -153,14 +153,14 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
                                     filter(Lab_QC == FALSE & StartYear > last_lab_year) %>%
                                     mutate(Field_misID_O = NA_real_,
                                            Field_misID_A = NA_real_) %>%
-                                    select(Plot_Name, PlotID, EventID, StartYear, IsQAQC,
+                                    select(Plot_Name, PlotID, EventID, StartYear, StartDate, IsQAQC,
                                            num_samps, Litter_cm, O_Horizon_cm, A_Horizon_cm, Total_Depth_cm, Lab_QC,
                                            Field_misID_O, Field_misID_A)
 
   soil_comb <- rbind(soillab_wide2, soilsamp_new)
   soil_final <- left_join(soil_comb, plot_events, by = intersect(names(soil_comb), names(plot_events))) %>%
                 select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                       PlotCode, PlotID, EventID, StartYear, IsQAQC, cycle,
+                       PlotCode, PlotID, EventID, StartYear, StartDate, IsQAQC, cycle,
                        num_samps, Litter_cm, O_Horizon_cm, A_Horizon_cm,
                        Total_Depth_cm, Lab_QC, Field_misID_O, Field_misID_A)
 

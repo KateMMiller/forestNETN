@@ -92,7 +92,7 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, StartDate, StartYear, cycle, IsQAQC)
+                        EventID, StartYear, StartDate, cycle, IsQAQC)
 
   pe_list <- unique(plot_events$EventID)
 
@@ -141,7 +141,7 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
 
   # select columns based on specified valueType
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
-                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "cycle",
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle",
                 "CharacterLabel", "num_quads", "num_trampled", "quad_avg_cov", "quad_pct_freq")
 
   pct_cols <- c("Pct_Cov_UC", "Pct_Cov_UR", "Pct_Cov_MR", "Pct_Cov_BR",

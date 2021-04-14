@@ -120,7 +120,7 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                     abandoned = FALSE, status = status, speciesType = speciesType,
                                     dist_m = dist_m, output = 'verbose')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                        PlotCode, PlotID, EventID, IsQAQC, StartYear, TSN, ScientificName,
+                        PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TSN, ScientificName,
                         TagCode, TreeStatusCode, HWACode, HWALabel, BBDCode, BBDLabel) %>%
                  filter(ScientificName != "None present") # drop plot-events without trees that match
                                                           # the specified speciesType and/or status
@@ -160,7 +160,7 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   # Reshape tree condition data to wide
   trcond_wide <- trcond_evs3 %>% arrange(TreeConditionCode) %>%
                                  pivot_wider(id_cols = c(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                                                         PlotCode, PlotID, EventID, IsQAQC, StartYear, TSN, ScientificName,
+                                                         PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TSN, ScientificName,
                                                          TagCode, TreeStatusCode, HWACode, BBDCode),
                                              names_from = TreeConditionCode,
                                              values_from = present,
@@ -192,7 +192,7 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   tree_comb$num_cond <- rowSums(tree_comb[, cond_sum]) # num of conditions recorded
 
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
-                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "TSN", "ScientificName",
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "TSN", "ScientificName",
                 "TagCode", "TreeStatusCode")
 
   live_cols <- c("AD", "ALB", "BBD", "BC", "BWA", "CAVL", "CAVS", "CW", "DBT", "DOG", "EAB",

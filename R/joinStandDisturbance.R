@@ -87,7 +87,7 @@ joinStandDisturbance<- function(park = 'all', QAQC = FALSE, locType = c('VS', 'a
   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                               locType = locType, eventType = eventType, output = 'verbose') %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartYear, cycle, IsQAQC)
+           EventID, StartYear, StartDate, cycle, IsQAQC)
 
   sdist_evs <- left_join(plot_events, sdist, by = intersect(names(plot_events), names(sdist)))
   sdist_evs$DisturbanceCode[is.na(sdist_evs$DisturbanceCode)] <- 0
@@ -95,5 +95,5 @@ joinStandDisturbance<- function(park = 'all', QAQC = FALSE, locType = c('VS', 'a
   sdist_evs$DisturbanceSummary[is.na(sdist_evs$DisturbanceSummary)] <- "None present"
 
   sdist_final <- sdist_evs %>% arrange(Plot_Name, StartYear, IsQAQC)
-
+  return(data.frame(sdist_final))
   }

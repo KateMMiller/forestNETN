@@ -114,7 +114,7 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartDate, StartYear, cycle, IsQAQC)
+           EventID, StartYear, StartDate, cycle, IsQAQC)
 
   pe_list <- unique(plot_events$EventID)
 
@@ -227,7 +227,7 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
   # Clean up column name order
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
-                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "cycle",
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle",
                 "TSN", "ScientificName")
 
   taxa_cols <- c("Exotic", "InvasiveNETN", "Shrub", "Vine")
