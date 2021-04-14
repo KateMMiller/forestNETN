@@ -141,7 +141,7 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
 
   sap_sum <- saps_raw %>% select(-SQSaplingCode) %>%
                           group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                               PlotCode, PlotID, EventID, IsQAQC, StartYear, cycle, MicroplotCode,
+                               PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle, MicroplotCode,
                                TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, SizeClass)  %>%
                           summarize(Count = sum(Count), .groups = 'drop')
 
