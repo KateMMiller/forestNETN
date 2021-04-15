@@ -10,7 +10,7 @@
 #' @description This function combines stand-level data for each plot, including cover by strata,
 #' earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
 #'
-#'#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
+#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 #' \describe{
 #' \item{"all"}{Includes all parks in the network}
 #' \item{"ACAD"}{Acadia NP only}
