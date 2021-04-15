@@ -295,7 +295,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
      if(length(unique(tree_evs_rec$Plot_Name)) > 1){
         plot_list <- c(unique(tree_evs_rec$Plot_Name))
 
-        lapply(seq_along(plot_list), function(x){
+        invisible(lapply(seq_along(plot_list), function(x){
           df <- tree_evs_rec[tree_evs_rec$Plot_Name == plot_list[[x]],]
           parkcode <- unique(df$ParkUnit)
           orient <- paste0(unique(df$Plot_Name), " Orientation: ",
@@ -310,7 +310,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
                    units = "in")
           } else if(output_to == 'view')
           tree_map_fun(df)}
-          )
+          ))
 
   } else if(length(unique(tree_evs_rec$Plot_Name) == 1)){
       parkcode <- unique(tree_evs_rec$ParkUnit)
@@ -328,7 +328,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
       tree_map_fun(tree_evs_rec)
   }
 
-  return(plot_list)
+  if(output_to == "view"){return(plot_list)} else {noquote(paste0("Tree maps saved to: ", path))}
 
   } # end of function
 
