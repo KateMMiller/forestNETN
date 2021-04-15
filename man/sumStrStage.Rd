@@ -60,11 +60,11 @@ This function calculates structural stage metric from Ecological Integrity Score
 which assigns Pole, Mature, Late Successional, or Mosaic (i.e., none of the above) to each plot based
 on the percent of live basal area of canopy trees in pole, mature and large size classes. Plots must be
 closed-canopy forest to be classified for this metric. Therefore plots classified as Woodlands (ACAD only)
-or Early successional (SARA only) in the field are automartically assigned those classes in the calculation.
+or Early successional (SARA only) in the field are automatically assigned those classes in the calculation.
 Must run importData first.
 }
 \examples{
-importData() #imports using default odbc
+importData()
 stage_df <- sumStrStage(park = 'MABI', from = 2016, to = 2019)
 
 
