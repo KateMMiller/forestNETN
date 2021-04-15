@@ -11,6 +11,7 @@
 #' of live, dead, or excluded trees. Trees are color coded by status, and size is relative to DBH. Note that if multiple visits
 #' for a given plot are included in the function argument, only the most recent visit will be plotted. Therefore
 #' this function is best used on 1 to 4 year periods. Note that QA/QC events are not plotted with this function.
+#' Excluded trees are plotted with 10 cm DBH assigned, as these don't get a DBH measurement when excluded.
 #'
 #' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 #' \describe{
@@ -47,10 +48,10 @@
 #'
 #' @param status Filter by live, dead, or all. Acceptable options are:
 #' \describe{
+#' \item{"all"}{Default. Includes all trees with any status, including excluded or missing.}
 #' \item{"active"}{Includes all trees with an active monitoring status, including "DF".}
 #' \item{"live"}{live trees only}
 #' \item{"dead"}{dead trees only}
-#' \item{"all"}{Includes all trees with any status, including excluded or missing.}
 #' }
 #'
 #' @param speciesType Allows you to filter on native, exotic or include all species.
@@ -89,7 +90,7 @@
 #' plotTreeMap(park = "MABI", from = 2016, to = 2019, plotName = "MABI-001")
 #'
 #' # save pdfs of maps for panel 3
-#' plotTreeMap(from = 2016, to = 2019, panel = 3, output_to = "file", path = "C:/Temp")
+#' plotTreeMap(from = 2016, to = 2019, panels = 3, output_to = "file", path = "C:/Temp")
 #'
 #' @export
 #'
@@ -97,7 +98,7 @@
 # Plots tree map by status and size
 #------------------------
 plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 'all'), panels = 1:4,
-                        eventType = c('complete', 'all'), dist_m = NA, status = c('active', 'live', 'dead', 'all'),
+                        eventType = c('complete', 'all'), dist_m = NA, status = c('all', 'active', 'live', 'dead'),
                         speciesType = c('all', 'native','exotic', 'invasive'), plotName = NA, path = NA,
                         output_to = c('view', 'file'), ...){
 
@@ -118,6 +119,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
   locType <- match.arg(locType)
   eventType <- match.arg(eventType)
   speciesType <- match.arg(speciesType)
+  status <- match.arg(status)
   output_to <- match.arg(output_to)
 
   stopifnot(nchar(plotName) == 8 | is.na(plotName))
@@ -279,11 +281,12 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
     filter(StartYear == max(StartYear)) %>%
     ungroup()
 
+  tree_evs_rec$DBHcm[is.na(tree_evs_rec$DBHcm)] <- 10 # for excluded status trees
   tree_evs_rec <- prepTreeMap(tree_evs_rec) #%>% filter(Plot_Name %in% c("MABI-021", "MABI-022"))
 
   # Set up plot aesthetics
   status_cols <- c("#d9f008","#a6db12","#73c71c","#009900", "#00f2ff", "#0066ff", "#3300CC",
-                   "#CC2E00", "CC8800", "FF00F0")
+                   "#CC2E00", "#CC8800", "#FF00F0")
   names(status_cols) <- as.character(c('AB','AF','AL','AS','DB','DL','DS',
                                        'XS', 'XP', 'XO'))
 

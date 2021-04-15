@@ -12,7 +12,7 @@ plotTreeMap(
   panels = 1:4,
   eventType = c("complete", "all"),
   dist_m = NA,
-  status = c("active", "live", "dead", "all"),
+  status = c("all", "active", "live", "dead"),
   speciesType = c("all", "native", "exotic", "invasive"),
   plotName = NA,
   path = NA,
@@ -58,10 +58,10 @@ example, to select an area of trees that is 100 square meters in area, use a dis
 
 \item{status}{Filter by live, dead, or all. Acceptable options are:
 \describe{
+\item{"all"}{Default. Includes all trees with any status, including excluded or missing.}
 \item{"active"}{Includes all trees with an active monitoring status, including "DF".}
 \item{"live"}{live trees only}
 \item{"dead"}{dead trees only}
-\item{"all"}{Includes all trees with any status, including excluded or missing.}
 }}
 
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
@@ -98,6 +98,7 @@ This function converts tree distance and azimuth values to coordinates and plots
 of live, dead, or excluded trees. Trees are color coded by status, and size is relative to DBH. Note that if multiple visits
 for a given plot are included in the function argument, only the most recent visit will be plotted. Therefore
 this function is best used on 1 to 4 year periods. Note that QA/QC events are not plotted with this function.
+Excluded trees are plotted with 10 cm DBH assigned, as these don't get a DBH measurement when excluded.
 }
 \examples{
 importData()
@@ -106,6 +107,6 @@ importData()
 plotTreeMap(park = "MABI", from = 2016, to = 2019, plotName = "MABI-001")
 
 # save pdfs of maps for panel 3
-plotTreeMap(from = 2016, to = 2019, panel = 3, output_to = "file", path = "C:/Temp")
+plotTreeMap(from = 2016, to = 2019, panels = 3, output_to = "file", path = "C:/Temp")
 
 }
