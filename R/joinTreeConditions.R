@@ -124,6 +124,7 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                         TagCode, TreeStatusCode, HWACode, HWALabel, BBDCode, BBDLabel) %>%
                  filter(ScientificName != "None present") # drop plot-events without trees that match
                                                           # the specified speciesType and/or status
+  if(nrow(tree_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
   te_list <- unique(tree_events$EventID)
 

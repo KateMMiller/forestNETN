@@ -103,6 +103,8 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
                         EventID, StartYear, StartDate, cycle, IsQAQC)
 
+  if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
+
   taxa_wide <- prepTaxa()
 
   # Trees
@@ -129,8 +131,9 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
                           filter(ScientificName != "None present")
 
   # Quad species
-  quadspp <- do.call(joinQuadSpecies, c(arglist, list(speciesType = speciesType, valueType = 'averages')))
-
+  quadspp <- suppressWarnings(do.call(joinQuadSpecies,
+                                      c(arglist, list(speciesType = speciesType, valueType = 'averages')))
+  )
   quad_sum <- quadspp %>% select(Plot_Name, PlotID, EventID, IsQAQC, StartYear, TSN,
                                  ScientificName, quad_avg_cov, quad_pct_freq) %>%
                           filter(ScientificName != "None present")

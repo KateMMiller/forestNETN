@@ -105,6 +105,8 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
 
   plot_events <- full_join(plots, events, by = merge_names)
 
+  if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
+
   # Filter output based on function arguments
   plot_events <- if(output == 'short'){
     plot_events[, c("Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",

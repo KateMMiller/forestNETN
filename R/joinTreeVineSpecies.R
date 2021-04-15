@@ -106,6 +106,8 @@ joinTreeVineSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                         PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TagCode)
 
+  if(nrow(tree_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
+
   te_list <- unique(tree_events$EventID)
 
   vine_evs <- filter(vine_vw, EventID %in% te_list)
