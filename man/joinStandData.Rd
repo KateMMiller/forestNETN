@@ -16,6 +16,18 @@ joinStandData(
 )
 }
 \arguments{
+\item{park}{Combine data from all parks or one or more parks at a time. Valid inputs:
+\describe{
+\item{"all"}{Includes all parks in the network}
+\item{"ACAD"}{Acadia NP only}
+\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+\item{"MIMA"}{Minute Man NHP only}
+\item{"MORR"}{Morristown NHP only}
+\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+\item{"SAGA"}{Saint-Gaudens NHS only}
+\item{"SARA"}{Saratoga NHP only}
+\item{"WEFA"}{Weir Farm NHS only}}}
+
 \item{QAQC}{Allows you to remove or include QAQC events.
 \describe{
 \item{FALSE}{Default. Only returns visits that are not QAQC visits}
@@ -49,18 +61,6 @@ between cover class ranges (e.g., 62.5 is the midpoint for 50-75%). Field names 
 \description{
 This function combines stand-level data for each plot, including cover by strata,
 earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
-
-#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
-\describe{
-\item{"all"}{Includes all parks in the network}
-\item{"ACAD"}{Acadia NP only}
-\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
-\item{"MIMA"}{Minute Man NHP only}
-\item{"MORR"}{Morristown NHP only}
-\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
-\item{"SAGA"}{Saint-Gaudens NHS only}
-\item{"SARA"}{Saratoga NHP only}
-\item{"WEFA"}{Weir Farm NHS only}}
 }
 \examples{
 importData()
