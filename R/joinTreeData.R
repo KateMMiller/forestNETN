@@ -63,6 +63,13 @@
 #' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
+#' @param canopyPosition Allows you to filter on tree crown class
+#' \describe{
+#' \item{"all"}{Returns all canopy positions}
+#' \item{"canopy"}{Returns only dominant, codominant, and intermediate crown classes. Since only live trees
+#' are assigned crown classes, this also only returns live trees.}
+#' }
+#'
 #' @param dist_m Filter trees by a distance that is less than or equal to the specified distance in meters
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
@@ -95,7 +102,7 @@
 #------------------------
 joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
                          status = c('all', 'active', 'live', 'dead'), speciesType = c('all', 'native','exotic', 'invasive'),
-                         dist_m = NA, eventType = c('complete', 'all'), output = 'short', ...){
+                         canopyPosition = c("all", "canopy"), dist_m = NA, eventType = c('complete', 'all'), output = 'short', ...){
 
   # Match args and class
   status <- match.arg(status)
@@ -107,6 +114,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   stopifnot(class(QAQC) == 'logical')
   stopifnot(panels %in% c(1, 2, 3, 4))
   output <- match.arg(output, c("short", "verbose"))
+  canopyPosition <- match.arg(canopyPosition)
   speciesType <- match.arg(speciesType)
 
 
@@ -192,8 +200,12 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
                      'exotic' = filter(tree_taxa, Exotic == TRUE),
                      'invasive' = filter(tree_taxa, InvasiveNETN == TRUE))
 
-  tree_dist <- if(!is.na(dist_m)){filter(tree_nat, Distance <= dist_m)
-               } else {tree_nat}
+  tree_can <- switch(canopyPosition,
+                     'all' = tree_nat,
+                     'canopy' = tree_nat %>% filter(CrownClassCode %in% c(2, 3, 4)))
+
+  tree_dist <- if(!is.na(dist_m)){filter(tree_can, Distance <= dist_m)
+               } else {tree_can}
 
   tree_merge <- left_join(plot_events, tree_dist,
                       by = intersect(names(plot_events), names(tree_dist))) %>%
@@ -207,7 +219,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
 
   tree_final <- if(output == 'short'){
       tree_merge[, c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
-                     "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "TSN", "ScientificName",
+                     "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle", "TSN", "ScientificName",
                      "TagCode", "Fork", "Azimuth", "Distance", "DBHcm", "IsDBHVerified", "TreeStatusCode",
                      "CrownClassCode", "DecayClassCode", "Pct_Tot_Foliage_Cond",
                      "HWACode", "BBDCode", "BA_cm2", "num_stems", "TreeEventNote")]

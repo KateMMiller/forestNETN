@@ -115,7 +115,7 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
 
   # subset with EventID from tree_events to make tree data as small as possible to speed up function
-  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC,
+  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC, ...,
                                     locType = locType, panels = panels, eventType = 'complete',
                                     abandoned = FALSE, status = status, speciesType = speciesType,
                                     dist_m = dist_m, output = 'verbose')) %>%
