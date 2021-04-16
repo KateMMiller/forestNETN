@@ -139,7 +139,7 @@ sumTreeDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, l
   tree_check <- tree_df %>% filter(size_class == "unknown" & !is.na(TagCode))
 
   if(nrow(tree_check)>0){
-    warning(paste("The", nrow(tree_check), "records below are missing DBH measurements. They will be removed from summaries."),
+    warning(paste("The", nrow(tree_check), "records below are missing DBH measurements and will be removed from summaries."),
             "\n",
             paste(capture.output(data.frame(tree_check[, c("Plot_Name", "StartYear", "TagCode")])), collapse = "\n"))
     }
@@ -164,7 +164,7 @@ sumTreeDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, l
                                                                  values_from = dens,
                                                                  values_fill = 0,
                                                                  names_glue = "dens_{str_sub(size_class, 2)}"),
-                           'ba' = tree_dist %>% select(-dens) %>%
+                           'BA' = tree_dist %>% select(-dens) %>%
                                                 pivot_wider(names_from = size_class,
                                                             values_from = BA,
                                                             values_fill = 0,
@@ -195,7 +195,8 @@ missing_sizes <- setdiff(sizes, names(tree_dist_wide))
 
 tree_dist_wide[missing_sizes] <- 0
 
-tree_dist_final <- left_join(plot_events, tree_dist_wide, by = intersect(names(plot_events), names(tree_dist_wide))) %>%
+tree_dist_final <- left_join(plot_events, tree_dist_wide,
+                             by = intersect(names(plot_events), names(tree_dist_wide))) %>%
                    select(Plot_Name, ParkUnit, PlotID, EventID, StartYear, IsQAQC, cycle,
                           all_of(sizes))
 
