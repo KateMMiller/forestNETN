@@ -2,41 +2,74 @@
 % Please edit documentation in R/joinQuadData.R
 \name{joinQuadData}
 \alias{joinQuadData}
-\title{joinQuadData: compiles quadrat species data}
+\title{joinQuadData: compiles quadrat character data}
 \usage{
 joinQuadData(
-  speciesType = c("all", "native", "exotic", "invasive"),
   park = "all",
   from = 2006,
-  to = 2018,
+  to = 2021,
   QAQC = FALSE,
-  locType = "VS",
   panels = 1:4,
-  output,
+  locType = c("VS", "all"),
+  eventType = c("complete", "all"),
+  valueType = c("all", "midpoint", "classes"),
   ...
 )
 }
 \arguments{
-\item{speciesType}{Allows you to filter on native, exotic or include all species.
+\item{park}{Combine data from all parks or one or more parks at a time. Valid inputs:
 \describe{
-\item{"all"}{Default. Returns all species.}
-\item{"native"}{Returns native species only}
-\item{"exotic"}{Returns exotic species only}
-\item{"invasive"}{Returns species on the Indicator Invasive List}
+\item{"all"}{Includes all parks in the network}
+\item{"ACAD"}{Acadia NP only}
+\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+\item{"MIMA"}{Minute Man NHP only}
+\item{"MORR"}{Morristown NHP only}
+\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+\item{"SAGA"}{Saint-Gaudens NHS only}
+\item{"SARA"}{Saratoga NHP only}
+\item{"WEFA"}{Weir Farm NHS only}}}
+
+\item{from}{Year to start analysis, ranging from 2006 to current year}
+
+\item{to}{Year to stop analysis, ranging from 2006 to current year}
+
+\item{QAQC}{Allows you to remove or include QAQC events.
+\describe{
+\item{FALSE}{Default. Only returns visits that are not QAQC visits}
+\item{TRUE}{Returns all visits, including QAQC visits}}}
+
+\item{locType}{Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
+\describe{
+\item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+\item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}}
+
+\item{eventType}{Allows you to include only complete sampling events or all sampling events
+\describe{
+\item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+\item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+
+\item{valueType}{Allows you to return cover class midpoints (numeric) or cover class ranges (text)
+\describe{
+\item{"all"}{Default. Returns columns for midpoint and cover classes for each quad}
+\item{"midpoint"}{Default. Returns numeric cover class midpoints, with Pct prefix.}
+\item{"classes"}{Returns the text cover class definitions, with Txt prefix.}
 }}
 }
 \value{
 Returns a dataframe with cover class midpoints for each quadrat and includes guild for each species.
 }
 \description{
-This function combines quadrat species data with species names and allows you to filter on species types, park, years, and visit type. Note that the Shrub guild also includes woody vine species.
+This function compiles the quadrat character data (i.e., Soil, Rock, etc.) into a wide format,
+so that each quadrat has a column. Notes fields are not compiled in this function. For quadrat-related notes,
+use the joinQuadNotes() function.
 }
 \examples{
 importData()
-# compile quadrat data for invasive species in SARA for all years
-SARA_quads <- joinQuadData(park = 'SARA', speciesType = 'invasive')
+# compile quadrat data cover class midpoints in SARA for all years
+SARA_quads <- joinQuadData(park = 'SARA', valueType = 'midpoint')
 
-# compile native species only for all parks in most recent survey
-native_quads <- joinQuadData(speciesType = 'native', from = 2015, to = 2018)
+# compile quadrat data for cycle 3
+native_quads <- joinQuadData(from = 2014, to = 2017)
 
 }

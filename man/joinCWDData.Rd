@@ -2,39 +2,79 @@
 % Please edit documentation in R/joinCWDData.R
 \name{joinCWDData}
 \alias{joinCWDData}
-\title{joinCWDData: compile coarse woody debris data.}
+\title{joinCWDData: compile coarse woody debris volume data.}
 \usage{
 joinCWDData(
-  units = c("ha", "acres"),
   park = "all",
   from = 2006,
-  to = 2018,
+  to = 2021,
   QAQC = FALSE,
-  locType = "VS",
   panels = 1:4,
-  output,
+  locType = c("VS", "all"),
+  output = "short",
+  units = c("ha", "acres"),
   ...
 )
 }
 \arguments{
+\item{park}{Combine data from all parks or one or more parks at a time. Valid inputs:
+\describe{
+\item{"all"}{Includes all parks in the network}
+\item{"ACAD"}{Acadia NP only}
+\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+\item{"MIMA"}{Minute Man NHP only}
+\item{"MORR"}{Morristown NHP only}
+\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+\item{"SAGA"}{Saint-Gaudens NHS only}
+\item{"SARA"}{Saratoga NHP only}
+\item{"WEFA"}{Weir Farm NHS only}}}
+
+\item{from}{Year to start analysis, ranging from 2006 to current year}
+
+\item{to}{Year to stop analysis, ranging from 2006 to current year}
+
+\item{QAQC}{Allows you to remove or include QAQC events.
+\describe{
+\item{FALSE}{Default. Only returns visits that are not QAQC visits}
+\item{TRUE}{Returns all visits, including QAQC visits}}}
+
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
+\item{locType}{Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
+\describe{
+\item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+\item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}}
+
+\item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
+inputs are "short" and "verbose".}
+
 \item{units}{Calculates CWD Volume based on different units.
 \describe{
 \item{"ha"}{Default. Returns CWD volume as cubic m/hectare}
-\item{"acres"}{Returns CWD volume as cubic ft/ acre}
+\item{"acres"}{Returns CWD volume as cubic ft/acre}
 }}
+
+\item{eventType}{Allows you to include only complete sampling events or all sampling events
+\describe{
+\item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+\item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
 }
 \value{
-returns a dataframe with CWD volume for each plot, one with cubic m/ha and cubic ft/acre
+returns a dataframe with CWD volume for each plot, species, decay class combination
 }
 \description{
-This function combines and calculates CWD volume for each plot. Must run importData first.
+This function combines and calculates CWD volume for each plot. Must run importData() first. Function
+only works for complete visits.
 }
 \examples{
-importData() #imports using default odbc
-# Compile CWD data for MABI for most recent survey and return in ft^3/acre
-cwd_data <- joinCWDData(park = 'MABI', from = 2015, to = 2018, units = 'acres')
+importData() #imports data
 
-# Compile CWD data for all parks (default) for most recent survey and return in m^3/ha (default)
-cwd_data <- joinCWDData(from = 2015, to = 2018)
+# Compile CWD data for MABI for most recent survey and return in ft^3/acre
+cwd_data <- joinCWDData(park = 'MABI', from = 2016, to = 2019, units = 'acres')
+
+# Compile CWD data for all parks and years in m^3/ha, including QAQC events.
+cwd_data <- joinCWDData(park = 'all', QAQC = TRUE)
 
 }

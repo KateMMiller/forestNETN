@@ -7,29 +7,64 @@
 joinSoilSampleData(
   park = "all",
   from = 2007,
-  to = 2018,
+  to = 2021,
   QAQC = FALSE,
-  locType = "VS",
   panels = 1:4,
-  output,
-  layers = "all",
+  locType = c("VS", "all"),
+  last_lab_year = 2019,
   ...
 )
 }
+\arguments{
+\item{park}{Combine data from all parks or one or more parks at a time. Valid inputs:
+\describe{
+\item{"all"}{Includes all parks in the network}
+\item{"ACAD"}{Acadia NP only}
+\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+\item{"MIMA"}{Minute Man NHP only}
+\item{"MORR"}{Morristown NHP only}
+\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+\item{"SAGA"}{Saint-Gaudens NHS only}
+\item{"SARA"}{Saratoga NHP only}
+\item{"WEFA"}{Weir Farm NHS only}}}
+
+\item{from}{Year to start analysis, ranging from 2007 to current year.}
+
+\item{to}{Year to stop analysis, ranging from 2007 to current year}
+
+\item{QAQC}{Allows you to remove or include QAQC events.
+\describe{
+\item{FALSE}{Default. Only returns visits that are not QAQC visits}
+\item{TRUE}{Returns all visits, including QAQC visits}}}
+
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
+\item{locType}{Allows you to only include plots that are part of the GRTS sample design or
+include all plots, such as deer exclosures.
+\describe{
+\item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+\item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}}
+
+\item{last_lab_year}{The most recent year lab analyses have been completed for. This will allow non-lab QCed horizon data
+to be returned for years following. Otherwise, only QCed data horizon data are returned.}
+}
 \value{
-returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of O and A sampled.
-Litter is not included in total depth calculation. Note soil chemistry data are typically a year behind plot data,
-so correcteed soil horizon depths will also be a year behind. Plots that weren't sampled during a given cycle are
-not returned. Horizon depths are averaged across samples of the same horizon type.
+returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of
+O and A sampled. Litter is not included in total depth calculation. Note soil chemistry data are typically a year behind
+plot data, so corrected soil horizon depths will also be a year behind. Soil horizon data not yet QCed by lab data are
+indicated by the Lab_QC (T/F) column. Plots that weren't sampled during a given cycle are not returned. Horizon depths
+are averaged across samples of the same horizon type.
 }
 \description{
-This function verifies whether O and A horizons were named corrected based on % Total Carbon using
-the joinSoilLabData() function, then compiles sample depth by horizon. Must run importData first.
-Note that Earthworms are summarized in joinStandData(). Note that data starts at 2007 because 2006 methods were pretty different.
+This function verifies whether O and A horizons were named corrected based on % Total Carbon (O = TC >= 20%) using
+the joinSoilLabData() function, then compiles average sample depth by horizon. Must run importData first. Only works for complete
+visits and plots that haven't been abandoned. Note that Earthworms are summarized in joinStandData(). This function starts at 2007
+because 2006 methods were pretty different.
 }
 \examples{
-importData() #imports using default odbc
-# join horizon dpeth data for most recent cycle in ACAD.
-soil_ACAD_O <- joinSoilSampleData(park = 'ACAD', from = 2015, to = 2018)
+importData() #default imports
+# join horizon depth data for the third cycle in ACAD.
+soil_ACAD_O <- joinSoilSampleData(park = 'ACAD', from = 2014, to = 2017)
 
 }

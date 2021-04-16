@@ -5,33 +5,81 @@
 \title{joinMicroShrubData: compiles shrub data collected in microplots}
 \usage{
 joinMicroShrubData(
-  speciesType = c("all", "native", "exotic"),
-  numMicros = 3,
   park = "all",
-  from = 2007,
-  to = 2018,
+  from = 2006,
+  to = 2021,
   QAQC = FALSE,
-  locType = "VS",
   panels = 1:4,
-  output,
+  locType = c("VS", "all"),
+  eventType = c("complete", "all"),
+  speciesType = c("all", "native", "exotic", "invasive"),
+  valueType = c("all", "midpoint", "classes", "averages"),
   ...
 )
 }
 \arguments{
+\item{park}{Combine data from all parks or one or more parks at a time. Valid inputs:
+\describe{
+\item{"all"}{Includes all parks in the network}
+\item{"ACAD"}{Acadia NP only}
+\item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+\item{"MIMA"}{Minute Man NHP only}
+\item{"MORR"}{Morristown NHP only}
+\item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+\item{"SAGA"}{Saint-Gaudens NHS only}
+\item{"SARA"}{Saratoga NHP only}
+\item{"WEFA"}{Weir Farm NHS only}}}
+
+\item{from}{Year to start analysis, ranging from 2006 to current year}
+
+\item{to}{Year to stop analysis, ranging from 2006 to current year}
+
+\item{QAQC}{Allows you to remove or include QAQC events.
+\describe{
+\item{FALSE}{Default. Only returns visits that are not QAQC visits}
+\item{TRUE}{Returns all visits, including QAQC visits}}}
+
+\item{locType}{Allows you to only include plots that are part of the GRTS sample design or
+include all plots, such as deer exclosures.
+\describe{
+\item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+\item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}}
+
+\item{eventType}{Allows you to include only complete sampling events or all sampling events
+\describe{
+\item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+\item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
 \describe{
 \item{"all"}{Default. Returns all species.}
 \item{"native"}{Returns native species only}
 \item{"exotic"}{Returns exotic species only}
+\item{"invasive"}{Returns species on the Indicator Invasive List}
 }}
 
-\item{numMicros}{Allows you to select 1, 2, or 3 microplots of data to summarize}
+\item{valueType}{Allows you to return cover class midpoints (numeric) or cover class ranges (text)
+\describe{
+\item{"all"}{Default. Returns columns for midpoint and cover classes for each quad}
+\item{"midpoint"}{Default. Returns numeric cover class midpoints, with Pct prefix, for each
+microplot/species combination.}
+\item{"classes"}{Returns the text cover class definitions, with Txt prefix, for each microplot/
+species combination.}
+\item{"averages"}{Returns only the plot-level average cover and percent frequency per species.}
+}}
 }
 \value{
 returns a dataframe with shrub data collected in microplots
 }
 \description{
-This function combines shrub stem counts (cycle 1) and percent cover (cycle 2+) data from microplots. Must run importData first.
+This function compiles shrub data collected in the microplots. For microplot or species-level notes
+run the joinMicroNotes function. Note that in 2006, only 1 microplot was sampled. Note that from 2006 to 2009,
+stem tallies were recorded instead of % cover. For records < 2010, microplot percent frequency is summarized by
+species, but average percent cover is NA. For more information on how methods evolved for shrubs in NETN,
+refer to the Summary of Major Protocol Changes and Deviations document located in the Long-Term Forest Monitoring
+Protocol IRMA Project:
+   https://irma.nps.gov/Datastore/Reference/Profile/2189101.
 }
 \examples{
 importData()

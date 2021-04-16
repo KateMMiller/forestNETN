@@ -1,12 +1,12 @@
-#' @title joinLocEvent: merges Location and Event level data with options for filtering.
+#' @title joinLocEvent: compile Location and Event data with filtering options.
 #'
-#' @importFrom dplyr select filter arrange mutate summarise group_by between
+#' @importFrom dplyr filter full_join select
+#' @importFrom stringr str_pad
 #' @importFrom magrittr %>%
-#' @importFrom stringr str_pad str_sub
 #'
 #' @description This function combines location and event data. Must run importData first.
 #'
-#' @param park Combine data from all parks or one park at a time. Acceptable options are:
+#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 #' \describe{
 #' \item{"all"}{Includes all parks in the network}
 #' \item{"ACAD"}{Acadia NP only}
@@ -17,27 +17,36 @@
 #' \item{"SAGA"}{Saint-Gaudens NHS only}
 #' \item{"SARA"}{Saratoga NHP only}
 #' \item{"WEFA"}{Weir Farm NHS only}}
-#' @param from Year to start analysis, ranging from 2006-2019
-#' @param to Year to stop analysis, ranging from 2006-2019
+#'
+#' @param from Year to start analysis, ranging from 2006 to current year
+#' @param to Year to stop analysis, ranging from 2006 to current year
+#'
 #' @param QAQC Allows you to remove or include QAQC events.
 #' \describe{
 #' \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 #' \item{TRUE}{Returns all visits, including QAQC visits}}
-#' @param rejected Allows you to remove (FALSE) or include (TRUE) rejected plots.
+#'
+#' @param abandonded Allows you to include (TRUE) or remove (FALSE; Default.) or abandoned plots.
 #' \describe{
 #' \item{FALSE}{Default. Only returns plots that were not rejected.}
 #' \item{TRUE}{returns all records}}
+#'
 #' @param locType Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
 #' \describe{
 #' \item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
-#' \item{"all"}{Include all plots, such as deer exclosures and bonus plots}}
-#' @param eventType Allows you to only include complete sampling events, or to include all sampling events
+#' \item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}
+#'
+#' @param eventType Allows you to include only complete sampling events or all sampling events
 #' \describe{
-#' \item{"complete"}{Only include sampling events for a plot that are complete.}
-#' \item{"all}{Include all plots with an Event_ID, including plots that are missing all data associated with that event (eg ACAD-029.2010).}
-#' }
+#' \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+#' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+#' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
+#'
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
-#' If more than one panel is selected, specify by c(1,3), for example.
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param output Allows you to return all columns or just the most important columns for analysis. Valid
+#' inputs are "short" and "verbose".
 #'
 #' @return returns a dataframe with location and visit events
 #'
@@ -46,64 +55,98 @@
 #' # Select most recent survey of data from WEFA
 #' WEFA_data <- joinLocEvent(park = 'WEFA', panels = c(2,4), from = 2015, to = 2018)
 #'
-#' # Select data from cycle 3
-#' cycle3 <- joinLocEvent(from = 2014, to = 2017) # all parks is default
+#' # Select data from cycle 3 for MABI and SAGA
+#' cycle3 <- joinLocEvent(park = c("MABI", "SAGA"), from = 2014, to = 2017) # all parks is default
 #'
 #' # Select data from plots that had a QA/QC event in ACAD in 2018
-#' ACAD_data<-joinLocEvent(park = 'ACAD', QAQC = T, from = 2018)
-#' QAQC_plots<-ACAD_data$Plot_Name[which(ACAD_data$Event_QAQC==TRUE)]
-#' ACAD_QAQC<-ACAD_data %>% filter(Plot_Name %in% QAQC_plots) %>% droplevels()
+#' ACAD_data <- joinLocEvent(park = 'ACAD', QAQC = TRUE, from = 2018)
+#' QAQC_plots <- ACAD_data$Plot_Name[which(ACAD_data$Event_QAQC == TRUE)]
+#' ACAD_QAQC <- ACAD_data %>% filter(Plot_Name %in% QAQC_plots)
 #'
 #' @export
 #'
 
 #------------------------
-# Joins tbl_Locations and tbl_Events tables and filters by park, year, and plot/visit type
+# Joins Plots and Events views and filters by park, year, and plot/visit type
 #------------------------
-joinLocEvent<-function(park="all", from=2006,to=2019, QAQC=FALSE, rejected=FALSE, panels=1:4,
-                       locType='VS', eventType=c('complete','all'), output='short', ...){
+joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, abandoned = FALSE, panels = 1:4,
+                       locType = c('VS', 'all'), eventType = c('complete', 'all'),
+                       output = c('short', 'verbose'), ...){
 
-  eventType<-match.arg(eventType)
+  # Match args and class
+  locType <- match.arg(locType)
+  eventType <- match.arg(eventType)
+  park <- match.arg(park, several.ok = TRUE,
+                     c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))
+  stopifnot(class(from) == "numeric", from >= 2006)
+  stopifnot(class(to) == "numeric", to >= 2006)
+  stopifnot(class(QAQC) == 'logical')
+  stopifnot(class(abandoned) == 'logical')
+  stopifnot(panels %in% c(1, 2, 3, 4))
+  output <- match.arg(output, c("short", "verbose"))
 
-  loc2<-loc %>% mutate(Unit_Code=as.factor(str_sub(Unit_ID,1,4)))
-  loc2$Plot_Number<-str_pad(loc2$Plot_Number,width=3,side="left",pad=0) #Pad plot number so retains 3-digits
-  loc2$Plot_Name<-paste(loc2$Unit_Code, loc2$Plot_Number, sep="-")
+  env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
-  loc3<- if (locType=='VS') {filter(loc2,Loc_Type=="VS") %>% droplevels()
-  } else if (locType=='all') {(loc2)
-  } else if (locType!='VS'|locType!='all') {stop("locType must either be 'VS' or 'all'")}
+  # Check if the views exist and stop if they don't
+  tryCatch(plots <- get("COMN_Plots", envir = env),
+           error = function(e){stop("COMN_Plots view not found. Please import views.")}
+  )
 
-  loc4<- if (rejected==FALSE) {filter(loc3, Rejected==F)
-  } else if (rejected==TRUE) {(loc3)
-  } else {stop("rejected must be TRUE or FALSE")}
+  tryCatch(events <- get("COMN_Events", envir = env),
+           error = function(e){stop("COMN_Events view not found. Please import views.")}
+  )
 
-  loc5<- if (park=='all') {(loc4)
-  } else if (park %in% levels(loc4$Unit_Code)){filter(loc4,Unit_Code==park)
-  } else {stop("park must be one of the factor levels of Unit_Code")}
+  # Merge COMN_Plots and COMN_Events
+  plots <- plots %>% select(-ExportDate)
+  events <- events %>% select(-ExportDate)
+  merge_names <- intersect(names(plots), names(events))
+    # merge_names: "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PlotTypeLabel",
+    # "PanelCode", "PanelLabel", "PlotCode", "IsAbandoned"
 
-  park.ev<-merge(loc5,event,by="Location_ID",all.x=T)
+  plot_events <- full_join(plots, events, by = merge_names)
 
-  park.ev2<- if (QAQC==FALSE) {filter(park.ev, Event_QAQC==0)
-  } else if (QAQC==TRUE) {(park.ev)
-  } else {stop("QAQC must be TRUE or FALSE")}
+  if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
-  park.ev3<- if (eventType=='complete') {filter(park.ev2, !(Plot_Name=='ACAD-029' & Start_Date =='2010-07-07')) %>% droplevels()
-                                  #Event_ID=='3BF64BE2-7089-42B6-B610-09B3511BF1B4')) %>% droplevels()
-  } else {park.ev2}
+  # Filter output based on function arguments
+  plot_events <- if(output == 'short'){
+    plot_events[, c("Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
+                    "IsAbandoned", "PlotID", "PlotLegacyID", "xCoordinate", "yCoordinate", "ZoneCode",
+                    "PhysiographyCode", "PhysiographyLabel", "PhysiographySummary", "Aspect",
+                    "Orientation", "GRTS", "IsOrientationChanged", "IsStuntedWoodland",
+                    "EventID", "EventLegacyID", "StartDate", "IsQAQC", "StartYear", "StartDate",
+                    "PlotNotes", "Directions", "EventNotes", "StandNotes")]} else {plot_events}
 
-  park.ev4<- park.ev3 %>% filter(Panel %in% panels) %>% droplevels()
-  park.ev4$Year <- as.numeric(format(as.Date(park.ev4$Start_Date, format = "%Y-%m-%d"), "%Y"))
 
-  park.ev5<- park.ev4 %>% mutate(cycle=ifelse(Year<=2009,1,
-    ifelse(Year>=2010 & Year<=2013,2,
-      ifelse(between(Year,2014,2017),3,ifelse(between(Year,2018,2021),4,NA))))) %>%
-    filter(Year>=from & Year <=to) %>% droplevels()
+  # microbenchmark::microbenchmarl(plot_events$Plot_Name <- paste(plot_events$Park.Unit,
+  #                                sprintf("%03d", plot_events$PlotCode), sep = "-"), #sprintf was 2x slower
+  plot_events$Plot_Name <- paste(plot_events$ParkUnit,
+                                 stringr::str_pad(plot_events$PlotCode, 3, side = 'left', "0"),
+                                 sep = "-")
 
-  park.plots<- if (output=='short') {park.ev5 %>% select(Location_ID,Event_ID,Unit_Code,
-    Plot_Name, Plot_Number, X_Coord, Y_Coord, Panel, Year, Event_QAQC, cycle)
-  } else if (output=='verbose') {park.ev5 %>% select(Location_ID:Y_Coord,Coord_Units:Physiographic_Class,
-    Plot_Name,Unit_Code:Start_Date,Event_QAQC, Year, cycle)}
+  plot_events1 <- if(locType == 'VS'){filter(plot_events, PlotTypeCode == "VS")
+  } else if (locType=='all') {(plot_events)}
 
-  return(data.frame(park.plots))
+  plot_events2 <- if(abandoned == FALSE){filter(plot_events1, IsAbandoned == FALSE)
+  } else if (abandoned == TRUE) {(plot_events1)}
+
+  plot_events3 <- if(any(park == "all")){plot_events2
+  } else {filter(plot_events2, ParkUnit %in% park)}
+
+  plot_events4 <- if(QAQC == FALSE){filter(plot_events3, IsQAQC == 0)
+    } else {plot_events3}
+
+  plot_events5 <- if(eventType == "complete"){
+    filter(plot_events4, !(Plot_Name == 'ACAD-029' & StartDate == '2010-07-07'))
+    } else {plot_events4}
+
+  plot_events6 <- plot_events5[plot_events5$PanelCode %in% c(panels), ]
+  plot_events7 <- plot_events6[plot_events6$StartYear %in% c(from:to), ]
+
+  plot_events7$cycle[plot_events7$StartYear %in% c(2006:2009)] <- 1
+  plot_events7$cycle[plot_events7$StartYear %in% c(2010:2013)] <- 2
+  plot_events7$cycle[plot_events7$StartYear %in% c(2014:2017)] <- 3
+  plot_events7$cycle[plot_events7$StartYear %in% c(2018:2021)] <- 4
+    # need to update for 2022
+  return(data.frame(plot_events7))
 } # end of function
 

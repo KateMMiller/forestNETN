@@ -1,113 +1,170 @@
 #' @include joinLocEvent.R
-#' @title joinQuadData: compiles quadrat species data
+#' @title joinQuadData: compiles quadrat character data
 #'
-#' @importFrom dplyr select filter arrange mutate summarise group_by rename_at
+#' @importFrom dplyr arrange case_when full_join group_by left_join mutate select summarize ungroup
 #' @importFrom magrittr %>%
+#' @importFrom tidyr pivot_wider
 #'
-#' @description This function combines quadrat species data with species names and allows you to filter on species types, park, years, and visit type. Note that the Shrub guild also includes woody vine species.
+#' @description This function compiles the quadrat character data (i.e., Soil, Rock, etc.) into a wide format,
+#' so that each quadrat has a column. Notes fields are not compiled in this function. For quadrat-related notes,
+#' use the joinQuadNotes() function.
 #'
-#' @param speciesType Allows you to filter on native, exotic or include all species.
+#' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 #' \describe{
-#' \item{"all"}{Default. Returns all species.}
-#' \item{"native"}{Returns native species only}
-#' \item{"exotic"}{Returns exotic species only}
-#' \item{"invasive"}{Returns species on the Indicator Invasive List}
+#' \item{"all"}{Includes all parks in the network}
+#' \item{"ACAD"}{Acadia NP only}
+#' \item{"MABI"}{Marsh-Billings-Rockefeller NHP only}
+#' \item{"MIMA"}{Minute Man NHP only}
+#' \item{"MORR"}{Morristown NHP only}
+#' \item{"ROVA"}{Roosevelt-Vanderbilt NHS only}
+#' \item{"SAGA"}{Saint-Gaudens NHS only}
+#' \item{"SARA"}{Saratoga NHP only}
+#' \item{"WEFA"}{Weir Farm NHS only}}
+#'
+#' @param from Year to start analysis, ranging from 2006 to current year
+#' @param to Year to stop analysis, ranging from 2006 to current year
+#'
+#' @param QAQC Allows you to remove or include QAQC events.
+#' \describe{
+#' \item{FALSE}{Default. Only returns visits that are not QAQC visits}
+#' \item{TRUE}{Returns all visits, including QAQC visits}}
+#'
+#' @param locType Allows you to only include plots that are part of the GRTS sample design or include all plots, such as deer exclosures
+#' \describe{
+#' \item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
+#' \item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}
+#'
+#' @param eventType Allows you to include only complete sampling events or all sampling events
+#' \describe{
+#' \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
+#' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
+#' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
+#'
+#' @param valueType Allows you to return cover class midpoints (numeric) or cover class ranges (text)
+#' \describe{
+#' \item{"all"}{Default. Returns columns for midpoint and cover classes for each quad}
+#' \item{"midpoint"}{Default. Returns numeric cover class midpoints, with Pct prefix.}
+#' \item{"classes"}{Returns the text cover class definitions, with Txt prefix.}
 #' }
 #'
 #' @return Returns a dataframe with cover class midpoints for each quadrat and includes guild for each species.
 #'
 #' @examples
 #' importData()
-#' # compile quadrat data for invasive species in SARA for all years
-#' SARA_quads <- joinQuadData(park = 'SARA', speciesType = 'invasive')
+#' # compile quadrat data cover class midpoints in SARA for all years
+#' SARA_quads <- joinQuadData(park = 'SARA', valueType = 'midpoint')
 #'
-#' # compile native species only for all parks in most recent survey
-#' native_quads <- joinQuadData(speciesType = 'native', from = 2015, to = 2018)
+#' # compile quadrat data for cycle 3
+#' native_quads <- joinQuadData(from = 2014, to = 2017)
 #'
 #' @export
 #'
 #------------------------
-# Joins quadrat tables and filters by park, year, and plot/visit type
+# Joins quadrat character data and filters by park, year, and plot/visit type
 #------------------------
-joinQuadData<-function(speciesType=c('all', 'native','exotic', 'invasive'), park='all',from=2006, to=2018,
-                       QAQC=FALSE, locType='VS', panels=1:4, output, ...){
-  speciesType<-match.arg(speciesType)
-  # Prepare the quadrat data
+joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
+                         locType = c('VS', 'all'), eventType = c('complete', 'all'),
+                         valueType = c('all', 'midpoint', 'classes'),  ...){
 
-  plants$Latin_Name[plants$TSN == 27372] <- paste("Oenothera perennis") # Fixes weird issue with that spp
-  plants$Accepted_Latin_Name[plants$TSN == 27372] <- paste("Oenothera perennis")
+  # Match args and class
+  park <- match.arg(park, several.ok = TRUE,
+                    c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))
+  stopifnot(class(from) == "numeric", from >= 2006)
+  stopifnot(class(to) == "numeric", to >= 2006)
+  stopifnot(class(QAQC) == 'logical')
+  stopifnot(panels %in% c(1, 2, 3, 4))
+  locType <- match.arg(locType)
+  eventType <- match.arg(eventType)
+  valueType <- match.arg(valueType)
 
-  quadsamp$numHerbPlots<-apply(quadsamp[,c(15:22)], 1,sum)
-  park.plots<-force(joinLocEvent(park=park, from=from,to=to,QAQC=QAQC,locType=locType, panels=panels,output='short'))
 
-  quads1<-merge(park.plots, quadsamp[,c("Event_ID","numHerbPlots")], by="Event_ID", all.x=T)
-  plants<-plants %>% mutate(Tree=ifelse(Latin_Name=="Rhamnus cathartica",0,Tree))
+  env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
-  quadspp<-merge(quads[,c("Event_ID","TSN","Germinant","qUC_Cover_Class_ID","qUL_Cover_Class_ID",
-    "qML_Cover_Class_ID", "qBL_Cover_Class_ID","qBC_Cover_Class_ID","qBR_Cover_Class_ID",
-    "qMR_Cover_Class_ID","qUR_Cover_Class_ID")],
-    plants[,c("TSN","Latin_Name","Tree","Shrub","Vine","Herbaceous","Graminoid","Fern_Ally",
-      "Exotic","Indicator_Invasive_NETN")],
-    by="TSN",all.x=T)
-  quads2<-merge(quads1,quadspp,by="Event_ID",all.x=T) #%>% filter(Germinant==0) %>% select(-Germinant)
+  # Prepare the quad data
+  tryCatch(quadchr <- get("COMN_QuadCharacter", envir = env) %>%
+                      select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQQuadCharCode,
+                             IsTrampled, QuadratCode, CharacterLabel, CoverClassCode, CoverClassLabel),
+           error = function(e){stop("COMN_QuadCharacter view not found. Please import view.")}
+  )
 
-#names(quads2)
+  # subset with EventID from plot_events to make function faster
+  plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
+                                    panels = panels, locType = locType, eventType = eventType,
+                                    abandoned = FALSE, output = 'short')) %>%
+                 select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+                        EventID, StartYear, StartDate, cycle, IsQAQC)
 
-  # Convert coverclasses to midpoints for all 8 quadrats
-  quads2[,15:22][quads2[,15:22]==1]<-0.1
-  quads2[,15:22][quads2[,15:22]==2]<-1.5
-  quads2[,15:22][quads2[,15:22]==3]<-3.5
-  quads2[,15:22][quads2[,15:22]==4]<-7.5
-  quads2[,15:22][quads2[,15:22]==5]<-17.5
-  quads2[,15:22][quads2[,15:22]==6]<-37.5
-  quads2[,15:22][quads2[,15:22]==7]<-62.5
-  quads2[,15:22][quads2[,15:22]==8]<-85
-  quads2[,15:22][quads2[,15:22]==9]<-97.5
+  if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
-  old.names<-names(quads2[,15:22])
-  new.names<-c('UC','UL','ML','BL','BC','BR','MR','UR')
-  quads2<-quads2 %>% rename_at(vars(old.names),~new.names)
-  quads2[,c(15:22)][is.na(quads2[,c(15:22)])]<-0
+  pe_list <- unique(plot_events$EventID)
 
-  quads3<-quads2 %>% mutate(avg.cover=(UC+UL+ML+BL+BC+BR+MR+UR)/numHerbPlots)
-  quads3[,c(15:22)][quads3[,c(15:22)]>0]<-1
-  quads3<-quads3 %>% mutate(avg.freq=(UC+UL+ML+BL+BC+BR+MR+UR)/numHerbPlots)
+  quadchr_evs <- filter(quadchr, EventID %in% pe_list)
 
-  quads4<-if (speciesType=='native'){filter(quads3,Exotic==FALSE)
-  } else if (speciesType=='exotic'){filter(quads3,Exotic==TRUE)
-  } else if (speciesType=='invasive'){filter(quads3,Indicator_Invasive_NETN==TRUE)
-  } else if (speciesType=='all'){(quads3)
-  }
+  # prep for reshaping to wide
+  quadchr_evs2 <- quadchr_evs %>%
+    mutate(Pct_Cov = as.numeric(case_when(CoverClassCode == "0" ~ 0,
+                                            CoverClassCode == "1" ~ 0.1,
+                                            CoverClassCode == "2" ~ 1.5,
+                                            CoverClassCode == "3" ~ 3.5,
+                                            CoverClassCode == "4" ~ 7.5,
+                                            CoverClassCode == "5" ~ 17.5,
+                                            CoverClassCode == "6" ~ 37.5,
+                                            CoverClassCode == "7" ~ 62.5,
+                                            CoverClassCode == "8" ~ 85,
+                                            CoverClassCode == "9" ~ 97.5,
+                                            CoverClassCode %in% c("NC", "PM") ~ NA_real_)), # convert to NA later
+           Txt_Cov = ifelse(CoverClassLabel == "-<1%", "<1%", CoverClassLabel),
+           Sampled = ifelse(SQQuadCharCode == "SS", 1, 0)) %>%
+    select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, QuadratCode,
+           Sampled, IsTrampled, CharacterLabel, Pct_Cov, Txt_Cov)
 
-  quads5<-merge(quads1,quads4[,c(1,13:33)],by='Event_ID',all.x=T)
-  quads5[,c(15:22, 24:33)][is.na(quads5[,c(15:22, 24:33)])]<-0
-  quads5<-quads5 %>% mutate(germ.cover=ifelse(Germinant==1,avg.cover,0), germ.freq=ifelse(Germinant==1,avg.freq,0),
-                            avg.cover=ifelse(Germinant==0,avg.cover,0), avg.freq=ifelse(Germinant==0,avg.freq,0))
+  quad_sum <- quadchr_evs2 %>% group_by(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear,
+                                        IsQAQC, CharacterLabel) %>%
+                               summarize(num_quads = sum(Sampled, na.rm = T),
+                                         num_trampled = sum(IsTrampled, na.rm = T),
+                                         quad_avg_cov = sum(Pct_Cov, na.rm = T)/num_quads,
+                                         quad_pct_freq = (sum(Pct_Cov > 0, na.rm = T)/num_quads)*100,
+                                         .groups = 'drop') %>% ungroup()
 
-  quads5.nongerm<-quads5 %>% filter(Germinant==0) %>% select(-(germ.cover:germ.freq)) %>% droplevels()
-  quads5.germ<-quads5 %>% filter(Germinant==1) %>% select(-(avg.cover:avg.freq)) %>% droplevels()
 
-  quads6<-merge(quads1,quads5.nongerm[,c(1,13,15:22,32,33)], by="Event_ID",all.x=T)
-  quads7<-merge(quads1,quads5.germ[,c(1,13:22,32,33)], by=c("Event_ID"), all.x=T,all.y=T)
-  quads8<-merge(quads6,quads7,by=c("Event_ID","Location_ID","Unit_Code","Plot_Name",
-    "Plot_Number","X_Coord","Y_Coord","Panel","Year","Event_QAQC","cycle", "TSN"), all.x=T,all.y=T)
+  # make data wide on quad name
+  quadchr_wide <- quadchr_evs2 %>%  select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear,
+                                           IsQAQC, QuadratCode, CharacterLabel, Pct_Cov, Txt_Cov) %>%
+                                    pivot_wider(names_from = QuadratCode,
+                                               values_from = c(Pct_Cov, Txt_Cov),
+                                               values_fill = list(Pct_Cov = 0, Txt_Cov = "0%"))
+    # note that values_fill only fills non-existent combinations with 0 or 0%. NAs already in the data remain NA.
 
-  quads8[,c(14:35)][is.na(quads8[,c(14:35)])]<-0
+  quadchr_comb <- full_join(quad_sum, quadchr_wide,
+                            by = intersect(names(quad_sum), names(quadchr_wide)))
 
-  quads9<-quads8 %>% mutate(numHerbPlots=ifelse(numHerbPlots.x>0,numHerbPlots.x,numHerbPlots.y),
-                            UC=ifelse((UC.x+UC.y)>0,1,0), UR=ifelse((UR.x+UR.y)>0,1,0),
-                            MR=ifelse((MR.x+MR.y)>0,1,0), BR=ifelse((BR.x+BR.y)>0,1,0),
-                            BC=ifelse((BC.x+BC.y)>0,1,0), BL=ifelse((BL.x+BL.y)>0,1,0),
-                            ML=ifelse((ML.x+ML.y)>0,1,0), UL=ifelse((UL.x+UL.y)>0,1,0)) %>%
-    select(-(UC.x:UR.x),-(UC.y:UR.y),-numHerbPlots.x,-numHerbPlots.y,-Germinant)
+  quadchr_comb2 <- left_join(plot_events, quadchr_comb,
+                             by = intersect(names(plot_events), names(quadchr_comb)))
 
-  quads10<-merge(quads9,plants[,c("TSN","Latin_Name","Tree","Shrub","Vine","Herbaceous","Graminoid","Fern_Ally",
-    "Exotic","Indicator_Invasive_NETN")], by="TSN",all.x=T)
+  # select columns based on specified valueType
+  req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle",
+                "CharacterLabel", "num_quads", "num_trampled", "quad_avg_cov", "quad_pct_freq")
 
-  quads10<-quads10 %>% mutate(Latin_Name= ifelse(is.na(Latin_Name), paste0('No species'), paste0(Latin_Name)))
+  pct_cols <- c("Pct_Cov_UC", "Pct_Cov_UR", "Pct_Cov_MR", "Pct_Cov_BR",
+                "Pct_Cov_BC", "Pct_Cov_BL", "Pct_Cov_ML", "Pct_Cov_UL")
 
-  quads.final<-quads10 %>% select(Location_ID,Event_ID:cycle,numHerbPlots,UC:UL,TSN,Latin_Name,Tree:Indicator_Invasive_NETN,avg.cover:germ.freq)
-  return(data.frame(quads.final))
+  txt_cols <- c("Txt_Cov_UC", "Txt_Cov_UR", "Txt_Cov_MR", "Txt_Cov_BR",
+                "Txt_Cov_BC", "Txt_Cov_BL", "Txt_Cov_ML", "Txt_Cov_UL")
+
+  # Need to reset PMs to NA after pivot_wider
+  invisible(lapply(seq_along(pct_cols), function(x){
+    quadchr_comb2[,pct_cols[[x]]][quadchr_comb2[,txt_cols[[x]]] == "Permanently Missing"] <- NA
+  }))
+
+  quadchr_comb2$Pct_Cov_UC[quadchr_comb2$Txt_Cov_UC == "Permanently Missing"] <- NA
+
+  quadchr_final <- switch(valueType,
+                          "midpoint" = quadchr_comb2[, c(req_cols, pct_cols)],
+                          "classes" = quadchr_comb2[, c(req_cols, txt_cols)],
+                          "all" = quadchr_comb2[, c(req_cols, pct_cols, txt_cols)])
+
+  return(data.frame(quadchr_final))
 
   } # end of function
 
