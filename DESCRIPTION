@@ -36,6 +36,7 @@ Collate:
     'joinVisitNotes.R'
     'plotTreeMap.R'
     'sumQuadGuilds.R'
+    'sumSapDBHDist.R'
     'sumSpeciesList.R'
     'sumStrStage.R'
     'sumTreeDBHDist.R'

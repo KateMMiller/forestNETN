@@ -110,6 +110,7 @@ sumTreeDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, l
   stopifnot(class(QAQC) == 'logical')
   stopifnot(panels %in% c(1, 2, 3, 4))
   speciesType <- match.arg(speciesType)
+  canopyPosition <- match.arg(canopyPosition)
   units <- match.arg(units)
 
   arglist <- list(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
@@ -154,8 +155,8 @@ sumTreeDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, l
   # Summarize stems to size class and pivot wide
   tree_dist <- tree_df2 %>% group_by(Plot_Name, ParkUnit, PlotID, EventID, StartYear, IsQAQC,
                                      size_class, unit_conv) %>%
-                            summarize(dens = sum(stem) * 10000/first(unit_conv),
-                                      BA = sum(BA_cm2)/first(unit_conv),
+                            summarize(dens = sum(stem) * 10000/first(unit_conv), #stems/ha
+                                      BA = sum(BA_cm2)/first(unit_conv), #m2/ha
                                       .groups = 'drop')
 
   tree_dist_wide <- switch(units,
