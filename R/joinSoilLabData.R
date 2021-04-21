@@ -82,7 +82,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
   # Prepare the soil data
   tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                    SampleTypeLabel, PositionCode, Horizon.Code, # HorizonCode,
+                    SampleTypeLabel, PositionCode, HorizonCode, # HorizonCode,
                     SoilEventNote, IsArchived) %>%
              filter(StartYear > 2006 #& StartYear < 2020
                     ),
@@ -119,18 +119,16 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
-
   pe_list <- unique(plot_events$EventID)
   soilsamp_evs <- filter(soilsamp_vw, EventID %in% pe_list)
   soillab_evs <- filter(soillab_vw, EventID %in% pe_list)
   soilhd_evs <- filter(soilhd_samp, EventID %in% pe_list)
 
-    # Change this step after migration switches FF to O
+  # Change this step after migration switches FF to O
   soilsamp_wide <- soilsamp_evs %>% select(-SoilLayerLabel) %>%
-                                   filter(SoilLayer %in% c("Litter", "Forest_Floor", "A_Horizon", "Total_Depth")) %>%
+                                   filter(SoilLayer %in% c("Litter", "O_Horizon", "A_Horizon", "Total_Depth")) %>%
                                    pivot_wider(names_from = SoilLayer,
                                                values_from = Depth_cm) %>%
-                                   rename(O_Horizon = Forest_Floor) %>%
                                    mutate(O_Horizon = ifelse(is.na(O_Horizon), 0, O_Horizon),
                                           A_Horizon = ifelse(is.na(A_Horizon), 0, A_Horizon),
                                           Total_Depth = ifelse(is.na(Total_Depth) | Total_Depth == 0,
