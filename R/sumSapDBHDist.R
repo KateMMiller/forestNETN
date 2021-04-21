@@ -69,7 +69,7 @@
 #'
 #' @examples
 #' importData()
-#' sap_diam_dist <- sumSapDBHDist(park = 'ROVA, speciesType = 'native', from = 2015, to = 2018, units = 'BA')
+#' sap_diam_dist <- sumSapDBHDist(park = 'ROVA', speciesType = 'native', from = 2015, to = 2018, units = 'BA')
 #'
 #' @export
 #'
