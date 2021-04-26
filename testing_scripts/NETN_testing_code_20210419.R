@@ -698,6 +698,7 @@ shrub_merge %>% select(Plot_Name, StartYear, IsQAQC, ScientificName, shrub_avg_c
 
 #----- Microplot Seedlings ------
 seed_new <- joinMicroSeedlings(from = 2006, to = 2019, eventType = 'all', locType = 'all', QAQC = TRUE)
+table(seed_new$SQSeedlingCode, seed_new$StartYear)
 
 # SAGA-007-2010 UL micro is migrating as ND instead of NP. Not sure why that's happening
 # rest of issues in seedling data are SAGA-007-2010 and ACAD-029-2010 or seedlings
@@ -706,14 +707,37 @@ seed_new <- joinMicroSeedlings(from = 2006, to = 2019, eventType = 'all', locTyp
 #-------------------------------
 # Microplot saplings
 #-------------------------------
-saps_new <- joinMicroSaplings(locType = "all", QAQC = T, eventType = 'all')
-length(unique(saps_new$EventID))
-sap_exo <- joinMicroSaplings(speciesType = 'exotic')
-length(unique(sap_exo$EventID))
+# Checking raw view first, so make sure SQs are correct
+saps_vw <- get("NETN_MicroplotSaplings", envir = VIEWS_NETN) %>%
+  select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, StartDate, IsQAQC, SQSaplingCode,
+         MicroplotCode, TSN, ScientificName, DBHcm)
 
-sap19 <- joinMicroSaplings(from = 2019, to = 2019, speciesType = 'native', canopyForm = 'canopy')
+table(saps_vw$SQSaplingCode)
+  #  NP   NS   SS
+  # 1819  184 5723
 
+table(saps_vw$SQSaplingCode, saps_vw$StartYear) # Most of the NS are in 2006 for UL/B, and rest are 2010. Correct.
+table(saps_vw$SQSaplingCode, saps_vw$MicroplotCode) # Most NS are for UL/B in 2006. Correct.
 
+saps_new <- joinMicroSaplings(locType = "all", QAQC = T, eventType = 'all', canopyForm = 'all', speciesType = 'all')
+length(unique(saps_new$EventID)) #1281
+
+saps_prep <- merge(plotevs_old, micro, by = 'Event_ID', all = TRUE)
+saps_prep2 <- merge(saps_prep, saps[, 1:6], by = "Microplot_Characterization_Data_ID", all = TRUE)
+saps_old <- merge(saps_prep2, plants[, c("Latin_Name", "TSN")], by = "TSN", all.x = TRUE) %>%
+            mutate(Latin_Name2 = ifelse(Latin_Name == "No species recorded", "None present", Latin_Name))
+head(saps_old)
+head(saps_new)
+saps_merge <- full_join(saps_new, saps_old, by = c("Plot_Name" = "Plot_Name",
+                                                  "StartYear" = "Year",
+                                                  "IsQAQC" = "Event_QAQC",
+                                                  "ScientificName" = "Latin_Name2",
+                                                  "MicroplotCode" = "Microplot_Name"),
+                        suffix = c("_new", "_old"))
+
+table(complete.cases(saps_merge$ScientificName)) # 6 F ACAD-029-2010 and SAGA-008-2010 b/c NS and join didn't match. OK
+# Hard to check much more than this, since NETN doesn't track individual saplings.
+# Will check that joinRegen returns the same values.
 
 #++++++++ Catch no species recorded in all new tabs TSN: -9999999951 TaxonID: 8
 
