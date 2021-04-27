@@ -216,7 +216,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   # select columns based on specified valueType
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
                 "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle",
-                "TSN", "ScientificName", "Confidence", "IsGerminant", "num_quads",
+                "SQQuadSppCode", "TSN", "ScientificName", "Confidence", "IsGerminant", "num_quads",
                 "quad_avg_cov", "quad_pct_freq")
 
   pct_cols <- c("Pct_Cov_UC", "Pct_Cov_UR", "Pct_Cov_MR", "Pct_Cov_BR",
