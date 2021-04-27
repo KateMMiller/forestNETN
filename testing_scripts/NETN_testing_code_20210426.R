@@ -1033,3 +1033,13 @@ table(soillab_new_act$LabLayer)
 
 # Done with 4/26 migration check
 
+#-------------------------------------
+# Testing summary functions with latest updates
+plotTreeMap(plotName = "WEFA-001", from = 2016, to = 2019 ) # worked
+
+quadtest <- sumQuadGuilds(speciesType = 'invasive')
+saptest <- sumSapDBHDist()
+spplist <- sumSpeciesList()
+spplist <- sumSpeciesList(speciesType = 'invasive')
+strstg <- sumStrStage()
+trdist <- sumTreeDBHDist()
