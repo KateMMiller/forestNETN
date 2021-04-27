@@ -59,6 +59,8 @@
 #' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
+#' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
+#'
 #' @return Returns a dataframe with species list for each plot.
 #'
 #' @examples
@@ -80,6 +82,7 @@
 #------------------------
 sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
                         locType = c('VS', 'all'), eventType = c('complete', 'all'),
+                        numMicros = 3,
                         speciesType = c('all', 'native', 'exotic', 'invasive'),...){
 
   # Match args and class
