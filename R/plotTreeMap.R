@@ -172,6 +172,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
   tree_map_fun <- function(df){
     orient <- paste0(unique(df$Plot_Name), "-", unique(df$StartYear), " Orientation: ",
                      unique(df$Orientation))
+    parkcode <- unique(df$ParkUnit)
 
     if(parkcode == 'ACAD'){
 

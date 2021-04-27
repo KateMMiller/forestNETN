@@ -77,7 +77,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
   # Prepare the soil data
   tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                    SampleTypeLabel, PositionCode, Horizon.Code, # HorizonCode,
+                    SampleTypeLabel, PositionCode, HorizonCode, # HorizonCode,
                     SoilEventNote, IsArchived) %>%
              filter(StartYear > 2006 #& StartYear < 2020
              ),
@@ -123,19 +123,19 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
   pe_list <- unique(plot_events$EventID)
   soilsamp_evs <- filter(soilsamp_vw, EventID %in% pe_list)
 
-  # Prepare sample data to pivot the layers wide (clean up after next migration)
+  # Prepare sample data to pivot the layers wide
   soilsamp_evs$SoilLayer = gsub(" ", "_", soilsamp_evs$SoilLayerLabel)
   soilsamp_evs$SoilLayer = gsub("Unconsolidated_Litter", "Litter", soilsamp_evs$SoilLayer)
 
   soilsamp_wide <- soilsamp_evs %>% select(-SoilLayerLabel, -SQSoilCode) %>%
-                                    filter(SoilLayer %in% c("Litter", "Forest_Floor", "A_Horizon", "Total_Depth")) %>%
+                                    filter(SoilLayer %in% c("Litter", "O_Horizon", "A_Horizon", "Total_Depth")) %>%
                                     pivot_wider(names_from = SoilLayer,
                                                 values_from = Depth_cm,
                                                 values_fill = 0) %>%
                                     group_by(PlotID, EventID, ParkUnit, PlotCode, StartYear,
                                              IsQAQC) %>%
                                     summarize(Litter_cm = mean(Litter, na.rm = T),
-                                              O_Horizon_cm = mean(Forest_Floor, na.rm = T),
+                                              O_Horizon_cm = mean(O_Horizon, na.rm = T),
                                               A_Horizon_cm = mean(A_Horizon, na.rm = T),
                                               Total_Depth_cm = mean(Total_Depth, na.rm = T),
                                               num_samps = length(!is.na(Total_Depth)),

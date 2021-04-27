@@ -121,11 +121,27 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   seeds_raw <- joinMicroSeedlings(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                                   locType = locType, eventType = eventType, speciesType = speciesType,
                                   canopyForm = canopyForm, numMicros = numMicros) %>%
-               select(-tot_seeds) %>% filter(!ScientificName %in% "None present")
+               select(-tot_seeds)
 
-  not_sampled_sds <- seeds_raw %>% filter(SQSeedlingCode %in% c("ND", "NS")) %>% select(EventID)
+  # Set up plots missing all seedling data and calculate number of microplots sampled
+  num_samp_micros_seed <- seeds_raw %>% select(Plot_Name, StartYear, IsQAQC, EventID, SQSeedlingCode, MicroplotCode) %>%
+                            unique() %>% mutate(samp_micro = ifelse(SQSeedlingCode %in% c("NP", "SS"), 1, 0),
+                                                not_samp_micro = ifelse(SQSeedlingCode == "NS", 1, 0)) %>% #View() %>%
+                            group_by(Plot_Name, StartYear, IsQAQC, EventID) %>%
+                            summarize(num_micros_seed = sum(samp_micro),
+                                      not_samp_events = ifelse(sum(not_samp_micro) == 3, 1, 0),
+                                      .groups = 'drop')
 
-  seeds_long <- seeds_raw %>% select(-SQSeedlingCode) %>%
+  # Plots missing all seedling data
+  not_samp_evs_seed <- num_samp_micros_seed %>% filter(not_samp_events == 1) %>%
+    select(Plot_Name, StartYear, IsQAQC, EventID)
+
+  # Number of microplots for visits not missing all seedling data
+  num_micros_seeds <- num_samp_micros_seed %>% filter(not_samp_events != 1) %>%
+    select(Plot_Name, StartYear, IsQAQC, EventID, num_micros_seed)
+
+  seeds_long <- seeds_raw %>% filter(!SQSeedlingCode %in% c("NP", "NS")) %>% # drop b/c saplings might have species
+                              select(-SQSeedlingCode) %>%
                               pivot_longer(cols = c(sd_15_30cm, sd_30_100cm, sd_100_150cm, sd_p150cm),
                                        names_to = "SizeClass",
                                        values_to = "Count")
@@ -134,31 +150,48 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   saps_raw <- joinMicroSaplings(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                                locType = locType, eventType = eventType, speciesType = speciesType,
                                canopyForm = canopyForm, numMicros = numMicros) %>%
-              filter(!ScientificName %in% "None present") %>%
               mutate(SizeClass = ifelse(DBHcm <= 2.5, "Sapling_SI", "Sapling"))
 
-  not_sampled_saps <- saps_raw %>% filter(SQSaplingCode %in% c("ND", "NS")) %>% select(EventID)
+  # Set up plots missing all sapling data and calculate number of microplots sampled
+  num_samp_micros_sap <- saps_raw %>% select(Plot_Name, StartYear, IsQAQC, EventID, SQSaplingCode, MicroplotCode) %>%
+    unique() %>% mutate(samp_micro = ifelse(SQSaplingCode %in% c("NP", "SS"), 1, 0),
+                        not_samp_micro = ifelse(SQSaplingCode == "NS", 1, 0)) %>% #View() %>%
+    group_by(Plot_Name, StartYear, IsQAQC, EventID) %>%
+    summarize(num_micros_sap = sum(samp_micro),
+              not_samp_events = ifelse(sum(not_samp_micro) == 3, 1, 0),
+              .groups = 'drop')
 
-  sap_sum <- saps_raw %>% select(-SQSaplingCode) %>%
-                          group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                               PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle, MicroplotCode,
-                               TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, SizeClass)  %>%
-                          summarize(Count = sum(Count), .groups = 'drop')
+  # Plots missing all sapling data
+  not_samp_evs_sap <- num_samp_micros_sap %>% filter(not_samp_events == 1) %>%
+    select(Plot_Name, StartYear, IsQAQC, EventID)
 
-  reg_long <- rbind(seeds_long, sap_sum)
+  # Number of microplots for visits not missing all sapling data
+  num_micros_saps <- num_samp_micros_sap %>% filter(not_samp_events != 1) %>%
+    select(Plot_Name, StartYear, IsQAQC, EventID, num_micros_sap)
+
+  # Summarize saplings before rbind
+  sap_sum <- saps_raw %>% filter(!(SQSaplingCode %in% c("NP", "NS"))) %>%  # drop b/c saplings might have species
+    select(-SQSaplingCode) %>%
+    group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+             PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle, MicroplotCode,
+             TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, SizeClass)  %>%
+    summarize(Count = sum(Count), .groups = 'drop')
+
+  # Combine seedling and sapling data
+  reg_long <- rbind(seeds_long, sap_sum) #%>% filter(!(ScientificName %in% c("Not present", "Not Sampled")))
 
   size_classes <- c("sd_15_30cm", "sd_30_100cm", "sd_100_150cm", "sd_p150cm", "Sapling", "Sapling_SI")
 
   reg_wide <- reg_long %>% pivot_wider(names_from = "SizeClass",
                                        values_from = "Count",
-                                       values_fill = NA_real_) #%>% select(-MicroplotCode)
+                                       values_fill = 0) #%>% select(-MicroplotCode)
 
   # Fixes for size classes not represented in filtered regen
   all_cols <- unique(c(names(reg_wide), size_classes))
   missing_cols <- setdiff(all_cols, names(reg_wide))
-  reg_wide[missing_cols] <- NA_real_
+  reg_wide[missing_cols] <- 0
 
-  # Helps to add all events back for MIDN (didn't need this for NETN)
+  # Add plot events left join
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
@@ -169,46 +202,52 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
 
   reg_wide2 <- left_join(plot_events, reg_wide, by = intersect(names(plot_events), names(reg_wide)))
 
-  # Fill 0s for plots without issues using the not_sampled_evs
-  # Also safe because we counted the number of quadrats and microplots already. Some 0s
-  # might be here that shouldn't, but the summary metrics will be correct
+  # pull in NS and num_micros
+  num_micros_comb <- full_join(num_micros_seeds, num_micros_saps,
+                               by = intersect(names(num_micros_seeds), names(num_micros_saps)))
 
-  not_sampled_evs <- unique(rbind(not_sampled_sds, not_sampled_saps))
+  reg_wide3 <- full_join(reg_wide2, num_micros_comb, by = intersect(names(reg_wide2), names(num_micros_comb)))
 
-  reg_wide2[, size_classes][is.na(reg_wide2[, size_classes])] <- 0
-  reg_wide2[, size_classes][reg_wide2$EventID %in% not_sampled_evs$EventID,] <- NA_real_
+  reg_wide3$ScientificName[is.na(reg_wide3$ScientificName) &
+                             !is.na(reg_wide3$num_micros_seed) &
+                             !is.na(reg_wide3$num_micros_sap)] <- "None present"
+  reg_wide3[, size_classes][is.na(reg_wide3[, size_classes])] <- 0
 
-  reg_wide2$ScientificName[(!reg_wide2$EventID %in% not_sampled_evs$EventID)
-                           & is.na(reg_wide2$ScientificName)] <- "None present"
-  reg_wide2$ScientificName[(reg_wide2$EventID %in% not_sampled_evs$EventID)
-                           & is.na(reg_wide2$ScientificName)] <- "Not Sampled"
-  reg_wide2$num_micros <- ifelse(reg_wide2$StartYear == 2006, 1, numMicros)
+  not_samp_evs <- full_join(not_samp_evs_seed, not_samp_evs_sap, c("Plot_Name", "StartYear", "IsQAQC", "EventID"))
+  reg_wide3[, size_classes][reg_wide3$EventID %in% not_samp_evs$EventID,] <- NA_real_ # These are the NS events
+  reg_wide3$ScientificName[reg_wide3$EventID %in% not_samp_evs$EventID] <- "Not Sampled"
 
   # Summarise data at plot level. We lose the Microplot name, but average over # microplots selected in next step
-  reg_sum <- reg_wide2 %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
+  reg_sum <- reg_wide3 %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                                     PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle,
                                     TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN) %>%
-                           summarize(num_micros = first(num_micros),
-                                     seed_15_30cm = sum(sd_15_30cm), # leaving na.rm = F, so problem plots return NA
-                                     seed_30_100cm = sum(sd_30_100cm),
-                                     seed_100_150cm = sum(sd_100_150cm),
-                                     seed_p150cm = sum(sd_p150cm),
-                                     sap_stems = sum(Sapling) + sum(Sapling_SI),
-                                     sap_stems_SI = sum(Sapling_SI),
+                           summarize(num_micros_seed = first(num_micros_seed),
+                                     num_micros_sap = first(num_micros_sap),
+                                     seed_15_30cm = sum(sd_15_30cm, na.rm = T),
+                                     seed_30_100cm = sum(sd_30_100cm, na.rm = T),
+                                     seed_100_150cm = sum(sd_100_150cm, na.rm = T),
+                                     seed_p150cm = sum(sd_p150cm, na.rm = T),
+                                     sap_stems = sum(Sapling, na.rm = T) + sum(Sapling_SI, na.rm = T),
+                                     sap_stems_SI = sum(Sapling_SI, na.rm = T),
                                      .groups = 'drop')
 
-  #length(unique(reg_sum$EventID)) #1280
+  diff_micros <- reg_sum %>% filter(num_micros_seed != num_micros_sap) %>%
+    select(Plot_Name, StartYear, IsQAQC, num_micros_seed, num_micros_sap) %>% unique()
+
+  if(nrow(diff_micros) > 0){warning(
+    paste0("There following visits have differing numbers of seedling and sapling microplots. Stocking index based on sapling microplots: \n"),
+    paste0(paste(capture.output(data.frame(diff_micros)), collapse = "\n")))}
 
   reg_stock <- reg_sum %>% mutate(stock = ((1*seed_15_30cm) + (2*seed_30_100cm) + (20*seed_100_150cm) +
-                                            (50*seed_p150cm) + (50*sap_stems_SI))/num_micros,
-                                  seed_15_30cm = seed_15_30cm/num_micros,
-                                  seed_30_100cm = seed_30_100cm/num_micros,
-                                  seed_100_150cm = seed_100_150cm/num_micros,
-                                  seed_p150cm = seed_p150cm/num_micros,
+                                            (50*seed_p150cm) + (50*sap_stems_SI))/num_micros_sap,
+                                  seed_15_30cm = seed_15_30cm/num_micros_seed,
+                                  seed_30_100cm = seed_30_100cm/num_micros_seed,
+                                  seed_100_150cm = seed_100_150cm/num_micros_seed,
+                                  seed_p150cm = seed_p150cm/num_micros_seed,
                                   seed_den = ((seed_15_30cm + seed_30_100cm + seed_100_150cm +
-                                                seed_p150cm))/num_micros,
-                                  sap_den = sap_stems/num_micros,
-                                  sap_den_SI = sap_stems_SI/num_micros,
+                                                seed_p150cm)), # already/num_micros
+                                  sap_den = sap_stems/num_micros_seed,
+                                  sap_den_SI = sap_stems_SI/num_micros_seed,
                                   regen_den = (seed_den + sap_den)) %>% select(-sap_stems, -sap_stems_SI)
 
   reg_units <- switch(units,
@@ -245,8 +284,7 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   cols_to_NA <- c("num_micros", "seed_15_30cm", "seed_30_100cm", "seed_100_150cm", "seed_p150cm",
                   "stock", "seed_den", "sap_den", "sap_den_SI", "regen_den")
 
-  reg_units[reg_units$ScientificName == "Permanently Missing", cols_to_NA] <- NA
-
+  #table(complete.cases(reg_units$ScientificName)) # All T
   reg_final <- reg_units %>% arrange(Plot_Name, StartYear, IsQAQC, ScientificName)
 
   return(data.frame(reg_final))

@@ -130,8 +130,8 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
   pe_list <- unique(plot_events$EventID)
 
   sap_evs <- filter(saps_vw, EventID %in% pe_list) %>%
-    left_join(plot_events, ., by = intersect(names(plot_events), names(.))) %>%
-    filter(!(StartYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
+    left_join(plot_events, ., by = intersect(names(plot_events), names(.))) #%>%
+    #filter(!(StartYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
 
   sap_cnt_evs <- filter(saps_cnt, EventID %in% pe_list)
 
@@ -143,26 +143,16 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
   sap_tax$Count <- ifelse(sap_tax$SQSaplingCode == "NP", 0,
                      ifelse(sap_tax$SQSaplingCode == "SS", 1,
                             NA_real_))
-  sap_tax$ScientificName[is.na(sap_tax$ScientificName) & !is.na(sap_tax$Count)] <- "None present"
 
   sap_tax$ScientificName[sap_tax$SQSaplingCode == "NP"] <- "None present"
-  sap_tax$Count[sap_tax$SQSaplingCode == "NP"] <- 0
-
-  sap_tax$CanopyExclusion[sap_tax$ScientificName == "None present"] <- FALSE
-  sap_tax$Exotic[sap_tax$ScientificName == "None present"] <- FALSE
-  sap_tax$InvasiveNETN[sap_tax$ScientificName == "None present"] <- FALSE
 
   # Create the left data.frame to join back to after filtering species types
   sap_left <- sap_tax %>% select(Plot_Name:MicroplotCode) %>% unique() #%>%
   # group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode,
   #          PlotID, EventID, StartYear, cycle, IsQAQC) %>%
-  # mutate(numquads = length(MicroplotCode)) # All plots have expected # micros
+  # mutate(nummicros = length(MicroplotCode)) # All plots have expected # micros
+  # table(sap_left$nummicros) # all 3
 
-  # sap_tax$ScientificName[is.na(sap_tax$ScientificName) &
-  #                            (sap_tax$SQSeedlingCode == "SS")] = "Permanently Missing" # don't need this
-  sap_tax$CanopyExclusion[is.na(sap_tax$CanopyExclusion)] <- FALSE # so next filtering steps don't drop PMs
-  sap_tax$Exotic[is.na(sap_tax$Exotic)] <- ifelse(speciesType == "native", FALSE, TRUE)
-  sap_tax$InvasiveNETN[is.na(sap_tax$InvasiveNETN)] <- ifelse(speciesType == 'invasive', TRUE, FALSE)
 
   sap_mic <- if(numMicros == 3) {sap_tax
   } else if(numMicros == 2) {filter(sap_tax, MicroplotCode %in% c('UR','B')) #randomly determined this
@@ -182,15 +172,15 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
 
   # join filtered data back to full plot/visit/microplot list
   sap_comb <- left_join(sap_left, sap_nat, by = intersect(names(sap_left), names(sap_nat)))
-  # table(complete.cases(sap_comb[,17])) #6 rows with missing SN values.
-  # table(complete.cases(sap_comb[,21])) #6 rows with missing SN values.
+  # table(complete.cases(sap_comb[,17])) #184 rows with missing SN values.
+  # table(complete.cases(sap_comb[,22])) #184 rows with missing SN values.
 
   # Use SQs to fill blank ScientificNames after filtering
   sap_comb$ScientificName[is.na(sap_comb$ScientificName) &
                              (sap_comb$SQSaplingCode %in% c("SS", "NP"))] = "None present"
   sap_comb$ScientificName[is.na(sap_comb$ScientificName) &
                              (sap_comb$SQSaplingCode %in% c("ND", "NS"))] = "Not Sampled"
-  sap_comb$Count[(sap_comb$ScientificName == "None present") & is.na(sap_comb$Count)] <- 0
+  sap_comb$Count[(sap_comb$ScientificName %in% c("None present")) & is.na(sap_comb$Count)] <- 0
 
   # Need to add the sapling count data to full dataset. Will average DBH of saplings recorded
   # for that plot/visit/species/microplot combination and make that the DBHcm

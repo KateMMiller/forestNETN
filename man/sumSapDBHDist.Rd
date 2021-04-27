@@ -82,3 +82,8 @@ returns a dataframe with one row for each plot and either density, BA or both in
 \description{
 This function calculates DBH distribution of live saplings by 1cm size classes. Must run importData first.
 }
+\examples{
+importData()
+sap_diam_dist <- sumSapDBHDist(park = 'ROVA', speciesType = 'native', from = 2015, to = 2018, units = 'BA')
+
+}
