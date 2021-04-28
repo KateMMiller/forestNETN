@@ -113,7 +113,7 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
                     "IsAbandoned", "PlotID", "PlotLegacyID", "xCoordinate", "yCoordinate", "ZoneCode",
                     "PhysiographyCode", "PhysiographyLabel", "PhysiographySummary", "Aspect",
                     "Orientation", "GRTS", "IsOrientationChanged", "IsStuntedWoodland",
-                    "EventID", "EventLegacyID", "StartDate", "IsQAQC", "StartYear", "StartDate",
+                    "EventID", "EventLegacyID", "IsQAQC", "StartYear", "StartDate",
                     "PlotNotes", "Directions", "EventNotes", "StandNotes")]} else {plot_events}
 
 
