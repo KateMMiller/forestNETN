@@ -63,7 +63,8 @@
 # Join stand data
 #------------------------
 joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
-                          from = 2006, to = 2021, output = 'verbose', ...){
+                          from = 2006, to = 2021, eventType = c('complete', 'all'),
+                          output = 'verbose', ...){
 
     # Match args and class
     park <- match.arg(park, several.ok = TRUE,
@@ -71,6 +72,7 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
     stopifnot(class(from) == "numeric", from >= 2006)
     stopifnot(class(to) == "numeric", to >= 2006)
     locType <- match.arg(locType)
+    eventType <- match.arg(eventType)
     stopifnot(class(QAQC) == 'logical')
     stopifnot(panels %in% c(1, 2, 3, 4))
     output <- match.arg(output, c("short", "verbose"))
