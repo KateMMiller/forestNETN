@@ -12,6 +12,7 @@ joinStandDisturbance(
   from = 2006,
   to = 2021,
   output = "verbose",
+  eventType = c("complete", "all"),
   ...
 )
 }
