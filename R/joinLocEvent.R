@@ -107,9 +107,13 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
+  plot_events$Plot_Name <- paste(plot_events$ParkUnit,
+                                 stringr::str_pad(plot_events$PlotCode, 3, side = 'left', "0"),
+                                 sep = "-")
+
   # Filter output based on function arguments
   plot_events <- if(output == 'short'){
-    plot_events[, c("Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
+    plot_events[, c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
                     "IsAbandoned", "PlotID", "PlotLegacyID", "xCoordinate", "yCoordinate", "ZoneCode",
                     "PhysiographyCode", "PhysiographyLabel", "PhysiographySummary", "Aspect",
                     "Orientation", "GRTS", "IsOrientationChanged", "IsStuntedWoodland",
@@ -119,9 +123,7 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
 
   # microbenchmark::microbenchmarl(plot_events$Plot_Name <- paste(plot_events$Park.Unit,
   #                                sprintf("%03d", plot_events$PlotCode), sep = "-"), #sprintf was 2x slower
-  plot_events$Plot_Name <- paste(plot_events$ParkUnit,
-                                 stringr::str_pad(plot_events$PlotCode, 3, side = 'left', "0"),
-                                 sep = "-")
+
 
   plot_events1 <- if(locType == 'VS'){filter(plot_events, PlotTypeCode == "VS")
   } else if (locType=='all') {(plot_events)}
