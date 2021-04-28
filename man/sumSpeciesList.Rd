@@ -12,6 +12,7 @@ sumSpeciesList(
   panels = 1:4,
   locType = c("VS", "all"),
   eventType = c("complete", "all"),
+  numMicros = 3,
   speciesType = c("all", "native", "exotic", "invasive"),
   ...
 )
@@ -52,6 +53,8 @@ include all plots, such as deer exclosures.
 \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
 \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
 associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+
+\item{numMicros}{Allows you to select 1, 2, or 3 microplots of data to summarize}
 
 \item{speciesType}{Allows you to filter on native, exotic or include all species.
 \describe{
