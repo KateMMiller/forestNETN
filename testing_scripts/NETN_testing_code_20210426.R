@@ -43,7 +43,7 @@ odbcClose(db)
 
 # import old database for comparisons
 forestNETNarch::importData(type='file',
-  path='D:/NETN/Monitoring_Projects/Forest_Health/Database/2021_Forest_Database/Forest_Backend_NETN_20210422_Migration.mdb')
+  path='D:/NETN/Monitoring_Projects/Forest_Health/Database/2021_Forest_Database/Forest_Backend_NETN_20210427_Migration.mdb')
 
 
 #----- Testing joinLocEvent and migration -----
@@ -279,12 +279,9 @@ table(tree_simp$CrownClassCode, tree_simp$Crown_Class_ID, useNA = 'always')
 check_trees(tree_merge, "Decay_Class_ID", "DecayClassCode")
 # No issues. Decays that are diff are DF and AS, which correctly shouldn't have a decay class
 
-#check_trees(tree_merge, "IsDBHVerified", "DBH_Verified") #too many records
 table(tree_merge$IsDBHVerified, tree_merge$DBH_Verified, useNA = 'always') # Align with diagonal. OK
 
-#check_trees(tree_merge, "Pct_Tot_Foliage_Cond", "Total_Foliage_Condition")
 table(tree_merge$Pct_Tot_Foliage_Cond, tree_merge$Total_Foliage_Condition, tree_merge$StartYear, useNA = 'always')
-# 4/22: 10 records in 2011 and 6 in 2012 that have a 0 % Foliage still
 # 4/26: 7 records in 2011 and 1 in 2012 that have a 0 % Foliage still
 
 fol_check <-
