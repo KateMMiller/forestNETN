@@ -17,6 +17,9 @@
 #' @param new_env Logical. Specifies which environment to store views in. If \code{TRUE}(Default), stores
 #' views in VIEWS_NETN environment. If \code{FALSE}, stores views in global environment
 #'
+#' @param name Character. Specifies the name of the database. Default is "NETN_Forest"
+#'
+#'
 #' @examples
 #' # Import using default settings of local instance, server = 'localhost' and add VIEWS_NETN environment
 #' importData()
@@ -32,7 +35,7 @@
 #' @export
 
 
-importData <- function(instance = c("local", "server"), server = "localhost", new_env = TRUE){
+importData <- function(instance = c("local", "server"), server = "localhost", name = "NETN_Forest", new_env = TRUE){
 
   options(scipen = 100) # for TSNs
   instance <- match.arg(instance)
@@ -44,11 +47,12 @@ importData <- function(instance = c("local", "server"), server = "localhost", ne
 
   # Set up connection
   connect <- if(instance == 'local'){
-    paste0("Driver={SQL Server};server=", server, "\\SQLEXPRESS;database=NETN_Forest;trusted_connection=TRUE;ReadOnly=True")
+    paste0("Driver={SQL Server};server=", server, "\\SQLEXPRESS;database=", name, ";trusted_connection=TRUE;ReadOnly=True")
   } else if (instance == 'server'){
-    paste0("Driver={SQL Server};server=", server, ";database=NETN_Forest;trusted_connection=TRUE;ReadOnly=True")
+    paste0("Driver={SQL Server};server=", server, ";database=", name, ";trusted_connection=TRUE;ReadOnly=True")
   }
 
+  print(connect)
   error_mess <- paste("Unable to connect to SQL database.",
                   ifelse(instance == 'server',
                     paste0("Make sure you are connected to VPN or NPS network, and server is spelled correctly (see examples)."),
