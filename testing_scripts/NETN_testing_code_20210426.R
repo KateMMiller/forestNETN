@@ -3,11 +3,11 @@ library(tidyverse)
 
 #----- Testing the import/export functions -----
 #importData(instance = 'local', server = "localhost", new_env = T) # release 1.0.22 on 4/22
-#importData(instance = 'server', server = "INP2300VTSQL16\\IRMADEV1", new_env = T) #
+importData(instance = 'server', server = "INP2300VTSQL16\\IRMADEV1", name = "NETN_Forest_Migration", new_env = T) #
 path = "C:/Forest_Health/exports/NETN"
-exportCSV(path, zip = TRUE)
+#exportCSV(path, zip = TRUE)
 
-importCSV(path = path, zip_name = "NETN_Forest_20210427.zip") #release 1.0.22 on 4/26 ##with IsGerminant added back by hand
+importCSV(path = path, zip_name = "NETN_Forest_20210503.zip") #release 1.0.22 on 4/26 ##with IsGerminant added back by hand
 
 # Function arguments
 park = 'all'
@@ -284,12 +284,19 @@ table(tree_merge$IsDBHVerified, tree_merge$DBH_Verified, useNA = 'always') # Ali
 table(tree_merge$Pct_Tot_Foliage_Cond, tree_merge$Total_Foliage_Condition, tree_merge$StartYear, useNA = 'always')
 # 4/26: 7 records in 2011 and 1 in 2012 that have a 0 % Foliage still
 
-fol_check <-
+tree_simp <- tree_merge %>% select(Plot_Name, StartYear, IsQAQC, TagCode, Pct_Tot_Foliage_Cond, Total_Foliage_Condition)
+fol_view <- get("COMN_TreesFoliageCond", envir = VIEWS_NETN) #%>% select(ParkUnit, PlotCode, IsQAQC, StartYear, TagCode,
+                                                              #        FoliageConditionLabel, TotalFoliageConditionLabel)
+names(tree_view)#
+table(tree_view$FoliageConditionLabel, tree_view$TotalFoliageConditionLabel, useNA = 'always')
+# There's actually a dead tree with Leaf Loss: ACAD-039-2007 Tag 9. I deleted it in 20210503 migration
+
 tree_merge %>% filter(Pct_Tot_Foliage_Cond == 0) %>% arrange(Plot_Name, StartYear) %>%
       select(Plot_Name, StartYear, IsQAQC, TagCode, ScientificName, TreeStatusCode, CrownClassCode,
              Pct_Tot_Foliage_Cond, Total_Foliage_Condition)
       # These trees appear to have had foliage conditions recorded, but the Total Foliage was recorded as 0%.
       # 6 were fixed b/c only 1 condition was reported, so applied its percent. 2 were deleted and should migrate as PM.
+# 5/3 0 records. Issues resolved
 write.csv(fol_check, "./testing_scripts/tot_fol_still_0.csv", row.names = F)
 # +++ Tree data finished checking.
 
@@ -299,37 +306,46 @@ fol_vw <- VIEWS_NETN$COMN_TreesFoliageCond
 table(fol_vw$TotalFoliageConditionCode, fol_vw$StartYear, useNA = 'always')
 # 8 records in 2011 and 1 in 2012 where Total Foliage was recorded as 0, but there were conditions recorded.
 # Already fixed in previous section. Should migrate 2 PM and the rest with non-0 values in next migration.
+# 5/3 Issue resolved
 
 table(fol_vw$PercentLeafAreaLabel, fol_vw$StartYear, useNA = 'always') # LA NC for 2006-2015; 14 PM from 2016 & 2017 correct
+nrow(fol_vw %>% filter(PercentLeafAreaLabel == "Not Collected" )) #18556 additional rows for NC
 table(fol_vw$PercentLeafAreaLabel, fol_vw$FoliageConditionCode, useNA = 'always') # NA correctly applied to L, NO, S, W
 table(fol_vw$TotalFoliageConditionLabel, fol_vw$FoliageConditionCode, useNA = 'always')
   # 4/22 14 0 TotFol when foliage conditions exist. Not clear why this is happening. NO to NotApp is correct.
   # 4/26 9 TotFol with 0% and foliage conditions pres. All but 3 were fixed b/c only 1 condition recorded.
       # Rest should be PM in next migration.
+  # 5/3 No 0s remaining
 pm_fol <- fol_vw %>% filter(TotalFoliageConditionCode == "PM")
 pm_fol$Plot_Name <- paste(pm_fol$ParkUnit, sprintf("%03d", pm_fol$PlotCode), sep = "-")
 write.csv(pm_fol, "./testing_scripts/PM_totfoliage.csv")
 
-no_folcond_with_totfol_0p <- fol_vw %>% filter(FoliageConditionCode == "NO" & TotalFoliageConditionCode %in% c(1:4)) %>%
+#no_folcond_with_totfol_0p <-
+  fol_vw %>% filter(FoliageConditionCode == "NO" & TotalFoliageConditionCode %in% c(1:4)) %>%
                              select(ParkUnit, PlotCode, StartYear, IsQAQC, TagCode, ScientificName, TreeStatusCode,
                                     FoliageConditionCode, TotalFoliageConditionCode)
 # 287 missing foliage conditions were converted to NO instead of PM (see no_folcond_with_totfol_0p)
 # Instead totfol should be kept as is and foliage conditions should come in as PM.
 # Remains an issue. See line 192 in legacy migration data questions spreadsheet.
+# No issues remain
 
 table(fol_vw$PercentLeavesLabel, fol_vw$FoliageConditionCode, useNA = 'always')# 1 L with 0 and 4 N with 0. NO to Not Applicable correct.
+# no issues remain
 fol_vw %>% filter(PercentLeavesLabel == "0%" & FoliageConditionCode %in% c("L", "N")) %>% arrange(ParkUnit, PlotCode, StartYear, TagCode) %>%
   select(ParkUnit, PlotCode, StartYear, IsQAQC, TagCode, ScientificName, TreeStatusCode,
          PercentLeavesLabel, FoliageConditionCode, TotalFoliageConditionCode) #0
 
+table(fol_vw$FoliageConditionCode, fol_vw$PercentLeavesLabel)
 table(fol_vw$TotalFoliageConditionLabel, fol_vw$PercentLeavesLabel, fol_vw$StartYear)
 # 2012 1 0%; 2011 7 0%. Should be fixed in next migration (see previous section)
+# 5/3 no issues remaining
 
 fol_vw %>% filter(TotalFoliageConditionLabel == "0%") %>%
   select(ParkUnit, PlotCode, StartYear, IsQAQC, TagCode, ScientificName, TreeStatusCode,
          FoliageConditionCode, TotalFoliageConditionLabel) %>%
   arrange(ParkUnit, PlotCode, StartYear, TagCode)
 # 9 records with 0% TotFolConLabel that should be > 0 b/c conditions recorded. Fixed all but 3, which should migrate as PM.
+# 5/3 0 issues remain
 
 compev_arglist <- list(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                        locType = locType)
@@ -382,6 +398,7 @@ fol_merge <- full_join(fol_new, fol_old,
                    by = c("Plot_Name" = "Plot_Name", "StartYear" = "Year", "IsQAQC" = "Event_QAQC", "TagCode" = "TagCode"),
                    suffix = c("_new", "_old"))
 
+head(fol_merge)
 check_conds <- function(df, col1, col2){
   lapply(1:nrow(df), function(x) (
     if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
@@ -405,6 +422,7 @@ la_N <- check_conds(fol_merge, "Pct_Leaf_Area_N_new", "Pct_Leaf_Area_N_old") # a
 
 # +++++ The remaining issue is when Total_Foliage_Condition > 0 but no foliage conditions.
   # Foliage conditions are getting converted to NO instead of PM in this case.
+  # 5/3 no issues remain
 
 #----- Tree Conditions
 # NETN old db condition counts
@@ -414,6 +432,7 @@ table(VIEWS_NETN$COMN_TreesConditions$TreeConditionCode, useNA = 'always')
 # Not quite the same. New DB has fewer when they differ
 # H      AD   BBD   BWA  CAVL  CAVS    CW   DBT   EAB    EB   EHS     G    GM   HWA    ID    NO   OTH   RPS    SB  VINE  <NA>
 # 15561 925   569   162   362   349  3869  2402     2   929   163   193     1   206    30  1851   131     2     2   455  3149
+
 con_vw <- VIEWS_NETN$COMN_TreesConditions
 table(VIEWS_NETN$COMN_TreesConditions$TreeConditionCode,
       VIEWS_NETN$COMN_TreesConditions$StartYear, useNA = 'always')
@@ -425,8 +444,10 @@ con_vw$status_simp <- ifelse(con_vw$TreeStatusCode %in% live, "live",
                                     "inactive"))
 table(con_vw$status_simp, con_vw$TreeConditionCode, con_vw$StartYear, useNA = "always")
 # Still missing NC and PMs. Otherwise RPS issue resolved
+# 5/3 resolved
 
-dead_trees_with_conds <- con_vw %>%
+dead_trees_with_conds <-
+  con_vw %>%
   filter(TreeStatusCode %in% c("2", "DB", "DL", "DM", "DS")) #%>%
   #filter(!TreeConditionCode %in% c("NO", "CAVS", "CAVL")) #%>%
                          #filter(!is.na(TreeConditionCode)) # 0 records
@@ -490,6 +511,7 @@ check_conds(cond_merge, "SB_new", "SB_old") #0
 
 #++++++ Remaining issue: NC and PM for dead trees are currently NA.
 #++++++ Missing conditions for live trees are NA instead of PM.
+# 5/3 both issues resolved
 
 #------ Vines -----
 vines_new <- do.call(joinTreeVineSpecies, c(compev_arglist, speciesType = 'all')) %>%
@@ -596,6 +618,7 @@ table(qchar_vw$CharacterLabel)
 quadspp_old <- forestNETNarch::joinQuadData(from = 2006, to = 2019, QAQC = T, eventType = "all", locType = "all")
 quadspp_new <- joinQuadSpecies(from = 2006, to = 2019,
                                QAQC = T, eventType = 'all', locType = 'all', valueType = 'midpoint')
+
 nrow(quadspp_new)#25296
 nrow(quadspp_old) #24858
 #438 new quadspp rows b/c germinants have their own row
@@ -694,7 +717,8 @@ check_qspp(quadspp_merge, "Pct_Cov_UL", "UL") # ACAD-029. ok
 
 head(quadspp_merge)
 check_qspp(quadspp_merge, "ScientificName", "Latin_Name") # 5 weird UTF issues. all ok.
-#++++++ No remaining quad species issues. Phew!
+#++++++ 5/3 Duplicate species introduced in ACAD-001-2018 are the only remaining problem, which is a big problem.
+# Reported issue in line 213.
 
 #----- Microplot Shrubs -----
 shrubs_vw <- get("COMN_MicroplotShrubs", envir = env) %>%
@@ -761,7 +785,7 @@ table(saps_vw$SQSaplingCode)
   #  NP   NS   SS
   # 1819  184 5720
 
-table(saps_vw$SQSaplingCode, saps_vw$StartYear) # Most of the NS are in 2006 for UL/B, and rest are 2010. Correct.
+table(saps_vw$SQSaplingCode, saps_vw$StartYear) # Most of the NS are in 2006 for UL/B, and 6 are 2010. Correct.
 table(saps_vw$SQSaplingCode, saps_vw$MicroplotCode) # Most NS are for UL/B in 2006. Correct.
 
 saps_new <- joinMicroSaplings(locType = "all", QAQC = T, eventType = 'all', canopyForm = 'all', speciesType = 'all')
@@ -816,7 +840,7 @@ check_reg(reg_merge_ss, "seed_30_100cm", "seed30.100") # SAGA-008-2010 data hand
 check_reg(reg_merge_ss, "seed_100_150cm", "seed100.150") # SAGA-008-2010 data handled diff.
 check_reg(reg_merge_ss, "seed_p150cm", "seed150p") # SAGA-008-2010 data handled diff.
 
-check_reg(reg_merge_ss, "seed_den", "seed.den") # SAGA-007-2010 issue and SAGA-008-2010 data handled diff.
+check_reg(reg_merge_ss, "seed_den", "seed.den") # SAGA-008-2010 data handled diff.
 check_reg(reg_merge_ss, "sap_den", "sap.den") # SAGA-008-2010 data handled diff.
 
 #++++++ Regen checks complete. no remaining issues
@@ -829,8 +853,8 @@ addspp_vw <- addspp_vw %>%
          TSN, ScientificName, ConfidenceClassCode, IsCollected, Note, SQAddSppNotes)
 table(addspp_vw$SQAddSppCode)
   # NP    NS    SS
-  # 6     1 15257
-  # NS is ACAD-029-2010. NPs are ACADs, and are correct
+  # 6     1 15257 # 5/3 15260
+  # NS is ACAD-029-2010. 6 NPs are ACADs, and are correct
 
 nrow(filter(addspp_vw, ScientificName == "No species recorded")) #0 Resolved!
 
@@ -894,6 +918,8 @@ check_taxa(taxa_merge, "Herbaceous.x", "Herbaceous.y")
 check_taxa(taxa_merge, "Graminoid.x", "Graminoid.y")
 
 check_taxa(taxa_merge, "CommonName", "Common") # Differences are b/c old common has lists
+
+taxa_wide %>% filter(TSN == -9999999951)
 
 #+++++ Only remaining issue is remove "No species recorded" from list +++++
 
@@ -969,7 +995,7 @@ check_soils <- function(df, col1, col2){
   )) %>% bind_rows()
 }
 names(soilsamp_merge)
-soilsamp_check<- soilsamp_merge %>% mutate(lit_diff = abs(Litter_cm - litter),
+soilsamp_merge %>% mutate(lit_diff = abs(Litter_cm - litter),
                                             O_diff = abs(O_Horizon_cm - O_hor),
                                             A_diff = abs(A_Horizon_cm - A_hor),
                                             tot_diff = abs(Total_Depth_cm - Tot_dep)) %>%
@@ -978,11 +1004,18 @@ soilsamp_check<- soilsamp_merge %>% mutate(lit_diff = abs(Litter_cm - litter),
 # Only returns 2 records
 # SAGA-009-2010 is missing a total depth for Sample 3. Fixed missing value. Should migrate corrected in next version.
 # MORR-008-2011 did not have a 3rd sample collected. Removed note, so hopefully migrates as NS instead of SS.
+#+++++5/3 0 records returned.
+
 check_soils(soilsamp_merge, "Note", "Comments") # 0
 
 # Soil lab data
+names(soildata2)
+names(soillab)
+
 soillab_old <- merge(soildata2, soillab[,-c(1, 34, 35)],
                      by = intersect(names(soildata2), names(soillab[,-c(1, 34, 35)])), all = TRUE)
+
+names(soillab_old)
 
 soillab_old2 <- merge(plotevs_old, soillab_old, by = intersect(names(plotevs_old), names(soillab_old)),
                       all.x = FALSE, all.y = TRUE) %>%
