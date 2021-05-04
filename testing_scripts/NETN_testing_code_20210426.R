@@ -43,7 +43,7 @@ odbcClose(db)
 
 # import old database for comparisons
 forestNETNarch::importData(type='file',
-  path='D:/NETN/Monitoring_Projects/Forest_Health/Database/2021_Forest_Database/Forest_Backend_NETN_20210427_Migration.mdb')
+  path='D:/NETN/Monitoring_Projects/Forest_Health/Database/2021_Forest_Database/Forest_Backend_NETN_20210503_Migration.mdb')
 
 
 #----- Testing joinLocEvent and migration -----
@@ -285,8 +285,13 @@ table(tree_merge$Pct_Tot_Foliage_Cond, tree_merge$Total_Foliage_Condition, tree_
 # 4/26: 7 records in 2011 and 1 in 2012 that have a 0 % Foliage still
 
 tree_simp <- tree_merge %>% select(Plot_Name, StartYear, IsQAQC, TagCode, Pct_Tot_Foliage_Cond, Total_Foliage_Condition)
+table(tree_simp$Pct_Tot_Foliage_Cond, tree_simp$Total_Foliage_Condition, useNA = 'always')
+
 fol_view <- get("COMN_TreesFoliageCond", envir = VIEWS_NETN) #%>% select(ParkUnit, PlotCode, IsQAQC, StartYear, TagCode,
                                                               #        FoliageConditionLabel, TotalFoliageConditionLabel)
+fol_simp <- fol_view %>% select(ParkUnit, PlotCode, StartYear, IsQAQC, TagCode, PercentLeavesLabel, TotalFoliageConditionLabel)
+table(fol_simp$PercentLeavesLabel, fol_simp$TotalFoliageConditionLabel, useNA = 'always')
+
 names(tree_view)#
 table(tree_view$FoliageConditionLabel, tree_view$TotalFoliageConditionLabel, useNA = 'always')
 # There's actually a dead tree with Leaf Loss: ACAD-039-2007 Tag 9. I deleted it in 20210503 migration
