@@ -52,7 +52,6 @@ importData <- function(instance = c("local", "server"), server = "localhost", na
     paste0("Driver={SQL Server};server=", server, ";database=", name, ";trusted_connection=TRUE;ReadOnly=True")
   }
 
-  print(connect)
   error_mess <- paste("Unable to connect to SQL database.",
                   ifelse(instance == 'server',
                     paste0("Make sure you are connected to VPN or NPS network, and server is spelled correctly (see examples)."),
@@ -79,7 +78,7 @@ importData <- function(instance = c("local", "server"), server = "localhost", na
   # Import views using their names and show progress bar
   view_import <- lapply(seq_along(view_list), function(x){
     setTxtProgressBar(pb, x)
-    RODBC::sqlQuery(con, paste0("SELECT * FROM ", "[NETN_Forest].[ANALYSIS].[", view_list[x], "]"))
+    RODBC::sqlQuery(con, paste0("SELECT * FROM ", "[", name, "].[ANALYSIS].[", view_list[x], "]"))
   })
 
   close(pb)
