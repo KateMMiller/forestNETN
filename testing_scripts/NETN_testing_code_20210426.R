@@ -3,11 +3,13 @@ library(tidyverse)
 
 #----- Testing the import/export functions -----
 #importData(instance = 'local', server = "localhost", new_env = T) # release 1.0.22 on 4/22
-importData(instance = 'server', server = "INP2300VTSQL16\\IRMADEV1", name = "NETN_Forest_Migration", new_env = T) #
+#importData(instance = 'server', server = "INP2300VTSQL16\\IRMADEV1", name = "NETN_Forest_Migration", new_env = T) #
+
 path = "C:/Forest_Health/exports/NETN"
 #exportCSV(path, zip = TRUE)
 
-importCSV(path = path, zip_name = "NETN_Forest_20210503.zip") #release 1.0.22 on 4/26 ##with IsGerminant added back by hand
+importCSV(path = path, zip_name = "NETN_Forest_20210507.zip") # migration check 5/7
+#importCSV(path = path, zip_name = "NETN_Forest_20210503.zip") #release 1.0.22 on 4/26 ##with IsGerminant added back by hand
 
 # Function arguments
 park = 'all'
@@ -17,12 +19,14 @@ QAQC = TRUE
 locType = "all"
 eventType = 'all'
 panels = 1:4
+last_lab_year = 2019
 
 arglist <- list(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                 locType = locType, eventType = eventType)
 
 compev_arglist <- list(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                        locType = locType)
+env = VIEWS_NETN
 
 # Checking data function
 check_data <- function(df, col1, col2){
@@ -283,6 +287,7 @@ table(tree_merge$IsDBHVerified, tree_merge$DBH_Verified, useNA = 'always') # Ali
 
 table(tree_merge$Pct_Tot_Foliage_Cond, tree_merge$Total_Foliage_Condition, tree_merge$StartYear, useNA = 'always')
 # 4/26: 7 records in 2011 and 1 in 2012 that have a 0 % Foliage still
+# 5/5: No issues
 
 tree_simp <- tree_merge %>% select(Plot_Name, StartYear, IsQAQC, TagCode, Pct_Tot_Foliage_Cond, Total_Foliage_Condition)
 table(tree_simp$Pct_Tot_Foliage_Cond, tree_simp$Total_Foliage_Condition, useNA = 'always')
@@ -292,7 +297,9 @@ fol_view <- get("COMN_TreesFoliageCond", envir = VIEWS_NETN) #%>% select(ParkUni
 fol_simp <- fol_view %>% select(ParkUnit, PlotCode, StartYear, IsQAQC, TagCode, PercentLeavesLabel, TotalFoliageConditionLabel)
 table(fol_simp$PercentLeavesLabel, fol_simp$TotalFoliageConditionLabel, useNA = 'always')
 
-names(tree_view)#
+tree_view <- VIEWS_NETN$COMN_TreesFoliageCond
+names(tree_view)
+
 table(tree_view$FoliageConditionLabel, tree_view$TotalFoliageConditionLabel, useNA = 'always')
 # There's actually a dead tree with Leaf Loss: ACAD-039-2007 Tag 9. I deleted it in 20210503 migration
 
@@ -302,7 +309,7 @@ tree_merge %>% filter(Pct_Tot_Foliage_Cond == 0) %>% arrange(Plot_Name, StartYea
       # These trees appear to have had foliage conditions recorded, but the Total Foliage was recorded as 0%.
       # 6 were fixed b/c only 1 condition was reported, so applied its percent. 2 were deleted and should migrate as PM.
 # 5/3 0 records. Issues resolved
-write.csv(fol_check, "./testing_scripts/tot_fol_still_0.csv", row.names = F)
+#write.csv(fol_check, "./testing_scripts/tot_fol_still_0.csv", row.names = F)
 # +++ Tree data finished checking.
 
 #----- Tree Foliage Conditions -----
@@ -335,7 +342,7 @@ write.csv(pm_fol, "./testing_scripts/PM_totfoliage.csv")
 # No issues remain
 
 table(fol_vw$PercentLeavesLabel, fol_vw$FoliageConditionCode, useNA = 'always')# 1 L with 0 and 4 N with 0. NO to Not Applicable correct.
-# no issues remain
+# 5/3 no issues remain
 fol_vw %>% filter(PercentLeavesLabel == "0%" & FoliageConditionCode %in% c("L", "N")) %>% arrange(ParkUnit, PlotCode, StartYear, TagCode) %>%
   select(ParkUnit, PlotCode, StartYear, IsQAQC, TagCode, ScientificName, TreeStatusCode,
          PercentLeavesLabel, FoliageConditionCode, TotalFoliageConditionCode) #0
@@ -386,7 +393,7 @@ tree_evs_old <- left_join(plotevs_old, trees %>% select(Tree_ID:Tree_Notes),
                 select(Plot_Name, Year, Event_QAQC, Event_ID, Tree_ID, Tree_Number_NETN, Total_Foliage_Condition,
                        Tree_Data_ID, Status_ID) %>% filter(Status_ID %in% c("1", "AB", "AF", "AL", "AM", "AS",
                                                                             "RB", "RF", "RL", "RS"))
-
+names(tree_evs_old)
 fol_old <- left_join(tree_evs_old, fol_old1, by = "Tree_Data_ID") %>%
            select(Plot_Name, Year, Event_QAQC, Tree_Number_NETN, Status_ID, Cond, Pct_Leaves_Aff, Pct_Leaf_Area) %>%
            arrange(Plot_Name, Year, Event_QAQC, Tree_Number_NETN) %>%
@@ -412,19 +419,30 @@ check_conds <- function(df, col1, col2){
 }
 
 names(fol_merge)
+
+table(fol_merge$Pct_Tot_Foliage_Cond)
 # 0s in _new because they were filled in function
 lvs_C <- check_conds(fol_merge, "Pct_Leaves_Aff_C_new", "Pct_Leaves_Aff_C_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(lvs_C$Pct_Leaves_Aff_C_new, lvs_C$Pct_Leaves_Aff_C_old, useNA = 'always')
 lvs_H <- check_conds(fol_merge, "Pct_Leaves_Aff_H_new", "Pct_Leaves_Aff_H_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(lvs_H$Pct_Leaves_Aff_H_new, lvs_H$Pct_Leaves_Aff_H_old, useNA = 'always')
 lvs_L <- check_conds(fol_merge, "Pct_Leaves_Aff_L_new", "Pct_Leaves_Aff_L_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(lvs_L$Pct_Leaves_Aff_L_new, lvs_L$Pct_Leaves_Aff_L_old, useNA = 'always')
 lvs_N <- check_conds(fol_merge, "Pct_Leaves_Aff_N_new", "Pct_Leaves_Aff_N_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(lvs_N$Pct_Leaves_Aff_N_new, lvs_N$Pct_Leaves_Aff_N_old, useNA = 'always')
 lvs_S <- check_conds(fol_merge, "Pct_Leaves_Aff_S_new", "Pct_Leaves_Aff_S_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(lvs_S$Pct_Leaves_Aff_S_new, lvs_S$Pct_Leaves_Aff_S_old, useNA = 'always')
 lvs_W <- check_conds(fol_merge, "Pct_Leaves_Aff_W_new", "Pct_Leaves_Aff_W_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(lvs_W$Pct_Leaves_Aff_W_new, lvs_W$Pct_Leaves_Aff_W_old, useNA = 'always')
 lvs_O <- check_conds(fol_merge, "Pct_Leaves_Aff_O_new", "Pct_Leaves_Aff_O_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(lvs_O$Pct_Leaves_Aff_O_new, lvs_O$Pct_Leaves_Aff_O_old, useNA = 'always')
 
 la_C <- check_conds(fol_merge, "Pct_Leaf_Area_C_new", "Pct_Leaf_Area_C_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(la_C$Pct_Leaf_Area_C_new, la_C$Pct_Leaf_Area_C_old, useNA = 'always')
 la_H <- check_conds(fol_merge, "Pct_Leaf_Area_H_new", "Pct_Leaf_Area_H_old") # all diffs are NAs converted to 0s. I think they should still be NA.
+table(la_H$Pct_Leaf_Area_H_new, la_H$Pct_Leaf_Area_H_old, useNA = 'always')
 la_N <- check_conds(fol_merge, "Pct_Leaf_Area_N_new", "Pct_Leaf_Area_N_old") # all diffs are NAs converted to 0s. I think they should still be NA.
-
+table(la_N$Pct_Leaf_Area_N_new, la_N$Pct_Leaf_Area_N_old, useNA = 'always')
 # +++++ The remaining issue is when Total_Foliage_Condition > 0 but no foliage conditions.
   # Foliage conditions are getting converted to NO instead of PM in this case.
   # 5/3 no issues remain
@@ -720,7 +738,6 @@ check_qspp(quadspp_merge, "Pct_Cov_BL", "BL") # ACAD-029, and NS ROVA-008-2011. 
 check_qspp(quadspp_merge, "Pct_Cov_ML", "ML") # ACAD-029. ok
 check_qspp(quadspp_merge, "Pct_Cov_UL", "UL") # ACAD-029. ok
 
-head(quadspp_merge)
 check_qspp(quadspp_merge, "ScientificName", "Latin_Name") # 5 weird UTF issues. all ok.
 #++++++ 5/3 Duplicate species introduced in ACAD-001-2018 are the only remaining problem, which is a big problem.
 # Reported issue in line 213.
@@ -800,8 +817,7 @@ saps_prep <- merge(plotevs_old, micro, by = 'Event_ID', all = TRUE)
 saps_prep2 <- merge(saps_prep, saps[, 1:6], by = "Microplot_Characterization_Data_ID", all = TRUE)
 saps_old <- merge(saps_prep2, plants[, c("Latin_Name", "TSN")], by = "TSN", all.x = TRUE) %>%
             mutate(Latin_Name2 = ifelse(Latin_Name == "No species recorded", "None present", Latin_Name))
-head(saps_old)
-head(saps_new)
+
 saps_merge <- full_join(saps_new, saps_old, by = c("Plot_Name" = "Plot_Name",
                                                   "StartYear" = "Year",
                                                   "IsQAQC" = "Event_QAQC",
@@ -1078,3 +1094,4 @@ spplist <- sumSpeciesList()
 spplist <- sumSpeciesList(speciesType = 'invasive')
 strstg <- sumStrStage()
 trdist <- sumTreeDBHDist()
+notes <- joinVisitNotes()

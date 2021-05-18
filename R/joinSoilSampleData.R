@@ -76,26 +76,27 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
 
   # Prepare the soil data
   tryCatch(soilhd_vw <- get("COMN_SoilHeader", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                    SampleTypeLabel, PositionCode, HorizonCode, # HorizonCode,
+             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, StartDate, IsQAQC,
+                    SampleTypeLabel, PositionCode, HorizonCode,
                     SoilEventNote, IsArchived) %>%
-             filter(StartYear > 2006 #& StartYear < 2020
+             filter(StartYear > 2006
              ),
            error = function(e){stop("COMN_SoilHeader view not found. Please import view.")})
 
   tryCatch(soilsamp_vw <- get("COMN_SoilSample", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
+             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, StartDate, IsQAQC,
                     SQSoilCode, SampleSequenceCode, SoilLayerLabel,
                     Depth_cm, Note) %>%
-             filter(StartYear > 2006 & !is.na(SoilLayerLabel) #& StartYear < 2020
+             filter(StartYear > 2006 & !is.na(SoilLayerLabel)
              ),
            error = function(e){stop("COMN_SoilSample view not found. Please import view.")})
 
   # Pull in the soil lab data with QCed horizons
-  soillab <- joinSoilLabData(park = park, from = from, to = to, QAQC = QAQC,
+  # From is 2007, so doesn't fail if no lab data exist for a given year
+  soillab <- joinSoilLabData(park = park, from = 2007, to = to, QAQC = QAQC,
                              panels = panels, locType = locType, eventType = 'complete',
                              abandoned = FALSE, layer = 'all') %>%
-             select(Plot_Name, PlotID, EventID, StartYear, IsQAQC, Horizon_QC, Field_misID,
+             select(Plot_Name, PlotID, EventID, StartYear, StartDate, IsQAQC, Horizon_QC, Field_misID,
                     horizon_depth, num_samps)
 
   soillab_wide <- soillab %>% pivot_wider(names_from = Horizon_QC,
@@ -103,7 +104,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
                                           values_fill = 0)  %>%
                               mutate(Lab_QC = TRUE)
 
-  all_cols <- c("Plot_Name", "PlotID", "EventID", "StartYear", "IsQAQC", "num_samps",
+  all_cols <- c("Plot_Name", "PlotID", "EventID", "StartYear", "StartDate", "IsQAQC", "num_samps",
                 "horizon_depth_A", "horizon_depth_O", "Field_misID_A", "Field_misID_O", "Lab_QC")
 
   missing_cols <- setdiff(all_cols, names(soillab_wide))
@@ -114,7 +115,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
 
   soillab_wide$Total_Depth_cm = rowSums(soillab_wide[,c("O_Horizon_cm", "A_Horizon_cm")])
 
-  soillab_wide <- soillab_wide %>% select(Plot_Name, PlotID, EventID, StartYear, IsQAQC,
+  soillab_wide <- soillab_wide %>% select(Plot_Name, PlotID, EventID, StartYear, StartDate, IsQAQC,
                                           num_samps, O_Horizon_cm, A_Horizon_cm, Total_Depth_cm, Lab_QC,
                                           Field_misID_O, Field_misID_A)
 
@@ -129,32 +130,41 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
 
   pe_list <- unique(plot_events$EventID)
   soilsamp_evs <- filter(soilsamp_vw, EventID %in% pe_list)
+  if(nrow(soilsamp_evs) == 0){stop("Function returned 0 rows. Check that park and years specified contain soil samples.")}
 
   # Prepare sample data to pivot the layers wide
   soilsamp_evs$SoilLayer = gsub(" ", "_", soilsamp_evs$SoilLayerLabel)
   soilsamp_evs$SoilLayer = gsub("Unconsolidated_Litter", "Litter", soilsamp_evs$SoilLayer)
 
-  soilsamp_wide <- soilsamp_evs %>% select(-SoilLayerLabel, -SQSoilCode) %>%
+  soilsamp_wide1 <- soilsamp_evs %>% select(-SoilLayerLabel, -SQSoilCode) %>%
                                     filter(SoilLayer %in% c("Litter", "O_Horizon", "A_Horizon", "Total_Depth")) %>%
                                     pivot_wider(names_from = SoilLayer,
                                                 values_from = Depth_cm,
-                                                values_fill = 0) %>%
-                                    group_by(PlotID, EventID, ParkUnit, PlotCode, StartYear,
-                                             IsQAQC) %>%
-                                    summarize(Litter_cm = mean(Litter, na.rm = T),
-                                              O_Horizon_cm = mean(O_Horizon, na.rm = T),
-                                              A_Horizon_cm = mean(A_Horizon, na.rm = T),
-                                              Total_Depth_cm = mean(Total_Depth, na.rm = T),
-                                              num_samps = length(!is.na(Total_Depth)),
-                                              Lab_QC = FALSE,
-                                              .groups = 'drop')
+                                                values_fill = 0)
 
+  all_soil_cols <- c("PlotID", "EventID", "ParkUnit", "ParkSubUnit", "PlotCode",
+                     "StartYear", "StartDate", "IsQAQC", "SampleSequenceCode", "Note",
+                     "Litter", "O_Horizon", "A_Horizon", "Total_Depth")
+
+  missing_soil_cols <- setdiff(all_soil_cols, names(soilsamp_wide1))
+  soilsamp_wide1[missing_soil_cols] <- 0
+
+  soilsamp_wide <- soilsamp_wide1 %>% group_by(PlotID, EventID, ParkUnit, PlotCode, StartYear,
+                                               StartDate, IsQAQC) %>%
+                                      summarize(Litter_cm = mean(Litter, na.rm = T),
+                                                O_Horizon_cm = mean(O_Horizon, na.rm = T),
+                                                A_Horizon_cm = mean(A_Horizon, na.rm = T),
+                                                Total_Depth_cm = mean(Total_Depth, na.rm = T),
+                                                num_samps = length(!is.na(Total_Depth)),
+                                                Lab_QC = FALSE,
+                                                .groups = 'drop')
   # List of events that have QCed soils
   events_QC <- unique(soillab_wide$EventID)
 
   # Split litter data out from sampled data to add to lab data
   litter_QC_evs <- soilsamp_wide %>% select(PlotID, EventID, Litter_cm) %>% filter(EventID %in% events_QC)
-  soillab_wide2 <- left_join(soillab_wide, litter_QC_evs, by = intersect(names(soillab_wide), names(litter_QC_evs)))
+  soillab_wide2 <- left_join(soillab_wide, litter_QC_evs,
+                             by = intersect(names(soillab_wide), names(litter_QC_evs)))
 
   # I'm not going to go through all the steps to fix total depth or O vs A based on data entry with non-lab QCed plots
   soilsamp_new <- soilsamp_wide %>% left_join(., plot_events, by = intersect(names(.), names(plot_events))) %>%
@@ -167,11 +177,13 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
                                            Field_misID_O, Field_misID_A)
 
   soil_comb <- rbind(soillab_wide2, soilsamp_new)
+
   soil_final <- left_join(soil_comb, plot_events, by = intersect(names(soil_comb), names(plot_events))) %>%
                 select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                        PlotCode, PlotID, EventID, StartYear, StartDate, IsQAQC, cycle,
                        num_samps, Litter_cm, O_Horizon_cm, A_Horizon_cm,
-                       Total_Depth_cm, Lab_QC, Field_misID_O, Field_misID_A)
+                       Total_Depth_cm, Lab_QC, Field_misID_O, Field_misID_A) %>%
+                filter(EventID %in% pe_list)
 
   return(soil_final)
 
