@@ -251,11 +251,15 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   quadspp_comb3$Txt_Cov_UL[quadspp_comb3$SQ_UL == 0] <- "Not Sampled"
   quadspp_comb3$ScientificName[quadspp_comb3$num_quad_sq == 0] <- "Not Sampled"
 
+  quadspp_comb4 <- quadspp_comb3 %>% filter(quadspp_comb3$ScientificName != "None present" &
+                                            rowSums(quadspp_comb3[,c("Pct_Cov_UC", "Pct_Cov_UR", "Pct_Cov_MR", "Pct_Cov_BR",
+                                              "Pct_Cov_BC", "Pct_Cov_BL", "Pct_Cov_ML", "Pct_Cov_UL")], na.rm = T) > 0)
+
   quadspp_final <- switch(valueType,
-                         "midpoint" = quadspp_comb3[, c(req_cols, pct_cols, taxa_cols, "QuadSppNote")],
-                         "classes" = quadspp_comb3[, c(req_cols, txt_cols, taxa_cols, "QuadSppNote")],
-                         "all" = quadspp_comb3[, c(req_cols, pct_cols, txt_cols, taxa_cols, "QuadSppNote")],
-                         "averages" = quadspp_comb3[, c(req_cols, taxa_cols)])
+                         "midpoint" = quadspp_comb4[, c(req_cols, pct_cols, taxa_cols, "QuadSppNote")],
+                         "classes" = quadspp_comb4[, c(req_cols, txt_cols, taxa_cols, "QuadSppNote")],
+                         "all" = quadspp_comb4[, c(req_cols, pct_cols, txt_cols, taxa_cols, "QuadSppNote")],
+                         "averages" = quadspp_comb4[, c(req_cols, taxa_cols)])
 
   return(data.frame(quadspp_final))
   } # end of function
