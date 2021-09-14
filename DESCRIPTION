@@ -50,7 +50,8 @@ Imports:
     magrittr,
     purrr,
     stringr,
-    tidyr
+    tidyr,
+    tidyselect
 Suggests: 
     cowplot,
     ggrepel,
