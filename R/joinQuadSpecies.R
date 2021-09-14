@@ -3,9 +3,11 @@
 #'
 #' @title joinQuadSpecies: compiles quadrat species data
 #'
-#' @importFrom dplyr anti_join case_when group_by filter full_join left_join row_number select summarize ungroup
+#' @importFrom dplyr across anti_join case_when group_by filter full_join left_join rename rename_with row_number select summarize ungroup
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_wider
+#' @importFrom tidyselect all_of
+#' @importFrom stringr str_replace
 #'
 #' @description This function combines quadrat species data with species names and allows you to filter on species types, park,
 #' years, and visit type. Note that the Shrub guild also includes woody vine species. Species-level notes are returned. For
@@ -80,7 +82,8 @@
 joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
                             locType = c('VS', 'all'), eventType = c('complete', 'all'),
                             speciesType = c('all', 'native', 'exotic', 'invasive'),
-                            valueType = c('all', 'midpoint', 'classes', 'averages'), ...){
+                            valueType = c('all', 'midpoint', 'classes', 'averages'),
+                            shape = c("long", "wide"), ...){
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
                     c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))
@@ -96,6 +99,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   options(scipen = 100)
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
+  if(shape == "long"){ ### DROP AFTER FINALIZED WIDE VIEW
   # Prepare the quadrat data
   tryCatch(quadspp <- get("NETN_QuadSpecies", envir = env) %>%
              select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQQuadSppCode,
@@ -260,6 +264,149 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                          "classes" = quadspp_comb4[, c(req_cols, txt_cols, taxa_cols, "QuadSppNote")],
                          "all" = quadspp_comb4[, c(req_cols, pct_cols, txt_cols, taxa_cols, "QuadSppNote")],
                          "averages" = quadspp_comb4[, c(req_cols, taxa_cols)])
+
+  } else if(shape == "wide"){
+
+    tryCatch(quadspp <- get("NETN_QuadSpecies_wide", envir = env) %>%
+               select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
+                      TSN, ScientificName, SQQuadSum,
+                      UC_SQ, UR_SQ, MR_SQ, BR_SQ, BC_SQ, BL_SQ, ML_SQ, UL_SQ,
+                      UC, UR, MR, BR, BC, BL, ML, UL,
+                      UC_txt, UR_txt, MR_txt, BR_txt, BC_txt, BL_txt, ML_txt, UL_txt,
+                      IsGerminant, ConfidenceClassCode, IsCollected, QuadSppNote),
+             error = function(e){stop("NETN_QuadSpecies_wide view not found. Please import view.")})
+
+    taxa_wide <- force(prepTaxa())
+
+    # subset with EventID from plot_events to make function faster
+    plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
+                                      panels = panels, locType = locType, eventType = eventType,
+                                      abandoned = FALSE, output = 'short')) %>%
+      select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+             EventID, StartYear, StartDate, cycle, IsQAQC)
+
+    if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
+
+    pe_list <- unique(plot_events$EventID)
+
+    quad_list <- c("UC", "UR", "MR", "BR", "BC", "BL", "ML", "UL")
+    quad_txt_list <- c("UC_txt", "UR_txt", "MR_txt", "BR_txt", "BC_txt", "BL_txt", "ML_txt", "UL_txt")
+    quad_sq_list <- c("UC_SQ", "UR_SQ", "MR_SQ", "BR_SQ", "BC_SQ", "BL_SQ", "ML_SQ", "UL_SQ")
+
+    quadspp_evs <- filter(quadspp, EventID %in% pe_list) %>%
+                   mutate(missing_cover = ifelse(rowSums(across(all_of(quad_list)), na.rm = T) == 0, TRUE, FALSE))
+
+    names(quadspp_evs)[names(quadspp_evs) == "ConfidenceClassCode"] <- "Confidence"
+
+    quadspp_lj <- left_join(plot_events, quadspp_evs,
+                            by = c("ParkUnit", "ParkSubUnit", "PlotCode", "PlotID",
+                                   "EventID", "StartYear", "IsQAQC")) %>%
+                  select(Plot_Name:IsQAQC, UC_SQ:UL_SQ, SQQuadSum) %>% unique()
+
+
+    # join with taxa data, so can filter for smaller dataset early
+    quadspp_tax <- left_join(quadspp_evs, taxa_wide[, c("TSN", "ScientificName", "Exotic", "InvasiveNETN")],
+                             by = c("TSN", "ScientificName"))
+
+
+    quadspp_sum <- quadspp_tax %>% mutate(
+      across(all_of(quad_list),
+        ~case_when(.x == 0 ~ 0,
+                   .x == 1 ~ 0.1,
+                   .x == 2 ~ 1.5,
+                   .x == 3 ~ 3.5,
+                   .x == 4 ~ 7.5,
+                   .x == 5 ~ 17.5,
+                   .x == 6 ~ 37.5,
+                   .x == 7 ~ 62.5,
+                   .x == 8 ~ 85,
+                   .x == 9 ~ 97.5,
+                   TRUE ~ NA_real_)),
+      across(all_of(quad_txt_list), ~str_replace(.x, "-<1%", "<1%")),
+      quad_avg_cov = (rowSums(across(all_of(quad_list)), na.rm = T)/SQQuadSum),
+      quad_pct_freq = ((rowSums(ifelse(across(all_of(quad_list)) > 0, 1, 0), na.rm = T)/SQQuadSum)*100)
+      )
+
+    # Cover class conversions
+    # Setting up df for filling out left join after filter
+
+    quadspp_filt <- switch(speciesType,
+                           'native' = filter(quadspp_sum, Exotic == FALSE),
+                           'exotic' = filter(quadspp_sum, Exotic == TRUE),
+                           'invasive' = filter(quadspp_sum, InvasiveNETN == TRUE),
+                           'all' = quadspp_sum) %>%
+                    select(-all_of(quad_sq_list), -SQQuadSum)
+
+    # Join the plot, visit, SQ info back after species filter
+    quadspp_comb <- left_join(quadspp_lj, quadspp_filt,
+                              by = c("ParkUnit", "ParkSubUnit", "PlotCode", "PlotID",
+                                     "EventID", "StartYear", "IsQAQC"))
+
+    quadspp_comb2 <- left_join(quadspp_comb,
+                               taxa_wide %>% select(TSN, Tree, TreeShrub, Shrub, Vine, Herbaceous,
+                                                    Graminoid, FernAlly),
+                               by = c("TSN"))
+
+    quadspp_comb2 <- quadspp_comb2 %>% mutate(
+                                         ScientificName =
+                                                case_when(is.na(ScientificName) & SQQuadSum > 0 ~ "None present",
+                                                          is.na(ScientificName) & SQQuadSum == 0 ~ "Not Sampled",
+                                                          TRUE ~ paste(ScientificName)),
+                                         quad_avg_cov = ifelse(is.na(quad_avg_cov) & SQQuadSum > 0, 0, quad_avg_cov),
+                                         quad_pct_freq = ifelse(is.na(quad_pct_freq) & SQQuadSum > 0, 0, quad_pct_freq),
+                                         across(all_of(c(quad_list, "quad_avg_cov", "quad_pct_freq")),
+                                                ~ifelse(missing_cover == TRUE, NA_real_, .x)),
+                                         across(all_of(quad_txt_list), ~ifelse(missing_cover == TRUE, NA_character_, .x)))
+
+    na_cols <- c("Exotic", "InvasiveNETN",
+                 "Tree", "TreeShrub", "Shrub", "Vine", "Herbaceous",
+                 "Graminoid", "FernAlly")
+
+    quadspp_comb2[ , na_cols][is.na(quadspp_comb2[, na_cols])] <- 0
+
+    cov_rename <- function(txt, col){paste(txt, substr(col, 1, 2), sep = "_")}
+
+    quadspp_comb3 <- quadspp_comb2 %>% rename_with(~cov_rename("Pct_Cov", .), all_of(quad_list)) %>%
+                                       rename_with(~cov_rename("Txt_Cov", .), all_of(quad_txt_list)) %>%
+                                       rename_with(~cov_rename("SQ", .), all_of(quad_sq_list))
+
+    # select columns based on specified valueType
+    req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
+                  "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle",
+                  "SQQuadSum", "TSN", "ScientificName")
+
+    sum_cols <- c("quad_avg_cov", "quad_pct_freq")
+
+    plant_cols <- c("Confidence", "IsGerminant")
+
+    sq_cols <- c("SQ_UC", "SQ_UR", "SQ_MR", "SQ_BR", "SQ_BC", "SQ_BL", "SQ_ML", "SQ_UL")
+
+    pct_cols <- c("Pct_Cov_UC", "Pct_Cov_UR", "Pct_Cov_MR", "Pct_Cov_BR",
+                  "Pct_Cov_BC", "Pct_Cov_BL", "Pct_Cov_ML", "Pct_Cov_UL")
+
+    txt_cols <- c("Txt_Cov_UC", "Txt_Cov_UR", "Txt_Cov_MR", "Txt_Cov_BR",
+                  "Txt_Cov_BC", "Txt_Cov_BL", "Txt_Cov_ML", "Txt_Cov_UL")
+
+    taxa_cols <- c("Exotic", "InvasiveNETN", "Tree", "TreeShrub", "Shrub", "Vine", "Herbaceous",
+                   "Graminoid", "FernAlly")
+
+    # Convert NAs to 0 except quads with SQ NS to NA
+    # quadspp_comb3[, pct_cols][is.na(quadspp_comb3[, pct_cols]) &
+    #                             quadspp_comb3$missing_cover == FALSE] <- 0
+    # quadspp_comb3[, txt_cols][is.na(quadspp_comb3[, txt_cols]) &
+    #                             quadspp_comb3$missing_cover == FALSE] <- "0%"
+
+
+    quadspp_final <- switch(valueType,
+                            "midpoint" = quadspp_comb3[, c(req_cols, pct_cols, plant_cols,
+                                                           sum_cols, taxa_cols, "QuadSppNote")],
+                            "classes" = quadspp_comb3[, c(req_cols, txt_cols, plant_cols,
+                                                          sum_cols, taxa_cols, "QuadSppNote")],
+                            "all" = quadspp_comb3[, c(req_cols, sq_cols, pct_cols, txt_cols,
+                                                      plant_cols, sum_cols, taxa_cols, "QuadSppNote")],
+                            "averages" = quadspp_comb3[, c(req_cols, sum_cols, taxa_cols)])
+
+  }
 
   return(data.frame(quadspp_final))
   } # end of function
