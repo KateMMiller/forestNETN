@@ -1,4 +1,4 @@
-NETN_QuadSpecies_wide_kmm <-
+NETN_QuadSpecies_wide <-
   "
 SELECT
 Network, ParkUnit, ParkSubUnit, PlotTypeCode, PlotCode, IsAbandoned, PanelCode, StartYear, IsQAQC, PIVSQ.EventID, PlotID, SQQuadSum,

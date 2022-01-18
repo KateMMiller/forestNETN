@@ -695,9 +695,16 @@ shrub_merge %>% select(Plot_Name, StartYear, IsQAQC, ScientificName, shrub_avg_c
 
 #++++++ Only remaining issue is the <2010 % Covers that should be NC
 
-
 #----- Microplot Seedlings ------
+seeds_vw <- get("NETN_MicroplotSeedlings", envir = VIEWS_NETN) %>%
+           select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQSeedlingCode,
+                  MicroplotCode, TSN, ScientificName, SizeClassCode, SizeClassLabel, Count)
+
+table(seeds_vw$SQSeedlingCode, seeds_vw$StartYear) # NS 178 in 2006 (good).
+# 2010: 6 of 7 NS are ACAD-029 & SAGA-008, which is correct. SAGA-007 UL is also NS, which should be NP. Fix after final migration.
+
 seed_new <- joinMicroSeedlings(from = 2006, to = 2019, eventType = 'all', locType = 'all', QAQC = TRUE)
+seed_inv <- joinMicroSeedlings(speciesType = 'invasive')
 table(seed_new$SQSeedlingCode, seed_new$StartYear)
 
 # SAGA-007-2010 UL micro is migrating as ND instead of NP. Not sure why that's happening
@@ -712,6 +719,7 @@ saps_vw <- get("NETN_MicroplotSaplings", envir = VIEWS_NETN) %>%
   select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, StartDate, IsQAQC, SQSaplingCode,
          MicroplotCode, TSN, ScientificName, DBHcm)
 
+nrow(saps_vw[saps_vw$ScientificName == "No species recorded",])
 table(saps_vw$SQSaplingCode)
   #  NP   NS   SS
   # 1819  184 5723
@@ -721,6 +729,7 @@ table(saps_vw$SQSaplingCode, saps_vw$MicroplotCode) # Most NS are for UL/B in 20
 
 saps_new <- joinMicroSaplings(locType = "all", QAQC = T, eventType = 'all', canopyForm = 'all', speciesType = 'all')
 length(unique(saps_new$EventID)) #1281
+saps_inv <- joinMicroSaplings(speciesType = 'invasive')
 
 saps_prep <- merge(plotevs_old, micro, by = 'Event_ID', all = TRUE)
 saps_prep2 <- merge(saps_prep, saps[, 1:6], by = "Microplot_Characterization_Data_ID", all = TRUE)
@@ -739,10 +748,214 @@ table(complete.cases(saps_merge$ScientificName)) # 6 F ACAD-029-2010 and SAGA-00
 # Hard to check much more than this, since NETN doesn't track individual saplings.
 # Will check that joinRegen returns the same values.
 
-#++++++++ Catch no species recorded in all new tabs TSN: -9999999951 TaxonID: 8
+#----- joinRegenData -----
+reg_old <- forestNETNarch::joinRegenData(from = 2006, to = 2019, QAQC = T, locType = 'all', speciesType = 'all', canopyForm = 'all') %>%
+  mutate(Latin_Name2 = ifelse(Latin_Name %in% c("No species recorded", 'no species recorded'), "None present", Latin_Name),
+         Latin_Name2 = ifelse(Latin_Name == "MissingData", "Not Sampled", Latin_Name2))
 
-addsppvw <- VIEWS_NETN$COMN_AdditionalSpecies
-table(addsppvw$SQAddSppCode) # 6 NP
-table(addsppvw$SQAddSppCode, addsppvw$ScientificName)
+reg_new <- joinRegenData(from = 2006, to = 2019, QAQC = T, locType = 'all', eventType = 'all', speciesType = 'all', canopyForm = 'all')
 
+reg_merge <- full_join(reg_new, reg_old, by = c('Plot_Name' = 'Plot_Name',
+                                                'StartYear' = 'Year',
+                                                'IsQAQC' = "Event_QAQC",
+                                                "ScientificName" = "Latin_Name2"),
+                       suffix = c("_new", "_old"))
+
+reg_merge_ss <- reg_merge %>% filter(ScientificName != "None present")
+
+check_reg <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("PlotID", "EventID", "Plot_Name", "StartYear", "IsQAQC",
+              "ScientificName", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+table(reg_new$ScientificName)
+table(reg_old$Latin_Name2)
+
+stock_check <- check_reg(reg_merge_ss, "stock_new", "stock_old") # Different b/c change in stocking. Not sure what's going on with NP.
+check_reg(reg_merge_ss, "seed_15_30cm", "seed15.30") # only diff is b/c SAGA-007-2010 is missing NP for 1 micro in new db
+check_reg(reg_merge_ss, "seed_30_100cm", "seed30.100") # SAGA-008-2010 data handled diff.
+check_reg(reg_merge_ss, "seed_100_150cm", "seed100.150") # SAGA-008-2010 data handled diff.
+check_reg(reg_merge_ss, "seed_p150cm", "seed150p") # SAGA-008-2010 data handled diff.
+
+check_reg(reg_merge_ss, "seed_den", "seed.den") # SAGA-007-2010 issue and SAGA-008-2010 data handled diff.
+check_reg(reg_merge_ss, "sap_den", "sap.den") # SAGA-008-2010 data handled diff.
+
+#++++++ Regen checks complete. SAGA-007-2010 missing micro only remaining problem
+
+#----- Additional Species -----
+addspp_vw <- get("COMN_AdditionalSpecies", envir = VIEWS_NETN)
+addspp_vw$Plot_Name <- paste(addspp_vw$ParkUnit, sprintf("%03d", addspp_vw$PlotCode), sep = "-")
+addspp_vw <- addspp_vw %>%
+  select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQAddSppCode,
+         TSN, ScientificName, ConfidenceClassCode, IsCollected, Note, SQAddSppNotes)
+table(addspp_vw$SQAddSppCode)
+  # NP    NS    SS
+  # 6     1 15257
+  # NS is ACAD-029-2010. NPs are ACADs, and are correct
+
+nrow(filter(addspp_vw, ScientificName == "No species recorded"))
+  # 6 records with No species recorded still
+  # matches number of NP SQs. Just need to drop these from tblCOMN_AdditionalSpecies
+
+addspp_new <- do.call(joinAdditionalSpecies, arglist)
+
+addspp_old <- forestNETNarch::joinLocEvent(locType = 'all', eventType = 'all', from = 2006, to = 2019, QAQC = T) %>%
+  left_join(., addspp) %>% left_join(., plants[, c("TSN", "Latin_Name")]) %>%
+  select(Plot_Name, Year, Event_QAQC, TSN, Latin_Name, Confidence_ID, Collected, Notes) %>%
+  mutate(Latin_Name2 = ifelse(Latin_Name == "No species recorded", "None present", Latin_Name))
+
+addspp_merge <- merge(addspp_new, addspp_old,
+                      by.x = c("Plot_Name", "StartYear", "IsQAQC", "TSN"),
+                      by.y = c("Plot_Name", "Year", "Event_QAQC", "TSN"),
+                      all.x = T, all.y = T)
+
+check_spp <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "IsQAQC", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+check_spp(addspp_merge, "ScientificName", "Latin_Name2")
+# Some weirdness here with unknown TSNs getting switched around
+# These are the same plots where Unknowns got switched around in the quad. species. Not sure it matters...
+#   Plot_Name StartYear IsQAQC     ScientificName        Latin_Name2
+# 1  ACAD-029      2010      0        Not Sampled               <NA> # OK
+# 2  ACAD-043      2007      0               <NA>  Unknown Herb - 04 # Mig changed to Unknown Herb - 02, which is causing dups. Fix after final migration
+# 3  ACAD-043      2007      0  Unknown Herb - 02               <NA> # Changed from Unknown Herb - 04; Fix after final migration
+# 4  ACAD-059      2007      0               <NA> Unknown Grass - 02 # This was dropped b/c duplicate in quadspp. ~OK
+# 5  ROVA-002      2007      0               <NA>  Unknown Herb - 01 # This is entirely missing from new database.
+# 6  ROVA-020      2007      0               <NA>  Unknown Herb - 01 # Missing from database
+# 7  ROVA-020      2007      0               <NA> Unknown Grass - 01 # Missing from database
+# 8  SARA-013      2006      1 Unknown Carex - 02               <NA> # The row below was replaced with this. OK, I guess. ugh
+# 9  SARA-013      2006      1               <NA>              Carex # This was changed to Unknown Carex - 02. OK, I guess.
+
+#++++++ Will fix migration afterwards, rather than having insert scripts corrected
+
+#------ Taxa/tlu_Plants
+head(plants)
+taxa_wide <- prepTaxa()
+head(taxa_wide)
+taxa_merge <- merge(taxa_wide, plants[, c(1,4:9,11:21,24)], by = "TSN",
+                    all.x = T, all.y = T)
+
+check_taxa <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("TSN", "ScientificName", "Latin_Name", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+check_taxa(taxa_merge, "ScientificName", "Latin_Name") # 2 weird UTF things. NO issues
+check_taxa(taxa_merge, "Order.x", "Order.y") # 3 weird UTF things. NO issues
+check_taxa(taxa_merge, "Family.x", "Family.y") # 3 weird UTF things. NO issues
+check_taxa(taxa_merge, "Genus.x", "Genus.y") #0
+check_taxa(taxa_merge, "Tree.x", "Tree.y") # Differences are b/c of new Tree/Shrub column
+check_taxa(taxa_merge, "Shrub.x", "Shrub.y") # Differences are b/c of new Tree/Shrub and Vine exclusive columns
+check_taxa(taxa_merge, "Vine.x", "Vine.y") # Persicaria was removed from the list b/c herbaceous
+check_taxa(taxa_merge, "Herbaceous.x", "Herbaceous.y")
+check_taxa(taxa_merge, "Graminoid.x", "Graminoid.y")
+
+check_taxa(taxa_merge, "CommonName", "Common") # Differences are b/c old common has lists
+
+#+++++ Only remaining issue is remove "No species recorded" from list +++++
+
+#----- Soil data
+# Soil sample data
+soilsamp_old <- read.csv("./testing_scripts/soilsamp_data_old.csv")
+soillab_old <- read.csv("./testing_scripts/soillab_data_old.csv")
+tbl_ssd <- read.csv("C:/Forest_Health/exports/tbl_Soil_Sample_Data.csv")
+
+length(unique(soilsamp_old$Event_ID)) # 819
+length(unique(soillab_old$Event_ID)) # 749
+
+# Check views
+soilsamp_vw <- get("COMN_SoilSample", envir = env) %>%
+  select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
+         SQSoilCode, SampleSequenceCode, SoilLayerLabel,
+         Depth_cm, Note) %>%
+  filter(StartYear > 2006 & !is.na(SoilLayerLabel) #& StartYear < 2020
+  )
+
+table(soilsamp_vw$SQSoilCode) # All SS. Good.
+length(unique(soilsamp_vw$EventID)) # 820
+
+soillab_vw <- get("COMN_SoilLab", envir = env) %>%
+  select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
+         LabLayer, LabDateSoilCollected, UMOSample:ECEC, LabNotes, EventID, PlotID) %>%
+  filter(StartYear > 2006 #& StartYear < 2020
+  )
+
+length(unique(soillab_vw$EventID)) # 823. Looks similar enough to move on.
+
+# Now to compare old and new
+
+# need to remove records that weren't sampled but had earthworms recorded
+soildata2 <- soildata[!grepl("[++]", soildata$Notes), -c(10:13)] # drop updated/created cols
+
+soil_old <- merge(soildata2, soilsamp[,-c(13:16)],
+                  by = intersect(names(soildata2), names(soilsamp[,-c(13:16)])), all = TRUE)
+
+plotevs_old <- forestNETNarch::joinLocEvent(from = 2007, to = 2019, QAQC = T, locType = 'all', eventType = 'all')
+soil_old2 <- merge(plotevs_old, soil_old, by = intersect(names(plotevs_old), names(soil_old)), all.x = FALSE, all.y = TRUE) %>%
+  filter(!is.na(Location_ID)) %>% select(Plot_Name, Year, Event_QAQC,
+                                         Sampling_Position, Sample_Type, Horizon_Type, Archived,
+                                         Sample_Number, Litter_Depth, FF_Depth,
+                                         A_Horizon_Depth, Total_Excavation_Depth, Notes, Comments, Sample_Missed) %>%
+  filter(Year > 2006)
+
+# convert NA horizons to 0, but not total
+soil_old2[,c(9:11)][is.na(soil_old2[,c(9:11)])]<-0
+names(soil_old2)
+
+soilold_sum <- soil_old2 %>% group_by(Plot_Name, Year, Event_QAQC, Sample_Type, Archived) %>%
+                             summarize(litter = mean(Litter_Depth, na.rm = T),
+                                      O_hor = mean(FF_Depth, na.rm = T),
+                                      A_hor = mean(A_Horizon_Depth, na.rm = T),
+                                      Tot_dep = mean(Total_Excavation_Depth, na.rm =T),
+                                      numsamps = length(unique(!is.na(Sample_Number))))
+
+  #soilsamp_wide comes from line 130 in joinSoilSampleData.R
+soilsamp_wide$Plot_Name <-  paste(soilsamp_wide$ParkUnit, sprintf("%03d", soilsamp_wide$PlotCode), sep = "-")
+
+soilsamp_merge <- merge(soilsamp_wide, soilold_sum,
+                        by.x = c("Plot_Name", "StartYear", "IsQAQC"),
+                        by.y = c("Plot_Name", "Year", "Event_QAQC"), all = T)
+
+soilsamp_merge %>% filter(is.na(EventID))
+# Only ACAD-029-2010 and SARA-015-2018. OK
+
+check_soils <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "IsQAQC", "Sampling_Position", "SampleSequenceCode", col1, col2)]}
+  )) %>% bind_rows()
+}
+names(soilsamp_merge)
+soilsamp_check<- soilsamp_merge %>% mutate(lit_diff = abs(Litter_cm - litter),
+                                            O_diff = abs(O_Horizon_cm - O_hor),
+                                            A_diff = abs(A_Horizon_cm - A_hor),
+                                            tot_diff = abs(Total_Depth_cm - Tot_dep)) %>%
+                  filter(lit_diff > 0.5 | O_diff > 0.5 | A_diff > 0.5 | tot_diff > 0.5)
+
+# Only returns 2 records
+# SAGA-009-2010 is missing a total depth for Sample 3. Fixed missing value. Should migrate corrected in next version.
+# MORR-008-2011 did not have a 3rd sample collected. Removed note, so hopefully migrates as NS instead of SS.
+check_soils(soilsamp_merge, "Note", "Comments") # 14 rows with UTF issues in comments. No concerns
+
+# Soil lab data
+soillab_old <- merge(soildata2, soillab[,-c(1, 34, 35)],
+                     by = intersect(names(soildata2), names(soillab[,-c(1, 34, 35)])), all = TRUE)
+soillab_old2 <- merge(plotevs_old, soillab_old, by = intersect(names(plotevs_old), names(soillab_old)),
+                      all.x = FALSE, all.y = TRUE) %>%
+  filter(!is.na(Location_ID) & Year > 2006) %>% select(Plot_Name, Year, Event_QAQC, Layer, UMO_Sample:ECEC, Notes,
+                                         Sampling_Position, Sample_Type, Archived)
+head(soillab_old2)
+
+#++++++++ No lab-related issues to report (though didn't check as thoroughly)
+
+# Done with 4/22 migration check. Rerun with 4/26 migration check
 
