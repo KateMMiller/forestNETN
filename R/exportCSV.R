@@ -39,7 +39,7 @@ exportCSV<- function(path = NA, zip = FALSE){
 
   # Make sure all the views are loaded. If anything is missing, function stops.
   view_list <- c("COMN_AdditionalSpecies", "COMN_CWD", "COMN_EventObservers", "COMN_Events",
-                 "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter",
+                 "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter", "COMN_QuadNotes",
                  "COMN_SoilHeader", "COMN_SoilSample", "COMN_SoilLab",
                  "COMN_StandDisturbances", "COMN_StandForestFloor", "COMN_StandPlantCoverStrata",
                  "COMN_StandSlopes", "COMN_StandTreeHeights", "COMN_Taxa", "COMN_TreesByEvent",
@@ -76,6 +76,7 @@ exportCSV<- function(path = NA, zip = FALSE){
   if(zip == FALSE){
   invisible(lapply(seq_along(view_list), function(x){
     setTxtProgressBar(pb, x)
+    print(view_list[[x]])
     write.csv(get(view_list[[x]], envir = env),
               paste0(path, view_list[x], ".csv"),
               row.names = FALSE)
