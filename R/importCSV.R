@@ -16,12 +16,14 @@
 #' @return NETN database views in specified environment
 #'
 #' @examples
+#' \dontrun{
 #' # Import individual csvs into global environment
 #' importCSV(path = "C:/Forest_Health/exports/NETN", new_env = FALSE)
 #'
 #' # Import zipped csvs into VIEWS_NETN environment
 #' path <- "C:/Forest_Health/exports/NETN"
 #' importCSV(path = path, zip_name = "NETN_Forest_20210406.zip")
+#' }
 #'
 #' @export
 
