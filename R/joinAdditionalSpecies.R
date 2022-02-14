@@ -57,7 +57,7 @@
 #' @examples
 #' importData()
 #' # compile invasive species found in plot search in SARA for all years
-#' SARA_quads <- joinAdditionalSpecies.R(park = 'SARA', speciesType = 'invasive')
+#' SARA_quads <- joinAdditionalSpecies(park = 'SARA', speciesType = 'invasive')
 #'
 #' # compile all species, including QAQC visits for parks in cycle 3
 #' native_quads <- joinQuadSpecies(from = 2014, to = 2017, QAQC = TRUE)
