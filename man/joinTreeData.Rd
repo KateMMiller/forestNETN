@@ -86,6 +86,8 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 
 \item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
 inputs are "short" and "verbose".}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with plot-level and visit-level tree data. Returns records for all specified
@@ -97,6 +99,7 @@ This function combines tree location and visit data for measurements that have o
 Must run importData first. Abandoned plots are excluded from function.
 }
 \examples{
+\dontrun{
 importData()
 # compile tree data in all parks for live trees only in cycle 3, excluding QAQC visits
 live_trees <- joinTreeData(status = 'live', from = 2014, to = 2017)
@@ -112,5 +115,5 @@ MIMA_exotic <- joinTreeData(park = 'MIMA', speciesType = 'exotic')
 
 # compile all visits in ROVA for 2019, including QAQC visits
 ROVA_trees <- joinTreeData(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE)
-
+}
 }

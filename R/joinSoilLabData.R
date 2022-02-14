@@ -44,6 +44,8 @@
 #' \item{"A"}{Return only samples from the A horizon.}
 #' }
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1, 3), for example.
 #'
@@ -52,13 +54,14 @@
 #' Note that horizons that were combined after lab QC may be > 10 cm deep.
 #'
 #' @examples
+#' \dontrun{
 #' importData() #imports using default odbc
 #'# join only O horizon data for most recent cycle in ACAD. Note soil chemistry data are typically a year behind plot data.
 #' soil_ACAD_O <- joinSoilLabData(park = 'ACAD', from = 2015, to = 2018, layers = 'O')
 #'
 #'# join all park data from all layers and all years
 #' soil_df_all <- joinSoilLabData(from = 2007, to = 2018, layers = 'all')
-#'
+#'}
 #' @export
 #'
 #------------------------
@@ -113,7 +116,7 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
 
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = "complete",
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
            EventID, StartDate, StartYear, cycle, IsQAQC)
 

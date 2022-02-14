@@ -58,6 +58,8 @@ include all plots, such as deer exclosures.
 
 \item{splitHerb}{TRUE/FALSE. If TRUE (Default), splits the herbaceous group into forb and fern. If FALSE,
 then resulting data frame will be summarized for tree, shrub, herbaceous, and graminoid guilds.}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a data frame with average quadrat cover, percent quadrat frequency and quadrat
@@ -72,6 +74,7 @@ guild includes fern and other herbaceous (but not graminoid) species cover. Only
 where a few quadrats were not sampled. Germinants are not included in summary.
 }
 \examples{
+\dontrun{
 importData()
 
 # compile invasive quad data for all parks and most recent survey. Keep ferns in with herbs
@@ -79,5 +82,6 @@ inv_guilds <- sumQuadGuilds(speciesType = 'invasive', from = 2015, to = 2018, sp
 
 # compile native quad data for more recent survey in ACAD, with ferns and forbs split in separate guilds
 ACAD_guilds <- sumQuadGuilds(speciesType = 'native', from = 2015, to = 2018, splitHerb = TRUE)
+}
 
 }

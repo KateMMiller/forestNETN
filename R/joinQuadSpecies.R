@@ -64,16 +64,21 @@
 #' \item{"averages"}{Returns only the plot-level average cover and percent frequency.}
 #' }
 #'
+#' @param shape Temporary argument until new view is ready
+#'
+#' @param ... Other arguments passed to function.
+#'
 #' @return Returns a dataframe with a row for each species/visit combination for quadrat data
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile quadrat data for invasive species in SARA for all years
 #' SARA_quads <- joinQuadSpecies(park = 'SARA', speciesType = 'invasive')
 #'
 #' # compile native species only for all parks in cycle 3
 #' native_quads <- joinQuadSpecies(speciesType = 'native', from = 2014, to = 2017)
-#'
+#' }
 #' @export
 #'
 #------------------------

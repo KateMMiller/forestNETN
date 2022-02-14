@@ -13,6 +13,7 @@
 #' @return NETN database views exported to specified path
 #'
 #' @examples
+#' \dontrun{
 #' # RUN FIRST
 #' library(forestNETN)
 #' importData()
@@ -25,6 +26,7 @@
 #'
 #' # Export views as .csvs to specified path
 #' exportCSV(path = "C:/Forest_Health/exports/NETN")
+#'}
 #'
 #' @export
 

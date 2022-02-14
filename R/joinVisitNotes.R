@@ -50,14 +50,21 @@
 #' \item{"all"}{Return visit and plot-level notes.}
 #' }
 #'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param ... Other arguments passed to function.
+#'
 #' @return Returns a dataframe with all notes related to a plot and visit. Only returns records with notes. The Note_Info
 #' column indicates the data type the note relates to. The Sample_Info column includes information about the data that may
 #' help interpret the note.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile notes for plots sampled in MORR in 2019
 #' MORR_notes <- joinVisitNotes(park = 'MORR', from = 2019, to = 2019, noteType = 'visit')
+#'}
 #'
 #' @export
 #'
@@ -85,7 +92,7 @@ joinVisitNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
 
   # Plot and visit notes
   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
-                              locType = locType, eventType = eventType, output = 'verbose') %>%
+                              locType = locType, eventType = eventType, output = 'verbose', ...) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
            EventID, StartYear, StartDate, cycle, IsQAQC, PlotNotes, Directions, IsOrientationChanged, EventNotes,
            StandNotes) %>% rename(Plot_Notes = PlotNotes,

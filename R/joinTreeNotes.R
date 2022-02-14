@@ -39,13 +39,19 @@
 #' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
 #' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
 #'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param ... Other arguments passed to function.
+#'
 #' @return Returns a dataframe with all tree-related notes. Only returns records with notes.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile quadrat data for invasive species in SARA for 2018
 #' SARA_tree_notes <- joinTreeNotes(park = 'SARA', from = 2018, to = 2018)
-#'
+#' }
 #'
 #' @export
 #'
@@ -73,7 +79,7 @@ joinTreeNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   )
 
   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
-                              locType = locType, eventType = eventType, output = 'verbose') %>%
+                              locType = locType, eventType = eventType, output = 'verbose', ...) %>%
                  select(Plot_Name, PlotID, EventID, StartYear, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}

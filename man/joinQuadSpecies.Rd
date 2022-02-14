@@ -70,6 +70,10 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"classes"}{Returns the text cover class definitions, with Txt prefix.}
 \item{"averages"}{Returns only the plot-level average cover and percent frequency.}
 }}
+
+\item{shape}{Temporary argument until new view is ready}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a dataframe with a row for each species/visit combination for quadrat data
@@ -80,11 +84,12 @@ years, and visit type. Note that the Shrub guild also includes woody vine specie
 quadrat-specific notes, use the joinQuadNotes() function.
 }
 \examples{
+\dontrun{
 importData()
 # compile quadrat data for invasive species in SARA for all years
 SARA_quads <- joinQuadSpecies(park = 'SARA', speciesType = 'invasive')
 
 # compile native species only for all parks in cycle 3
 native_quads <- joinQuadSpecies(speciesType = 'native', from = 2014, to = 2017)
-
+}
 }

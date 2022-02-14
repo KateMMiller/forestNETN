@@ -39,6 +39,9 @@ joinMicroShrubData(
 \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 \item{TRUE}{Returns all visits, including QAQC visits}}}
 
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
 \item{locType}{Allows you to only include plots that are part of the GRTS sample design or
 include all plots, such as deer exclosures.
 \describe{
@@ -68,6 +71,8 @@ microplot/species combination.}
 species combination.}
 \item{"averages"}{Returns only the plot-level average cover and percent frequency per species.}
 }}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with shrub data collected in microplots
@@ -82,11 +87,12 @@ Protocol IRMA Project:
    https://irma.nps.gov/Datastore/Reference/Profile/2189101.
 }
 \examples{
+\dontrun{
 importData()
 # native shrubs in MORR all years
 native_shrubs <- joinMicroShrubData(park ='MORR', speciesType = 'native')
 
 # all parks with exotic shrubs in most recent survey
 exotic_shrubs <- joinMicroShrubData(from = 2015, to = 2018, speciesType = 'exotic')
-
+}
 }

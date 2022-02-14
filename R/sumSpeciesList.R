@@ -61,9 +61,12 @@
 #'
 #' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return Returns a dataframe with species list for each plot.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #'
 #' # Compile number of invasive species found per plot cycle 3 recent survey for all parks
@@ -73,7 +76,7 @@
 #'
 #' # Compile species list for SARA in 2019
 #' SARA_spp <- sumSppList(park = 'SARA', from = 2019)
-#'
+#'}
 #'
 #' @export
 #'

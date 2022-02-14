@@ -74,11 +74,14 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with plot-level and visit-level tree data. Returns records for all specified
 #' plots and events, even if no trees meet the specified arguments (eg dead or exotic trees), although all
 #' associated data (eg TagCode, DBH), will be NA for those plot/events. ScientificName will be "None present".
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile tree data in all parks for live trees only in cycle 3, excluding QAQC visits
 #' live_trees <- joinTreeData(status = 'live', from = 2014, to = 2017)
@@ -94,7 +97,7 @@
 #'
 #' # compile all visits in ROVA for 2019, including QAQC visits
 #' ROVA_trees <- joinTreeData(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE)
-#'
+#'}
 #' @export
 #'
 #------------------------
@@ -102,7 +105,8 @@
 #------------------------
 joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
                          status = c('all', 'active', 'live', 'dead'), speciesType = c('all', 'native','exotic', 'invasive'),
-                         canopyPosition = c("all", "canopy"), dist_m = NA, eventType = c('complete', 'all'), output = 'short', ...){
+                         canopyPosition = c("all", "canopy"), dist_m = NA, eventType = c('complete', 'all'),
+                         output = 'short', ...){
 
   # Match args and class
   status <- match.arg(status)
@@ -141,7 +145,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   # subset with EventID from plot_events to make tree data as small as possible to speed up function
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
                        select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
                        EventID, StartDate, StartYear, cycle, IsQAQC)
 

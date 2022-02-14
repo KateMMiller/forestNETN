@@ -65,9 +65,12 @@
 #'
 #' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with sapling data
 #'
 #' @examples
+#' \dontrun{
 #' importCSV(zip_name = "NETN_Forest_20210405.zip")
 #' # compile sapling data for all parks and all species in most cycle 3
 #' regen_data <- joinMicroSaplings(canopyForm = 'all', from = 2014, to = 2017)
@@ -77,7 +80,7 @@
 #'
 #' # compile only 1 microplot of data for ACAD native canopy-forming species for all but first year
 #' ACAD_regen_m1 <- joinMicroSaplings(park = 'ACAD', speciesType = 'native', numMicros = 1, from = 2007)
-#'
+#' }
 #' @export
 #'
 #------------------------

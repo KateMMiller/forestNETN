@@ -66,6 +66,8 @@ If more than one panel is selected, specify by c(1, 3), for example.}
 \item{dist_m}{Filter trees by a distance that is less than or equal to the specified distance in meters
 of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a wide data frame with one row for each tree visit and tree conditions as columns.
@@ -83,6 +85,7 @@ one row per tree visit and a column for each foliage condition type. Must run im
 Abandoned plots and incomplete visits are excluded from function.
 }
 \examples{
+\dontrun{
 importData()
 # compile tree condition data for live trees in all parks in cycle 3, excluding QAQC visits
 trcond_c3 <- joinTreeConditions(from = 2014, to = 2017, status = 'live', QAQC = FALSE)
@@ -90,5 +93,5 @@ trcond_c3 <- joinTreeConditions(from = 2014, to = 2017, status = 'live', QAQC = 
 # compile tree condition for ROVA in 2019, including QAQC visits for active trees
 ROVA_trees <- joinTreeConditions(park = "ROVA", from = 2019, to = 2019, status = 'active',
                                  QAQC = TRUE)
-
+}
 }

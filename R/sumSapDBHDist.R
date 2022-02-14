@@ -65,12 +65,15 @@
 #' \item{"both"}{Returns noth stem density and BA/ha.}
 #' }
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with one row for each plot and either density, BA or both in 1cm size classes.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' sap_diam_dist <- sumSapDBHDist(park = 'ROVA', speciesType = 'native', from = 2015, to = 2018, units = 'BA')
-#'
+#' }
 #' @export
 #'
 #------------------------

@@ -78,10 +78,13 @@
 #' \item{"acres"}{Returns densities per acre}
 #'}
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with seedling and sapling densities, and stocking index metrics
 #' for each species observed per visit.
 #'
 #' @examples
+#' \dontrun{
 #' importCSV('./forest_csvs/')
 #' # compile seedling and sapling data for all parks and all species in cycle 3
 #' regen_data <- joinRegenData(canopyForm = 'all', from = 2014, to = 2017)
@@ -91,7 +94,7 @@
 #'
 #' # compile only 1 microplot of data for ACAD native canopy-forming species for all but first year
 #' ACAD_regen_m1 <- joinRegenData(park = 'ACAD', speciesType = 'native', numMicros = 1, from = 2007)
-#'
+#'}
 #' @export
 #'
 #------------------------
@@ -194,7 +197,7 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   # Add plot events left join
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
            EventID, StartYear, StartDate, cycle, IsQAQC)
 

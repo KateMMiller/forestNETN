@@ -39,6 +39,11 @@ joinLocEvent(
 \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 \item{TRUE}{Returns all visits, including QAQC visits}}}
 
+\item{abandoned}{Allows you to include (TRUE) or remove (FALSE; Default.) or abandoned plots.
+\describe{
+\item{FALSE}{Default. Only returns plots that were not rejected.}
+\item{TRUE}{returns all records}}}
+
 \item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 If more than one panel is selected, specify by c(1, 3), for example.}
 
@@ -56,10 +61,7 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
 inputs are "short" and "verbose".}
 
-\item{abandonded}{Allows you to include (TRUE) or remove (FALSE; Default.) or abandoned plots.
-\describe{
-\item{FALSE}{Default. Only returns plots that were not rejected.}
-\item{TRUE}{returns all records}}}
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with location and visit events
@@ -68,6 +70,7 @@ returns a dataframe with location and visit events
 This function combines location and event data. Must run importData first.
 }
 \examples{
+\dontrun{
 importCSV('./forest_csvs')
 # Select most recent survey of data from WEFA
 WEFA_data <- joinLocEvent(park = 'WEFA', panels = c(2,4), from = 2015, to = 2018)
@@ -79,5 +82,6 @@ cycle3 <- joinLocEvent(park = c("MABI", "SAGA"), from = 2014, to = 2017) # all p
 ACAD_data <- joinLocEvent(park = 'ACAD', QAQC = TRUE, from = 2018)
 QAQC_plots <- ACAD_data$Plot_Name[which(ACAD_data$Event_QAQC == TRUE)]
 ACAD_QAQC <- ACAD_data \%>\% filter(Plot_Name \%in\% QAQC_plots)
+}
 
 }

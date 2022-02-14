@@ -79,6 +79,8 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"ha"}{Returns seedling and sapling densities per hectare}
 \item{"acres"}{Returns densities per acre}
 }}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with seedling and sapling densities, and stocking index metrics
@@ -97,6 +99,7 @@ underestimate the stocking index for those plots, but their index values are sti
 most plots. Must run importData first.
 }
 \examples{
+\dontrun{
 importCSV('./forest_csvs/')
 # compile seedling and sapling data for all parks and all species in cycle 3
 regen_data <- joinRegenData(canopyForm = 'all', from = 2014, to = 2017)
@@ -106,5 +109,5 @@ SAGA_regen <- joinRegenData(park = 'SAGA', speciesType = 'native')
 
 # compile only 1 microplot of data for ACAD native canopy-forming species for all but first year
 ACAD_regen_m1 <- joinRegenData(park = 'ACAD', speciesType = 'native', numMicros = 1, from = 2007)
-
+}
 }

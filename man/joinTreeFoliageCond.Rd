@@ -64,6 +64,8 @@ example, to select an area of trees that is 100 square meters in area, use a dis
 \item{"midpoint"}{Default. Returns cover class midpoints}
 \item{"classes"}{Returns the text coverclass definitions}
 }}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a wide dataframe with one row for each live tree visit and foliage conditions as columns.
@@ -74,6 +76,7 @@ one row per tree visit and a column for each foliage condition type. Must run im
 Abandoned plots and incomplete visits are excluded from function.
 }
 \examples{
+\dontrun{
 importData()
 # compile numeric tree foliage condition data in all parks in cycle 3, excluding QAQC visits
 fol_c3 <- joinTreeFoliageCond(from = 2014, to = 2017, valueType = 'midpoint', QAQC = FALSE)
@@ -81,5 +84,6 @@ fol_c3 <- joinTreeFoliageCond(from = 2014, to = 2017, valueType = 'midpoint', QA
 # compile foliage condition cover classes for ROVA in 2019, including QAQC visits
 ROVA_trees <- joinTreeFoliageCond(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE,
                                   valueType = 'classes')
+}
 
 }

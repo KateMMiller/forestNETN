@@ -65,16 +65,22 @@
 #' \item{"averages"}{Returns only the plot-level average cover and percent frequency per species.}
 #' }
 #'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with shrub data collected in microplots
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # native shrubs in MORR all years
 #' native_shrubs <- joinMicroShrubData(park ='MORR', speciesType = 'native')
 #'
 #' # all parks with exotic shrubs in most recent survey
 #' exotic_shrubs <- joinMicroShrubData(from = 2015, to = 2018, speciesType = 'exotic')
-#'
+#' }
 #' @export
 #'
 #------------------------
@@ -112,7 +118,7 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   # subset with EventID from plot_events to make function faster
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
            EventID, StartYear, StartDate, cycle, IsQAQC)
 

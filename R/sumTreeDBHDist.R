@@ -82,14 +82,16 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#' @param ... Other arguments passed to function.
 #'
 #' @return returns a dataframe with one row for each plot and either density or BA
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' tree_diam_dist <-sumTreeDBHDist(park = 'MORR', speciesType = 'native', from = 2016, to = 2019, units = 'ba')
 #' head(tree_diam_dist)
-#'
+#' }
 #' @export
 #'
 #------------------------

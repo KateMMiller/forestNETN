@@ -47,16 +47,22 @@
 #' \item{"classes"}{Returns the text cover class definitions, with Txt prefix.}
 #' }
 #'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param ... Other arguments passed to function.
+#'
 #' @return Returns a dataframe with cover class midpoints for each quadrat and includes guild for each species.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile quadrat data cover class midpoints in SARA for all years
 #' SARA_quads <- joinQuadData(park = 'SARA', valueType = 'midpoint')
 #'
 #' # compile quadrat data for cycle 3
 #' native_quads <- joinQuadData(from = 2014, to = 2017)
-#'
+#'}
 #' @export
 #'
 #------------------------
@@ -90,7 +96,7 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
   # subset with EventID from plot_events to make function faster
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
                         EventID, StartYear, StartDate, cycle, IsQAQC)
 

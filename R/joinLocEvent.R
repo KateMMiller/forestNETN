@@ -26,7 +26,7 @@
 #' \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 #' \item{TRUE}{Returns all visits, including QAQC visits}}
 #'
-#' @param abandonded Allows you to include (TRUE) or remove (FALSE; Default.) or abandoned plots.
+#' @param abandoned Allows you to include (TRUE) or remove (FALSE; Default.) or abandoned plots.
 #' \describe{
 #' \item{FALSE}{Default. Only returns plots that were not rejected.}
 #' \item{TRUE}{returns all records}}
@@ -48,9 +48,12 @@
 #' @param output Allows you to return all columns or just the most important columns for analysis. Valid
 #' inputs are "short" and "verbose".
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with location and visit events
 #'
 #' @examples
+#' \dontrun{
 #' importCSV('./forest_csvs')
 #' # Select most recent survey of data from WEFA
 #' WEFA_data <- joinLocEvent(park = 'WEFA', panels = c(2,4), from = 2015, to = 2018)
@@ -62,6 +65,7 @@
 #' ACAD_data <- joinLocEvent(park = 'ACAD', QAQC = TRUE, from = 2018)
 #' QAQC_plots <- ACAD_data$Plot_Name[which(ACAD_data$Event_QAQC == TRUE)]
 #' ACAD_QAQC <- ACAD_data %>% filter(Plot_Name %in% QAQC_plots)
+#' }
 #'
 #' @export
 #'

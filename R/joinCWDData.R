@@ -34,11 +34,6 @@
 #' \item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
 #' \item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}
 #'
-#' @param eventType Allows you to include only complete sampling events or all sampling events
-#' \describe{
-#' \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
-#' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
-#' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
 #'
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1, 3), for example.
@@ -52,9 +47,12 @@
 #' \item{"acres"}{Returns CWD volume as cubic ft/acre}
 #'}
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with CWD volume for each plot, species, decay class combination
 #'
 #' @examples
+#' \dontrun{
 #' importData() #imports data
 #'
 #' # Compile CWD data for MABI for most recent survey and return in ft^3/acre
@@ -62,7 +60,7 @@
 #'
 #' # Compile CWD data for all parks and years in m^3/ha, including QAQC events.
 #' cwd_data <- joinCWDData(park = 'all', QAQC = TRUE)
-#'
+#' }
 #' @export
 #'
 #------------------------

@@ -57,6 +57,8 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a wide data frame with one row for each tree visit and tree conditions as columns.
 #' Note that vines in the crown and on the bole return the number of species in each condition. Remaining
 #' conditions are either 0 for absent or 1 for present. Only trees that are actively assessed for status
@@ -67,6 +69,7 @@
 #' missing for that visit.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile tree condition data for live trees in all parks in cycle 3, excluding QAQC visits
 #' trcond_c3 <- joinTreeConditions(from = 2014, to = 2017, status = 'live', QAQC = FALSE)
@@ -74,7 +77,7 @@
 #' # compile tree condition for ROVA in 2019, including QAQC visits for active trees
 #' ROVA_trees <- joinTreeConditions(park = "ROVA", from = 2019, to = 2019, status = 'active',
 #'                                  QAQC = TRUE)
-#'
+#' }
 #' @export
 #'
 #------------------------

@@ -47,15 +47,20 @@
 #' @param output Allows you to return all columns or just the most important columns for analysis. Valid
 #' inputs are "short" and "verbose".
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with recorded disturbances
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # import 4 years of MABI stand disturbances
 #' stand_df <- joinStandDisturbance(park = 'MABI', from = 2015, to = 2019)
 #'
 #' # import all visits, including QAQC, from 2019 in ACAD. Only return important data fields.
 #' acad_stand <- joinStandDisturbance(park = ACAD, from = 2019, to = 2019, QAQC = TRUE)
+#' }
+#'
 #' @export
 #'
 #------------------------
@@ -87,7 +92,7 @@ joinStandDisturbance<- function(park = 'all', QAQC = FALSE, locType = c('VS', 'a
   )
 
   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
-                              locType = locType, eventType = eventType, output = 'verbose') %>%
+                              locType = locType, eventType = eventType, output = 'verbose', ...) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
            EventID, StartYear, StartDate, cycle, IsQAQC)
 

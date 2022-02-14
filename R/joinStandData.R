@@ -47,16 +47,21 @@
 #' @param output Allows you to return all columns or just the most important columns for analysis. Valid
 #' inputs are "short" and "verbose".
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
 #' between cover class ranges (e.g., 62.5 is the midpoint for 50-75%). Field names starting with "Txt" define the cover classes.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # import 4 years of MABI stand data
 #' stand_df <- joinStandData(park = 'MABI', from = 2015, to = 2019)
 #'
 #' # import all visits, including QAQC, from 2019 in ACAD. Only return important data fields.
 #' acad_stand <- joinStandData(park = ACAD, from = 2019, to = 2019, QAQC = TRUE, output = 'short')
+#' }
+#'
 #' @export
 #'
 #------------------------
@@ -258,7 +263,7 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
 
     plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                       panels = panels, locType = locType, eventType = "complete",
-                                      abandoned = FALSE, output = 'short')) %>%
+                                      abandoned = FALSE, output = 'short', ...)) %>%
                    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
                      xCoordinate, yCoordinate, EventID, StartYear, StartDate, cycle, IsQAQC, IsStuntedWoodland)
 

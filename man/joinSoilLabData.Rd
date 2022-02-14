@@ -52,6 +52,8 @@ include all plots, such as deer exclosures.
 \item{"O"}{Return only samples from the O horizon.}
 \item{"A"}{Return only samples from the A horizon.}
 }}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe containing each plot and visit with soil chemistry data for each horizon on a plot
@@ -65,11 +67,12 @@ as the weight. Must run importData first. Note that Earthworms are summarized in
 visits and plots that haven't been abandoned. Note that data starts at 2007 because 2006 methods were pretty different.
 }
 \examples{
+\dontrun{
 importData() #imports using default odbc
 # join only O horizon data for most recent cycle in ACAD. Note soil chemistry data are typically a year behind plot data.
 soil_ACAD_O <- joinSoilLabData(park = 'ACAD', from = 2015, to = 2018, layers = 'O')
 
 # join all park data from all layers and all years
 soil_df_all <- joinSoilLabData(from = 2007, to = 2018, layers = 'all')
-
+}
 }

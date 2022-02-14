@@ -70,6 +70,8 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 }}
 
 \item{numMicros}{Allows you to select 1, 2, or 3 microplots of data to summarize}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with sapling data
@@ -83,6 +85,7 @@ and the count is the number of saplings that were counted and not measured for D
 and can be filtered out, if needed by filtering Count == 1. Must run importData first.
 }
 \examples{
+\dontrun{
 importCSV(zip_name = "NETN_Forest_20210405.zip")
 # compile sapling data for all parks and all species in most cycle 3
 regen_data <- joinMicroSaplings(canopyForm = 'all', from = 2014, to = 2017)
@@ -92,5 +95,5 @@ SAGA_regen <- joinMicroSaplings(park = 'SAGA', speciesType = 'native')
 
 # compile only 1 microplot of data for ACAD native canopy-forming species for all but first year
 ACAD_regen_m1 <- joinMicroSaplings(park = 'ACAD', speciesType = 'native', numMicros = 1, from = 2007)
-
+}
 }

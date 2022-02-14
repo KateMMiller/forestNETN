@@ -55,9 +55,12 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a wide dataframe with one row for each live tree visit and foliage conditions as columns.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile numeric tree foliage condition data in all parks in cycle 3, excluding QAQC visits
 #' fol_c3 <- joinTreeFoliageCond(from = 2014, to = 2017, valueType = 'midpoint', QAQC = FALSE)
@@ -65,6 +68,7 @@
 #' # compile foliage condition cover classes for ROVA in 2019, including QAQC visits
 #' ROVA_trees <- joinTreeFoliageCond(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE,
 #'                                   valueType = 'classes')
+#' }
 #'
 #' @export
 #'

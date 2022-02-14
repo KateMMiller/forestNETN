@@ -44,6 +44,8 @@
 #' @param last_lab_year The most recent year lab analyses have been completed for. This will allow non-lab QCed horizon data
 #' to be returned for years following. Otherwise, only QCed data horizon data are returned.
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of
 #' O and A sampled. Litter is not included in total depth calculation. Note soil chemistry data are typically a year behind
 #' plot data, so corrected soil horizon depths will also be a year behind. Soil horizon data not yet QCed by lab data are
@@ -51,10 +53,11 @@
 #' are averaged across samples of the same horizon type.
 #'
 #' @examples
+#' \dontrun{
 #' importData() #default imports
 #'# join horizon depth data for the third cycle in ACAD.
 #' soil_ACAD_O <- joinSoilSampleData(park = 'ACAD', from = 2014, to = 2017)
-#'
+#'}
 #' @export
 #'
 #------------------------
@@ -122,7 +125,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
   # Filter soil sample data to speed function
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = "complete",
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
            EventID, StartDate, StartYear, cycle, IsQAQC)
 

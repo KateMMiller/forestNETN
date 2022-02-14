@@ -48,10 +48,13 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a data frame for every tree visit with at least one vine condition recorded. Trees
 #' without a vine condition are not returned.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile vine data for all parks in cycle 3, excluding QAQC visits
 #' vines_c3 <- joinTreeVineSpecies(from = 2014, to = 2017, QAQC = FALSE)
@@ -62,6 +65,7 @@
 #' # compile vine data for ROVA in 2019, including QAQC visits
 #' ROVA_vines <- joinTreeVineSpecies(park = "ROVA", from = 2019, to = 2019,
 #'                                  QAQC = TRUE)
+#'}
 #'
 #' @export
 #'

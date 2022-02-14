@@ -40,6 +40,11 @@
 #' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
 #' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
 #'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param ... Other arguments passed to function.
+#'
 #' @return Returns a dataframe with all quadrat-related notes. Only returns visits with notes. The Note_Info
 #' column is either the quadrat or the species the note was recorded for. The Sample_Info column is either the
 #' sample qualifier for the quadrat, where SS = successfully sampled, NS = not sampled, NP = no species present,
@@ -47,10 +52,11 @@
 #' it means the species with the note was also collected.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile quadrat data for invasive species in WEFA for 2019
 #' WEFA_quadnotes <- joinQuadNotes(park = 'WEFA', from = 2019, to = 2019)
-#'
+#'}
 #'
 #' @export
 #'
@@ -89,7 +95,7 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   # subset with EventID from plot_events to make function faster
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
                         EventID, StartYear, cycle, IsQAQC)
 

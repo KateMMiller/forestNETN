@@ -49,13 +49,15 @@
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1, 3), for example.
 #'
+#' @param ... Other arguments passed to function.
 #'
 #' @return returns a dataframe with structural stage and metrics used to assign stages to plots.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' stage_df <- sumStrStage(park = 'MABI', from = 2016, to = 2019)
-#'
+#' }
 #'
 #' @export
 #'

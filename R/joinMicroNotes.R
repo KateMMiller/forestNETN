@@ -36,16 +36,23 @@
 #' @param eventType Allows you to include only complete sampling events or all sampling events
 #' \describe{
 #' \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
-#' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
-#' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
+#' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing
+#' most of the data associated with that event (eg ACAD-029.2010). This feature is currently
+#' hard-coded in the function.}}
+#'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param ... Other arguments passed to function.
 #'
 #' @return Returns a dataframe with all microplot-related notes. Only returns records with notes.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile microplot notes for invasive species in SARA for 2018
 #' SARA_quads <- joinMicroNotes(park = 'SARA', from = 2018, to = 2018)
-#'
+#'}
 #'
 #' @export
 #'

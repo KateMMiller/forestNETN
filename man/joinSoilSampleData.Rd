@@ -48,6 +48,8 @@ include all plots, such as deer exclosures.
 
 \item{last_lab_year}{The most recent year lab analyses have been completed for. This will allow non-lab QCed horizon data
 to be returned for years following. Otherwise, only QCed data horizon data are returned.}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe containing each plot and visit with soil sample data.Tot_Samp_cm is the total depth of
@@ -63,8 +65,9 @@ visits and plots that haven't been abandoned. Note that Earthworms are summarize
 because 2006 methods were pretty different.
 }
 \examples{
+\dontrun{
 importData() #default imports
 # join horizon depth data for the third cycle in ACAD.
 soil_ACAD_O <- joinSoilSampleData(park = 'ACAD', from = 2014, to = 2017)
-
+}
 }

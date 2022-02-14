@@ -55,11 +55,7 @@ inputs are "short" and "verbose".}
 \item{"acres"}{Returns CWD volume as cubic ft/acre}
 }}
 
-\item{eventType}{Allows you to include only complete sampling events or all sampling events
-\describe{
-\item{"complete"}{Default. Only include sampling events for a plot that are complete.}
-\item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
-associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with CWD volume for each plot, species, decay class combination
@@ -69,6 +65,7 @@ This function combines and calculates CWD volume for each plot. Must run importD
 only works for complete visits.
 }
 \examples{
+\dontrun{
 importData() #imports data
 
 # Compile CWD data for MABI for most recent survey and return in ft^3/acre
@@ -76,5 +73,5 @@ cwd_data <- joinCWDData(park = 'MABI', from = 2016, to = 2019, units = 'acres')
 
 # Compile CWD data for all parks and years in m^3/ha, including QAQC events.
 cwd_data <- joinCWDData(park = 'all', QAQC = TRUE)
-
+}
 }
