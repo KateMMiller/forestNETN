@@ -57,7 +57,6 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
-#' @param ... Other arguments passed to function.
 #'
 #' @return returns a wide data frame with one row for each tree visit and tree conditions as columns.
 #' Note that vines in the crown and on the bole return the number of species in each condition. Remaining
@@ -118,9 +117,9 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
 
   # subset with EventID from tree_events to make tree data as small as possible to speed up function
-  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC, ...,
+  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC,
                                     locType = locType, panels = panels, eventType = 'complete',
-                                    abandoned = FALSE, status = status, speciesType = speciesType,
+                                    status = status, speciesType = speciesType,
                                     dist_m = dist_m, output = 'verbose')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                         PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TSN, ScientificName,

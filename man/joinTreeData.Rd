@@ -16,8 +16,7 @@ joinTreeData(
   canopyPosition = c("all", "canopy"),
   dist_m = NA,
   eventType = c("complete", "all"),
-  output = "short",
-  ...
+  output = "short"
 )
 }
 \arguments{
@@ -86,8 +85,6 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 
 \item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
 inputs are "short" and "verbose".}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with plot-level and visit-level tree data. Returns records for all specified
