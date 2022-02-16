@@ -13,8 +13,7 @@ joinTreeFoliageCond(
   panels = 1:4,
   speciesType = c("all", "native", "exotic"),
   dist_m = NA,
-  valueType = c("midpoint", "classes"),
-  ...
+  valueType = c("midpoint", "classes")
 )
 }
 \arguments{
@@ -64,8 +63,6 @@ example, to select an area of trees that is 100 square meters in area, use a dis
 \item{"midpoint"}{Default. Returns cover class midpoints}
 \item{"classes"}{Returns the text coverclass definitions}
 }}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a wide dataframe with one row for each live tree visit and foliage conditions as columns.

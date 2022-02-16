@@ -55,7 +55,6 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
-#' @param ... Other arguments passed to function.
 #'
 #' @return returns a wide dataframe with one row for each live tree visit and foliage conditions as columns.
 #'
@@ -78,7 +77,7 @@
 joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
                                 locType = c('VS', 'all'), panels = 1:4,
                                 speciesType = c('all', 'native','exotic'), dist_m = NA,
-                                valueType = c("midpoint", "classes"), ...){
+                                valueType = c("midpoint", "classes")){
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
@@ -103,9 +102,9 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
            error = function(e){stop("COMN_TreeFoliageCond view not found. Please import view.")})
 
   # subset with EventID from tree_events to make tree data as small as possible to speed up function
-  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC, ...,
+  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC,
                                     locType = locType, panels = panels, eventType = 'complete',
-                                    abandoned = FALSE, status = 'live', speciesType = speciesType,
+                                    status = 'live', speciesType = speciesType,
                                     dist_m = dist_m, output = 'verbose')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                         PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TSN, ScientificName,
