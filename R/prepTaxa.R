@@ -24,7 +24,7 @@ prepTaxa <- function(){
 
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
-  tryCatch(taxa <- get("COMN_Taxa", envir = env) %>%
+  tryCatch(taxa <- get("Taxa_NETN", envir = env) %>%
              select(TaxonID, TSN, ScientificName, CommonName, Order, Family,
                     Genus, Species, SubSpecies, IsExotic, InvasiveNETN, IsCanopyExclusion, IsFernAlly,
                     TaxonGroupLabel, DeerIndicatorTree, DeerIndicatorHerb), # add FilterMIDN for MIDN
