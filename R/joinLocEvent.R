@@ -92,12 +92,12 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Check if the views exist and stop if they don't
-  tryCatch(plots <- get("COMN_Plots", envir = env),
-           error = function(e){stop("COMN_Plots view not found. Please import views.")}
+  tryCatch(plots <- get("Plots_NETN", envir = env),
+           error = function(e){stop("Plots_NETN view not found. Please import views.")}
   )
 
-  tryCatch(events <- get("COMN_Events", envir = env),
-           error = function(e){stop("COMN_Events view not found. Please import views.")}
+  tryCatch(events <- get("Events_NETN", envir = env),
+           error = function(e){stop("Events_NETN view not found. Please import views.")}
   )
 
   # Merge COMN_Plots and COMN_Events
@@ -121,7 +121,7 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
                     "IsAbandoned", "PlotID", "PlotLegacyID", "xCoordinate", "yCoordinate", "ZoneCode",
                     "PhysiographyCode", "PhysiographyLabel", "PhysiographySummary", "Aspect",
                     "Orientation", "GRTS", "IsOrientationChanged", "IsStuntedWoodland",
-                    "EventID", "EventLegacyID", "IsQAQC", "StartYear", "StartDate",
+                    "EventID", "EventLegacyID", "IsQAQC", "SampleYear", "SampleDate",
                     "PlotNotes", "Directions", "EventNotes", "StandNotes")]} else {plot_events}
 
 
@@ -142,16 +142,16 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
     } else {plot_events3}
 
   plot_events5 <- if(eventType == "complete"){
-    filter(plot_events4, !(Plot_Name == 'ACAD-029' & StartDate == '2010-07-07'))
+    filter(plot_events4, !(Plot_Name == 'ACAD-029' & SampleDate == '2010-07-07'))
     } else {plot_events4}
 
   plot_events6 <- plot_events5[plot_events5$PanelCode %in% c(panels), ]
-  plot_events7 <- plot_events6[plot_events6$StartYear %in% c(from:to), ]
+  plot_events7 <- plot_events6[plot_events6$SampleYear %in% c(from:to), ]
 
-  plot_events7$cycle[plot_events7$StartYear %in% c(2006:2009)] <- 1
-  plot_events7$cycle[plot_events7$StartYear %in% c(2010:2013)] <- 2
-  plot_events7$cycle[plot_events7$StartYear %in% c(2014:2017)] <- 3
-  plot_events7$cycle[plot_events7$StartYear %in% c(2018:2021)] <- 4
+  plot_events7$cycle[plot_events7$SampleYear %in% c(2006:2009)] <- 1
+  plot_events7$cycle[plot_events7$SampleYear %in% c(2010:2013)] <- 2
+  plot_events7$cycle[plot_events7$SampleYear %in% c(2014:2017)] <- 3
+  plot_events7$cycle[plot_events7$SampleYear %in% c(2018:2021)] <- 4
     # need to update for 2022
   return(data.frame(plot_events7))
 } # end of function

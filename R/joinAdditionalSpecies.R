@@ -88,11 +88,11 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the quadrat data
-  tryCatch(addspp_vw <- get("COMN_AdditionalSpecies", envir = VIEWS_NETN) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
+  tryCatch(addspp_vw <- get("AdditionalSpecies_NETN", envir = VIEWS_NETN) %>%
+             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleDate, SampleYear, IsQAQC,
                    SQAddSppCode, SQAddSppNotes, TSN, ScientificName, ConfidenceClassCode,
                    IsCollected, Note),
-             error = function(e){stop("COMN_AdditionalSpecies view not found. Please import view.")})
+             error = function(e){stop("AdditionalSpecies_NETN view not found. Please import view.")})
 
   taxa_wide <- force(prepTaxa())
 
@@ -101,7 +101,7 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartDate, StartYear, cycle, IsQAQC)
+           EventID, SampleDate, SampleYear, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -134,7 +134,7 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
 
   addspp_final <- addspp_comb %>% select(Plot_Name, Network, ParkUnit, ParkSubUnit,
                                          PlotTypeCode, PanelCode, PlotCode, PlotID,
-                                         EventID, IsQAQC, StartYear, StartDate, cycle,
+                                         EventID, IsQAQC, SampleYear, SampleDate, cycle,
                                          SQAddSppCode, TSN, ScientificName, addspp_present,
                                          Exotic, InvasiveNETN, Confidence, IsCollected, Note,
                                          SQAddSppNotes)
