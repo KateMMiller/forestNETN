@@ -11,8 +11,7 @@ joinSoilLabData(
   QAQC = FALSE,
   panels = 1:4,
   locType = c("VS", "all"),
-  layer = c("all", "O", "A"),
-  ...
+  layer = c("all", "O", "A")
 )
 }
 \arguments{
@@ -52,8 +51,6 @@ include all plots, such as deer exclosures.
 \item{"O"}{Return only samples from the O horizon.}
 \item{"A"}{Return only samples from the A horizon.}
 }}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe containing each plot and visit with soil chemistry data for each horizon on a plot
