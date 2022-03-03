@@ -109,15 +109,15 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the microplot data
-  tryCatch(saps_vw <- get("NETN_MicroplotSaplings", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, StartDate, IsQAQC, SQSaplingCode,
+  tryCatch(saps_vw <- get("MicroplotSaplings_NETN", envir = env) %>%
+             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC, SQSaplingCode,
                     MicroplotCode, TSN, ScientificName, DBHcm),
-           error = function(e){stop("NETN_MicroplotSaplings view not found. Please import view.")})
+           error = function(e){stop("MicroplotSaplings_NETN view not found. Please import view.")})
 
-  tryCatch(saps_cnt <- get("NETN_MicroplotSaplingsCount", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, StartDate, IsQAQC,
+  tryCatch(saps_cnt <- get("MicroplotSaplingsCount_NETN", envir = env) %>%
+             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC,
                     MicroplotCode, TSN, ScientificName, SaplingCount) %>% filter(SaplingCount > 0),
-           error = function(e){stop("NETN_MicroplotSaplingCount view not found. Please import view.")})
+           error = function(e){stop("MicroplotSaplingCount_NETN view not found. Please import view.")})
 
   taxa_wide <- force(prepTaxa())
 
@@ -126,7 +126,7 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartYear, StartDate, cycle, IsQAQC)
+           EventID, SampleYear, SampleDate, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -134,7 +134,7 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
 
   sap_evs <- filter(saps_vw, EventID %in% pe_list) %>%
     left_join(plot_events, ., by = intersect(names(plot_events), names(.))) #%>%
-    #filter(!(StartYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
+    #filter(!(SampleYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
 
   sap_cnt_evs <- filter(saps_cnt, EventID %in% pe_list)
 
@@ -152,7 +152,7 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
   # Create the left data.frame to join back to after filtering species types
   sap_left <- sap_tax %>% select(Plot_Name:MicroplotCode) %>% unique() #%>%
   # group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode,
-  #          PlotID, EventID, StartYear, cycle, IsQAQC) %>%
+  #          PlotID, EventID, SampleYear, cycle, IsQAQC) %>%
   # mutate(nummicros = length(MicroplotCode)) # All plots have expected # micros
   # table(sap_left$nummicros) # all 3
 
@@ -170,7 +170,7 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
                      "exotic" = filter(sap_can, Exotic == TRUE),
                      "invasive" = filter(sap_can, InvasiveNETN == TRUE)) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-           PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle, SQSaplingCode, MicroplotCode,
+           PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, cycle, SQSaplingCode, MicroplotCode,
            TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, DBHcm, Count)
 
   # join filtered data back to full plot/visit/microplot list
@@ -191,7 +191,7 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
 
   sap_cnt1 <- left_join(sap_cnt_u, sap_comb, by = intersect(names(sap_cnt_u), names(sap_comb))) %>%
               group_by(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                       PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle, SQSaplingCode, MicroplotCode,
+                       PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, cycle, SQSaplingCode, MicroplotCode,
                        TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN) %>%
               summarize(DBHcm = round(mean(DBHcm, na.rm = T), 1),
                         Count = first(SaplingCount),
@@ -210,11 +210,11 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
                     "exotic" = filter(sap_ccan, Exotic == TRUE),
                     "invasive" = filter(sap_ccan, InvasiveNETN == TRUE)) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-           PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle, SQSaplingCode, MicroplotCode,
+           PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, cycle, SQSaplingCode, MicroplotCode,
            TSN, ScientificName, CanopyExclusion, Exotic, InvasiveNETN, DBHcm, Count)
 
 
-  sap_final <- rbind(sap_comb, sap_cnat) %>% arrange(Plot_Name, StartYear, IsQAQC, MicroplotCode, ScientificName)
+  sap_final <- rbind(sap_comb, sap_cnat) %>% arrange(Plot_Name, SampleYear, IsQAQC, MicroplotCode, ScientificName)
 
   return(data.frame(sap_final))
 } # end of function
