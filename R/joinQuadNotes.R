@@ -81,56 +81,67 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare quad datasets
-  tryCatch(quadspp <- get("NETN_QuadSpecies", envir = env) %>%
-                      select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQQuadSppCode,
-                             QuadratCode, SQQuadSppNotes, ScientificName, IsCollected, QuadSppNote),
-           error = function(e){stop("NETN_QuadSpecies view not found. Please import view.")})
+  tryCatch(quadspp <- get("QuadSpecies_NETN", envir = env) %>%
+                      select(PlotID, EventID, ScientificName, QuadSppNote, IsCollected),
+           error = function(e){stop("QuadSpecies_NETN view not found. Please import view.")})
 
-  tryCatch(quadchr <- get("COMN_QuadCharacter", envir = env) %>%
-                      select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQQuadCharCode,
-                             QuadratCode, SQQuadCharNotes),
-           error = function(e){stop("COMN_QuadCharacter view not found. Please import view.")}
-  )
+  tryCatch(quadnotes <- get("QuadNotes_NETN", envir = env) %>%
+                        select(PlotID, EventID, SQQuadCharCode, SQQuadCharNotes,
+                               SQQuadSppNotes, QuadratCode, QuadratNote) %>%
+                               unique(),
+           error = function(e){stop("QuadNotes_NETN view not found. Please import view.")})
 
   # subset with EventID from plot_events to make function faster
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short', ...)) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, StartYear, cycle, IsQAQC)
+                        EventID, SampleYear, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
   pe_list <- unique(plot_events$EventID)
 
   quadspp_evs <- filter(quadspp, EventID %in% pe_list) %>%
+                 left_join(plot_events, ., by = intersect(names(plot_events), names(.)))
+
+  quadnotes_evs <- filter(quadnotes, EventID %in% pe_list) %>%
                    left_join(plot_events, ., by = intersect(names(plot_events), names(.)))
 
-  quadchr_evs <- filter(quadchr, EventID %in% pe_list) %>%
-                   left_join(plot_events, ., by = intersect(names(plot_events), names(.)))
+  # Species-level notes
+  spp_notes <- quadspp_evs %>% mutate(Note_Type = "Quad_Species",
+                                      Sample_Info = ifelse(IsCollected == TRUE, "Collected", NA_character_)) %>%
+                               rename(Note_Info = ScientificName, Notes = QuadSppNote) %>%
+                               select(-IsCollected) %>% na.omit(Notes)
 
-  # Split quadrat-level notes from species-level notes for easier compiling
-  spp_notes <- quadspp_evs %>% select(-SQQuadSppCode, -QuadratCode, -SQQuadSppNotes) %>%
-                               filter(!is.na(QuadSppNote)) %>%
-                               mutate(Note_Type = "Quad_Species",
-                                      Sample_Info = ifelse(IsCollected == 1, "Collected", NA)) %>%
-                               unique() %>% rename(Note_Info = ScientificName,
-                                                   Notes = QuadSppNote) %>%
-                               select(-IsCollected)
+  # SQ Species quad-level notes
+  sq_spp_notes <- quadnotes_evs %>% select(Plot_Name:IsQAQC,
+                                           Sample_Info = SQQuadCharCode,
+                                           Note_Info = QuadratCode,
+                                           Notes = SQQuadSppNotes) %>%
+                                    mutate(Note_Type = "Quad_SQ_Species") %>%
+                                    select(names(spp_notes)) %>% na.omit(Notes)
 
-  quadspp_notes <- quadspp_evs %>% select(-ScientificName, -IsCollected, -QuadSppNote) %>%
-                                   mutate(Note_Type = "Quad_SQ_Species") %>%
-                                   filter(!is.na(SQQuadSppNotes)) %>% unique() %>%
-                                   rename(Sample_Info = SQQuadSppCode, Notes = SQQuadSppNotes,
-                                          Note_Info = QuadratCode)
+  # SQ Char quad-level notes
+  sq_char_notes <- quadnotes_evs %>% select(Plot_Name:IsQAQC,
+                                            Sample_Info = SQQuadCharCode,
+                                            Note_Info = QuadratCode,
+                                            Notes = SQQuadCharNotes) %>%
+                                     mutate(Note_Type = "Quad_SQ_Character") %>%
+                                     select(names(spp_notes)) %>% na.omit(Notes)
 
-  quadchr_notes <- quadchr_evs %>% mutate(Note_Type = "Quad_SQ_Character") %>%
-                                   filter(!is.na(SQQuadCharNotes)) %>% unique() %>%
-                                   rename(Sample_Info = SQQuadCharCode, Notes = SQQuadCharNotes,
-                                          Note_Info = QuadratCode)
+  # SQ generic quad-level notes
+  gen_notes <- quadnotes_evs %>% select(Plot_Name:IsQAQC,
+                                            Sample_Info = SQQuadCharCode,
+                                            Note_Info = QuadratCode,
+                                            Notes = QuadratNote) %>%
+                                 mutate(Note_Type = "Quad_General") %>%
+                                 select(names(spp_notes)) %>% na.omit(Notes)
 
-  quad_notes <- rbind(quadspp_notes, quadchr_notes, spp_notes) %>% filter(!is.na(Notes)) %>% unique() %>%
-                arrange(Plot_Name, StartYear, IsQAQC, Note_Info, Note_Type) %>%
+
+  quad_notes <- rbind(spp_notes, sq_spp_notes, sq_char_notes, gen_notes) %>%
+                unique() %>%
+                arrange(Plot_Name, SampleYear, IsQAQC, Note_Info, Note_Type) %>%
                 select(Plot_Name:IsQAQC, Note_Type, Sample_Info, Note_Info, Notes)
 
   return(data.frame(quad_notes))
