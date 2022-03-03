@@ -2,7 +2,7 @@
 % Please edit documentation in R/joinRegenData.R
 \name{joinRegenData}
 \alias{joinRegenData}
-\title{joinRegenData: compiles seedling and sapling data}
+\title{joinRegenData: summarizes seedling and sapling data}
 \usage{
 joinRegenData(
   park = "all",
@@ -96,7 +96,7 @@ index only includes saplings < 2.5cm DBH, but the sapling density returned is al
 <10cm DBH. For the few plots with > 10 saplings of a given species in a microplot, their counts are
 included in the stocking index only if the average DBH of saplings measured is <=2.5 cm. This may
 underestimate the stocking index for those plots, but their index values are still way higher than
-most plots. Must run importData first.
+most plots. Must run importData() or importCSV() first.
 }
 \examples{
 \dontrun{

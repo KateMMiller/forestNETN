@@ -188,7 +188,7 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   seed_comb$Seedlings_15_30cm[(seed_comb$SQSeedlingCode == "NS")] <- NA_real_
   seed_comb$Seedlings_30_100cm[(seed_comb$SQSeedlingCode == "NS")] <- NA_real_
   seed_comb$Seedlings_100_150cm[(seed_comb$SQSeedlingCode == "NS")] <- NA_real_
-  seed_comb$Seedlings_p150cm[(seed_comb$SQSeedlingCode == "NS")] <- NA_real_
+  seed_comb$Seedlings_Above_150cm[(seed_comb$SQSeedlingCode == "NS")] <- NA_real_
   seed_comb$tot_seeds[(seed_comb$SQSeedlingCode == "NS")] <- NA_real_
   seed_comb$CanopyExclusion[seed_comb$SQSeedlingCode == "NS"] <- NA
   seed_comb$Exotic[seed_comb$SQSeedlingCode == "NS"] <- NA
