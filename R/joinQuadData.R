@@ -169,6 +169,11 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
   quadchar_comb2 <- left_join(plot_events, quadchar_comb,
                               by = intersect(names(plot_events), names(quadchar_comb)))
 
+  # Rename SQ columns, so SQ is first, quad is last
+  cov_rename <- function(txt, col){paste(txt, substr(col, 1, 2), sep = "_")}
+  quad_sq_list <- c("UC_SQ", "UR_SQ", "MR_SQ", "BR_SQ", "BC_SQ", "BL_SQ", "ML_SQ", "UL_SQ")
+  quadchar_comb3 <- quadchar_comb2 %>% rename_with(~cov_rename("SQ", .), all_of(quad_sq_list))
+
   # select columns based on specified valueType
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
                 "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "cycle",
@@ -180,25 +185,27 @@ joinQuadData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pan
   txt_cols <- c("Txt_Cov_UC", "Txt_Cov_UR", "Txt_Cov_MR", "Txt_Cov_BR",
                 "Txt_Cov_BC", "Txt_Cov_BL", "Txt_Cov_ML", "Txt_Cov_UL")
 
+  sq_cols <- c("SQ_UC", "SQ_UR", "SQ_MR", "SQ_BR", "SQ_BC", "SQ_BL", "SQ_ML", "SQ_UL")
+
   # Change "Permanently Missing in txt cover fields to "Not Sampled" where that's the case.
   # Makes the results more informative. ACAD-029-2010 is EventID 710. That stays PM
   # Don't have time to figure out the fancy way to do this right now
-  quadchar_comb2$Txt_Cov_UC[quadchar_comb2$UC_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
-  quadchar_comb2$Txt_Cov_UR[quadchar_comb2$UR_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
-  quadchar_comb2$Txt_Cov_MR[quadchar_comb2$MR_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
-  quadchar_comb2$Txt_Cov_BR[quadchar_comb2$BR_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
-  quadchar_comb2$Txt_Cov_BC[quadchar_comb2$BC_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
-  quadchar_comb2$Txt_Cov_BL[quadchar_comb2$BL_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
-  quadchar_comb2$Txt_Cov_ML[quadchar_comb2$ML_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
-  quadchar_comb2$Txt_Cov_UL[quadchar_comb2$UL_SQ == 'NS' & quadchar_comb2$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_UC[quadchar_comb3$SQ_UC == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_UR[quadchar_comb3$SQ_UR == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_MR[quadchar_comb3$SQ_MR == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_BR[quadchar_comb3$SQ_BR == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_BC[quadchar_comb3$SQ_BC == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_BL[quadchar_comb3$SQ_BL == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_ML[quadchar_comb3$SQ_ML == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$Txt_Cov_UL[quadchar_comb3$SQ_UL == 'NS' & quadchar_comb3$EventID != 710] <- "Not Sampled"
 
-  quadchar_comb2$ScientificName[quadchar_comb2$num_quads == 0 & quadchar_comb2$EventID != 710] <- "Not Sampled"
+  quadchar_comb3$ScientificName[quadchar_comb3$num_quads == 0 & quadchar_comb3$EventID != 710] <- "Not Sampled"
 
 
   quadchar_final <- switch(valueType,
-                          "midpoint" = quadchar_comb2[, c(req_cols, pct_cols)],
-                          "classes" = quadchar_comb2[, c(req_cols, txt_cols)],
-                          "all" = quadchar_comb2[, c(req_cols, pct_cols, txt_cols)])
+                          "midpoint" = quadchar_comb3[, c(req_cols, pct_cols)],
+                          "classes" = quadchar_comb3[, c(req_cols, txt_cols)],
+                          "all" = quadchar_comb3[, c(req_cols, sq_cols, pct_cols, txt_cols)])
 
   return(data.frame(quadchar_final))
 

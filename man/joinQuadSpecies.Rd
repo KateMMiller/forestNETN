@@ -14,7 +14,6 @@ joinQuadSpecies(
   eventType = c("complete", "all"),
   speciesType = c("all", "native", "exotic", "invasive"),
   valueType = c("all", "midpoint", "classes", "averages"),
-  shape = c("long", "wide"),
   ...
 )
 }
@@ -71,9 +70,9 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"averages"}{Returns only the plot-level average cover and percent frequency.}
 }}
 
-\item{shape}{Temporary argument until new view is ready}
-
 \item{...}{Other arguments passed to function.}
+
+\item{shape}{Temporary argument until new view is ready}
 }
 \value{
 Returns a dataframe with a row for each species/visit combination for quadrat data
