@@ -104,16 +104,12 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   plots <- plots %>% select(-ExportDate)
   events <- events %>% select(-ExportDate)
   merge_names <- intersect(names(plots), names(events))
-    # merge_names: "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PlotTypeLabel",
+    # merge_names: "Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PlotTypeLabel",
     # "PanelCode", "PanelLabel", "PlotCode", "IsAbandoned"
 
   plot_events <- full_join(plots, events, by = merge_names)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
-
-  plot_events$Plot_Name <- paste(plot_events$ParkUnit,
-                                 stringr::str_pad(plot_events$PlotCode, 3, side = 'left', "0"),
-                                 sep = "-")
 
   # Filter output based on function arguments
   plot_events <- if(output == 'short'){

@@ -110,13 +110,13 @@ joinMicroSaplings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE
 
   # Prepare the microplot data
   tryCatch(saps_vw <- get("MicroplotSaplings_NETN", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC, SQSaplingCode,
-                    MicroplotCode, TSN, ScientificName, DBHcm),
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+                    SampleDate, IsQAQC, SQSaplingCode, MicroplotCode, TSN, ScientificName, DBHcm),
            error = function(e){stop("MicroplotSaplings_NETN view not found. Please import view.")})
 
   tryCatch(saps_cnt <- get("MicroplotSaplingsCount_NETN", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC,
-                    MicroplotCode, TSN, ScientificName, SaplingCount) %>% filter(SaplingCount > 0),
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate,
+                    IsQAQC, MicroplotCode, TSN, ScientificName, SaplingCount) %>% filter(SaplingCount > 0),
            error = function(e){stop("MicroplotSaplingCount_NETN view not found. Please import view.")})
 
   taxa_wide <- force(prepTaxa())

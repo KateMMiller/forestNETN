@@ -79,16 +79,16 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
 
   # Prepare the soil data
   tryCatch(soilhd_vw <- get("SoilHeader_NETN", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC,
-                    SampleTypeCode, PositionCode, HorizonCode,
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+                    SampleDate, IsQAQC, SampleTypeCode, PositionCode, HorizonCode,
                     SoilEventNote, IsArchived) %>%
              filter(SampleYear > 2006
              ),
            error = function(e){stop("SoilHeader_NETN view not found. Please import view.")})
 
   tryCatch(soilsamp_vw <- get("SoilSample_NETN", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC,
-                    SQSoilCode, SampleSequenceCode, SoilLayerLabel,
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+                    SampleDate, IsQAQC, SQSoilCode, SampleSequenceCode, SoilLayerLabel,
                     Depth_cm, Note) %>%
              filter(SampleYear > 2006 & !is.na(SoilLayerLabel)
              ),

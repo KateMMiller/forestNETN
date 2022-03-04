@@ -91,8 +91,9 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
            error = function(e){stop("SoilHeader_NETN view not found. Please import view.")})
 
   tryCatch(soillab_vw <- get("SoilLab_NETN", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC,
-                    LabLayer, LabDateSoilCollected, UMOSample:ECEC, LabNotes, EventID, PlotID) %>%
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+                    SampleDate, IsQAQC, LabLayer, LabDateSoilCollected, UMOSample:ECEC, LabNotes,
+                    EventID, PlotID) %>%
              filter(!is.na(UMOSample)) %>% # drops soils not sampled
              filter(LabLayer %in% c("10 cm", "10cm - NonVS", "A", "A - NonVS", "O", "O/A")) %>%
              filter(SampleYear > 2006
@@ -100,8 +101,8 @@ joinSoilLabData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALSE, 
            error = function(e){stop("SoilLab_NETN view not found. Please import view.")})
 
   tryCatch(soilsamp_vw <- get("SoilSample_NETN", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, SampleDate, IsQAQC,
-                    SQSoilCode, SampleSequenceCode, SoilLayerLabel,
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+                    SampleDate, IsQAQC, SQSoilCode, SampleSequenceCode, SoilLayerLabel,
                     Depth_cm, Note) %>%
              filter(SampleYear > 2006
                     ),

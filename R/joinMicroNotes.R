@@ -75,15 +75,16 @@ joinMicroNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   tryCatch(saps_vw <- get("MicroplotSaplings_NETN", envir = env) %>%
-             select(PlotID, EventID, MicroplotCode, SQSaplingNotes, SaplingNote),
+             select(Plot_Name, PlotID, EventID, MicroplotCode, SQSaplingNotes, SaplingNote),
            error = function(e){stop("MicroplotSaplings_NETN view not found. Please import view.")})
 
   tryCatch(seeds_vw <- get("MicroplotSeedlings_NETN", envir = env) %>%
-             select(PlotID, EventID, MicroplotCode, SQSeedlingNotes, SeedlingSizeNote) %>% unique(),
+             select(Plot_Name, PlotID, EventID, MicroplotCode, SQSeedlingNotes, SeedlingSizeNote) %>%
+             unique(),
            error = function(e){stop("MicroplotSeedlings_NETN view not found. Please import view.")})
 
   tryCatch(shrubs_vw <- get("MicroplotShrubs_NETN", envir = env) %>%
-             select(PlotID, EventID, MicroplotCode, SQShrubNotes, ShrubNote),
+             select(Plot_Name, PlotID, EventID, MicroplotCode, SQShrubNotes, ShrubNote),
            error = function(e){stop("MicroplotShrubs_NETN view not found. Please import view.")})
 
   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,

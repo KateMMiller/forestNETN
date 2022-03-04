@@ -109,8 +109,9 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
   # Prepare the shrub data
   tryCatch(shrubs <- get("MicroplotShrubs_NETN", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, IsQAQC, SQShrubCode,
-                    MicroplotCode, TSN, ScientificName, CoverClassCode, CoverClassLabel),
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+                    IsQAQC, SQShrubCode, MicroplotCode, TSN, ScientificName, CoverClassCode,
+                    CoverClassLabel),
            error = function(e){stop("MicroplotShrubs_NETN view not found. Please import view.")})
 
   taxa_wide <- force(prepTaxa())
