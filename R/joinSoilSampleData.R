@@ -187,6 +187,6 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
                        Total_Depth_cm, Lab_QC, Field_misID_O, Field_misID_A) %>%
                 filter(EventID %in% pe_list)
 
-  return(soil_final)
+  return(data.frame(soil_final))
 
 }
