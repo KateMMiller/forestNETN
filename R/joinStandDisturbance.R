@@ -84,17 +84,17 @@ joinStandDisturbance<- function(park = 'all', QAQC = FALSE, locType = c('VS', 'a
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # import the Stand Data views
-  tryCatch(sdist <- get("COMN_StandDisturbances", envir = env) %>%
-           select(PlotID, EventID, ParkUnit, PlotCode, IsQAQC, StartYear, DisturbanceCode, DisturbanceLabel,
-                  DisturbanceSummary, ThresholdCode,
-                  ThresholdLabel, DisturbanceCoverClassCode, DisturbanceCoverClassLabel, DisturbanceNote),
-           error = function(e){stop("COMN_StandDisturbances view not found. Please import view.")}
+  tryCatch(sdist <- get("StandDisturbances_NETN", envir = env) %>%
+           select(Plot_Name, PlotID, EventID, DisturbanceCode, DisturbanceLabel,
+                  DisturbanceSummary, ThresholdCode, ThresholdLabel, DisturbanceCoverClassCode,
+                  DisturbanceCoverClassLabel, DisturbanceNote),
+           error = function(e){stop("StandDisturbances_NETN view not found. Please import view.")}
   )
 
   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                               locType = locType, eventType = eventType, output = 'verbose', ...) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartYear, StartDate, cycle, IsQAQC)
+           EventID, SampleYear, SampleDate, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -103,6 +103,6 @@ joinStandDisturbance<- function(park = 'all', QAQC = FALSE, locType = c('VS', 'a
   sdist_evs$DisturbanceLabel[is.na(sdist_evs$DisturbanceLabel)] <- "None present"
   sdist_evs$DisturbanceSummary[is.na(sdist_evs$DisturbanceSummary)] <- "None present"
 
-  sdist_final <- sdist_evs %>% arrange(Plot_Name, StartYear, IsQAQC)
+  sdist_final <- sdist_evs %>% arrange(Plot_Name, SampleYear, IsQAQC)
   return(data.frame(sdist_final))
   }
