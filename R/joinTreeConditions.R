@@ -148,8 +148,7 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                                 IsQAQC, SampleYear, TagCode, TreeStatusCode),
                          vine_evs,
                          by = c("Plot_Name", "PlotID", "EventID", "TagCode"))
-
-  # had to drop Tree TSN/Scientific name is different from Vine TSN/ScientificName
+     # had to drop Tree TSN/Scientific name is different from Vine TSN/ScientificName
 
   # Preparing vine data to join with rest of the tree conditions
   # In case the filtering above drops one of the vine positions
@@ -161,44 +160,29 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   tree_comb$VIN_B <- ifelse(tree_comb$VINE == 0 & tree_comb$SampleYear >= 2019, 0, tree_comb$VIN_B)
 
 
-  # Prep condition lists based on tree status to be the full list for each status before pivot wide
-  live_cond <- c('H', 'AD',	'ALB',	'BBD', 'BLD',	'BC',	'BWA',	'CAVL',	'CAVS',	'CW',
-                 'DBT',	'DOG', 'EAB',	'EB',	'EHS',	'G',	'GM',	'HWA',	'ID',	'OTH',	'RPS',
-                 'SB',	'SLF', 'SOD',	'SPB',	'SW',	'VIN_B', 'VIN_C')
+  # Create list of live and dead tree conditions besides H and NO to count number of conditions
+  live_cond_cnt <- c('AD',	'ALB',	'BBD', 'BLD',	'BC',	'BWA',	'CAVL',	'CAVS',	'CW',
+                     'DBT',	'DOG', 'EAB',	'EB',	'EHS',	'G',	'GM',	'HWA',	'ID',	'OTH',	'RPS',
+                     'SB',	'SLF', 'SOD',	'SPB',	'SW',	'VIN_B', 'VIN_C')
 
-  dead_cond <- c('NO', 'CAVL', 'CAVS')
+  dead_cond_cnt <- c('CAVL', 'CAVS')
 
-  all_cond <- unique(c(live_cond, dead_cond))
+  # List of columns to sum across based on status specified
+  cond_sum <- if(status == 'dead'){dead_cond_cnt} else {live_cond_cnt}
 
-  # clean up column names that are returned are relevant to status selected
-  cond_sum <- if(status == 'dead'){dead_cond} else {live_cond}
-
-  tree_comb$num_cond <- rowSums(tree_comb[, cond_sum]) # num of conditions recorded
+  tree_comb$num_cond <- rowSums(tree_comb[, cond_sum], na.rm = T) # num of conditions recorded
 
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
                 "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "TSN", "ScientificName",
                 "TagCode", "TreeStatusCode")
 
-  #+++++ ENDED HERE.  +++++ Not sure why the next code is duplicated.
-  live_cols <- c("AD", "ALB", "BBD", "BC", "BWA", "CAVL", "CAVS", "CW", "DBT", "DOG", "EAB",
-                 "EB", "EHS", "G", "GM", "HWA", "ID", "OTH", "RPS", "SB", "SOD", "SPB",
-                 "SW", "VIN_C", "VIN_B")
-
-  dead_cols <- c("CAVL", "CAVS")
-
   tree_comb2 <-
-    if(status == 'dead'){tree_comb[!tree_comb$TreeStatusCode %in% c("DF", "DC"),
-                                   c(req_cols, "num_cond", "NO", dead_cols, "PM")]
-    } else if(status == 'live'){tree_comb[, c(req_cols, "num_cond", "H", live_cols, "PM")]
-    } else {tree_comb[, c(req_cols, "num_cond", "H", "NO", live_cols, "PM")]}
+    if(status == 'dead'){
+      tree_comb[!tree_comb$TreeStatusCode %in% c("DF", "DC"), c(req_cols, "num_cond", "NO", dead_cond_cnt)]
+    } else if(status == 'live'){tree_comb[, c(req_cols, "num_cond", "H", live_cond_cnt)]
+    } else {tree_comb[, c(req_cols, "num_cond", "H", "NO", live_cond_cnt)]} # note live_cols contains all dead_cols
 
   # Convert 0 to NA for status codes added later
-  if(status != 'dead'){
-      tree_comb2$DOG[tree_comb2$SampleYear < 2015] <- NA
-      tree_comb2$VIN_B[tree_comb2$SampleYear < 2019] <- NA
-      tree_comb2$RPS[tree_comb2$SampleYear < 2019] <- NA
-  }
-
   if(status != 'live'){
       tree_comb2$NO[tree_comb2$SampleYear < 2012] <- NA}
 
