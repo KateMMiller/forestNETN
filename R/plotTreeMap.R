@@ -174,7 +174,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
 
   #----- Internal ggplot function -----
   tree_map_fun <- function(df){
-    orient <- paste0(unique(df$Plot_Name), "-", unique(df$StartYear), " Orientation: ",
+    orient <- paste0(unique(df$Plot_Name), "-", unique(df$SampleYear), " Orientation: ",
                      unique(df$Orientation))
     parkcode <- unique(df$ParkUnit)
 
@@ -197,7 +197,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
               legend.position = 'none',
               legend.spacing.y = unit(0.05,'cm'),
               legend.text = element_text(size = 10))+
-        guides(shape = T, size = F)+
+        guides(shape = T, size = 'none')+
         scale_size_continuous(range = c(2, 10))+
         ggrepel::geom_text_repel(aes(x = x, y = y,label = TagCode),
                                  direction = 'both', size = 5, nudge_x = 0.1, nudge_y = 0.1)+
@@ -236,7 +236,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
                  legend.position = 'none',
                  legend.spacing.y = unit(0.05,'cm'),
                  legend.text = element_text(size = 10))+
-           guides(shape = T, size = F)+
+           guides(shape = T, size = "none")+
            scale_size_continuous(range = c(2,10))+
            ggrepel::geom_text_repel(aes(x = x, y = y, label = TagCode), direction = 'both',
                                     size = 5, nudge_x = 0.2, nudge_y = 0.2)+
@@ -281,7 +281,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
 
   tree_events <- do.call(joinTreeData, c(arglist, list(status = status, speciesType = speciesType,
                                                        canopyPosition = canopyPosition, dist_m = dist_m))) %>%
-                 select(Plot_Name, ParkUnit, PlotID, EventID, StartYear, IsQAQC, TagCode, TreeStatusCode,
+                 select(Plot_Name, ParkUnit, PlotID, EventID, SampleYear, IsQAQC, TagCode, TreeStatusCode,
                         Distance, Azimuth, DBHcm, BA_cm2)
 
   if(nrow(tree_events) == 0){stop("Function returned 0 rows. Check that there are trees to map for each specified plot.")}
@@ -290,8 +290,8 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
 
   # Combine plot visit and tree data for plotting
   tree_evs_rec <- left_join(plot_events2, tree_events2, by = c("Plot_Name", "EventID")) %>%
-    arrange(Plot_Name, -StartYear) %>% group_by(Plot_Name) %>%
-    filter(StartYear == max(StartYear)) %>%
+    arrange(Plot_Name, -SampleYear) %>% group_by(Plot_Name) %>%
+    filter(SampleYear == max(SampleYear)) %>%
     ungroup()
 
   tree_evs_rec$DBHcm[is.na(tree_evs_rec$DBHcm)] <- 10 # for excluded status trees
