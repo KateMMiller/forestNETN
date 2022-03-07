@@ -113,7 +113,7 @@ sumSapDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, lo
                                                        between(DBHcm, 9, 9.9)~ 'd9_9.9',
                                                        TRUE ~ 'unknown'),
                                 stem = ifelse(!is.na(DBHcm), 1, 0),
-                                unit_conv = ifelse(StartYear == 2006, (pi*2^2), (pi*2^2)*3), #haven't missed a micro yet
+                                unit_conv = ifelse(SampleYear == 2006, (pi*2^2), (pi*2^2)*3), #haven't missed a micro yet
                                 BA_cm2 = round(pi*((DBHcm/2)^2),4))
 
   # Check for NA DBHcm
@@ -123,12 +123,12 @@ sumSapDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, lo
   if(nrow(sap_check)>0){
     warning(paste("The", nrow(sap_check), "records below are missing DBH measurements and will be removed from summaries."),
             "\n",
-            paste(capture.output(data.frame(sap_check[, c("Plot_Name", "StartYear", "TagCode")])), collapse = "\n"))
+            paste(capture.output(data.frame(sap_check[, c("Plot_Name", "SampleYear", "TagCode")])), collapse = "\n"))
   }
 
-  #sap_evs2 <- sap_evs %>% arrange(Plot_Name, StartYear, IsQAQC, size_class) %>% filter(!size_class %in% "unknown")
+  #sap_evs2 <- sap_evs %>% arrange(Plot_Name, SampleYear, IsQAQC, size_class) %>% filter(!size_class %in% "unknown")
 
-  sap_dist <- sap_evs %>% group_by(Plot_Name, ParkUnit, PlotID, EventID, StartYear, IsQAQC,
+  sap_dist <- sap_evs %>% group_by(Plot_Name, ParkUnit, PlotID, EventID, SampleYear, IsQAQC,
                                    size_class) %>%
                           summarize(dens = (sum(stem)*10000)/first(unit_conv), #stems/ha
                                     BA = sum(BA_cm2)/first(unit_conv), #m2/ha
@@ -175,7 +175,7 @@ sumSapDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, lo
 
   sap_dist_final <- left_join(plot_events, sap_dist_wide,
                               by = intersect(names(plot_events), names(sap_dist_wide))) %>%
-    select(Plot_Name, ParkUnit, PlotID, EventID, StartYear, IsQAQC, cycle,
+    select(Plot_Name, ParkUnit, PlotID, EventID, SampleYear, IsQAQC, cycle,
            all_of(sizes))
 
 

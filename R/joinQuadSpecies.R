@@ -198,12 +198,11 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                                by = c("TSN"))
 
     quadspp_comb2 <- quadspp_comb2 %>% mutate(
-                                         ScientificName =
-                                                case_when(is.na(ScientificName) & num_quads > 0 ~ "None present",
-                                                          is.na(ScientificName) & num_quads == 0 ~ "Not Sampled",
-                                                          TRUE ~ paste(ScientificName)),
-                                         quad_avg_cov = ifelse(is.na(quad_avg_cov) & num_quads > 0, 0, quad_avg_cov),
-                                         quad_pct_freq = ifelse(is.na(quad_pct_freq) & num_quads > 0, 0, quad_pct_freq))
+      ScientificName = case_when(is.na(ScientificName) & num_quads > 0 ~ "None present",
+                                 is.na(ScientificName) & num_quads == 0 ~ "Not Sampled",
+                                 TRUE ~ paste(ScientificName)),
+      quad_avg_cov = ifelse(is.na(quad_avg_cov) & num_quads > 0, 0, quad_avg_cov),
+      quad_pct_freq = ifelse(is.na(quad_pct_freq) & num_quads > 0, 0, quad_pct_freq))
 
     na_cols <- c("Exotic", "InvasiveNETN",
                  "Tree", "TreeShrub", "Shrub", "Vine", "Herbaceous",
@@ -218,7 +217,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
     # select columns based on specified valueType
     req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
                   "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "cycle",
-                  "SQQuadSum", "TSN", "ScientificName")
+                  "SQQuadSum", "TSN", "ScientificName", "num_quads")
 
     sum_cols <- c("quad_avg_cov", "quad_pct_freq")
 
@@ -243,7 +242,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                                                           sum_cols, taxa_cols, "QuadSppNote")],
                             "all" = quadspp_comb3[, c(req_cols, sq_cols, pct_cols, txt_cols,
                                                       plant_cols, sum_cols, taxa_cols, "QuadSppNote")],
-                            "averages" = quadspp_comb3[, c(req_cols, sum_cols, taxa_cols)])
+                            "averages" = quadspp_comb3[, c(req_cols, sum_cols, plant_cols, taxa_cols)])
 
 
 

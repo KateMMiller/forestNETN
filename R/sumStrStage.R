@@ -84,7 +84,7 @@ sumStrStage <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pane
 
   plot_events <- do.call(joinLocEvent, arglist) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartYear, StartDate, cycle, IsQAQC)
+           EventID, SampleYear, SampleDate, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -125,7 +125,7 @@ sumStrStage <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pane
 
   stand_str4 <- left_join(plot_events, stand_str3, by = c('EventID', 'Plot_Name')) %>%
                 select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                       PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle,
+                       PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, cycle,
                        BA_tot, pctBA_pole, pctBA_mature, pctBA_large, Stand_Structure,
                        Stage)
 

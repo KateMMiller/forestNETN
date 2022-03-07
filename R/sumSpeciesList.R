@@ -107,7 +107,7 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
 
   plot_events <- do.call(joinLocEvent, arglist) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, StartYear, StartDate, cycle, IsQAQC)
+                        EventID, SampleYear, SampleDate, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -116,7 +116,7 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
   # Trees
   tree_spp <- do.call(joinTreeData, c(arglist, list(status = 'live', speciesType = speciesType)))
 
-  tree_sum <- tree_spp %>% group_by(Plot_Name, PlotID, EventID, IsQAQC, StartYear, TSN, ScientificName) %>%
+  tree_sum <- tree_spp %>% group_by(Plot_Name, PlotID, EventID, IsQAQC, SampleYear, TSN, ScientificName) %>%
                            summarize(BA_cm2 = sum(BA_cm2, na.rm = TRUE),
                                      DBH_mean = mean(DBHcm, na.rm = TRUE),
                                      tree_stems = sum(num_stems),
@@ -126,13 +126,13 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
   regen_spp <- do.call(joinRegenData,
                        c(arglist, list(canopyForm = "all", speciesType = speciesType, numMicros = numMicros)))
 
-  regen_sum <- regen_spp %>% select(Plot_Name, PlotID, EventID, IsQAQC, StartYear, TSN, ScientificName, seed_den,
+  regen_sum <- regen_spp %>% select(Plot_Name, PlotID, EventID, IsQAQC, SampleYear, TSN, ScientificName, seed_den,
                                     sap_den, stock) %>%
                              filter(ScientificName != "None present")
   # Shrubs
   shrubs <- do.call(joinMicroShrubData, c(arglist, list(speciesType = speciesType, valueType = 'midpoint')))
 
-  shrub_sum <- shrubs %>% select(Plot_Name, PlotID, EventID, IsQAQC, StartYear,
+  shrub_sum <- shrubs %>% select(Plot_Name, PlotID, EventID, IsQAQC, SampleYear,
                                  TSN, ScientificName, shrub_avg_cov, shrub_pct_freq) %>%
                           filter(ScientificName != "None present")
 
@@ -141,14 +141,14 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
                                       c(arglist, list(speciesType = speciesType, valueType = 'averages')))
   )
   quad_sum <- quadspp %>% filter(IsGerminant == 0) %>%
-                          select(Plot_Name, PlotID, EventID, IsQAQC, StartYear, TSN,
+                          select(Plot_Name, PlotID, EventID, IsQAQC, SampleYear, TSN,
                                  ScientificName, quad_avg_cov, quad_pct_freq) %>%
                           filter(ScientificName != "None present")
 
   # Additional Species
   addspp <- do.call(joinAdditionalSpecies, c(arglist, list(speciesType = speciesType)))
 
-  addspp_sum <- addspp %>% select(Plot_Name, PlotID, EventID, IsQAQC, StartYear, TSN,
+  addspp_sum <- addspp %>% select(Plot_Name, PlotID, EventID, IsQAQC, SampleYear, TSN,
                                   ScientificName, addspp_present) %>%
                            filter(ScientificName != "None present")
 
@@ -156,7 +156,7 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
 
   spp_comb <- sppdata_list %>% reduce(full_join,
                                       by = c("Plot_Name", "PlotID", "EventID", "IsQAQC",
-                                             "StartYear", "TSN", "ScientificName"))
+                                             "SampleYear", "TSN", "ScientificName"))
 
   spp_evs <- left_join(plot_events,
                        spp_comb, by = intersect(names(plot_events), names(spp_comb)))
@@ -169,7 +169,7 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
 
   spp_evs[, na_cols][is.na(spp_evs[, na_cols])] <- 0
 
-  spp_final <- spp_evs %>% arrange(Plot_Name, StartYear, IsQAQC, ScientificName)
+  spp_final <- spp_evs %>% arrange(Plot_Name, SampleYear, IsQAQC, ScientificName)
 
   return(data.frame(spp_final))
 
