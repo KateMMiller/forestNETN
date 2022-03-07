@@ -72,15 +72,15 @@ joinTreeNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   options(scipen = 100)
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
-  tryCatch(tree_vw <- get("COMN_TreesByEvent", envir = env) %>%
+  tryCatch(tree_vw <- get("TreesByEvent_NETN", envir = env) %>%
                       select(PlotID, EventID, TagCode, TreeEventNote) %>%
                       filter(!is.na(TreeEventNote)),
-           error = function(e){stop("COMN_TreesByEvent view not found. Please import view.")}
+           error = function(e){stop("TreesByEvent_NETN view not found. Please import view.")}
   )
 
   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                               locType = locType, eventType = eventType, output = 'verbose', ...) %>%
-                 select(Plot_Name, PlotID, EventID, StartYear, IsQAQC)
+                 select(Plot_Name, PlotID, EventID, SampleYear, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -88,7 +88,7 @@ joinTreeNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
               mutate(Sample_Info = paste0("Tree Tag: ", TagCode),
                      Note_Type = "Tree_Notes",
                      Notes = TreeEventNote) %>%
-              select(Plot_Name, PlotID, EventID, StartYear, IsQAQC, Note_Type, Sample_Info, Notes)
+              select(Plot_Name, PlotID, EventID, SampleYear, IsQAQC, Note_Type, Sample_Info, Notes)
 
   return(tree_evs)
 

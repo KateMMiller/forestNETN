@@ -94,9 +94,9 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
 
   # Prepare the foliage data
   tryCatch(foliage_vw <- get("TreesFoliageCond_NETN", envir = env) %>%
-                         select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear, IsQAQC,
-                                TagCode, TreeStatusCode, FoliageConditionCode,
-                                PercentLeavesCode, PercentLeavesLabel,
+                         select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode,
+                                SampleYear, IsQAQC, TagCode, TreeStatusCode,
+                                FoliageConditionCode, PercentLeavesCode, PercentLeavesLabel,
                                 PercentLeafAreaCode, PercentLeafAreaLabel),
            error = function(e){stop("TreeFoliageCond_NETN view not found. Please import view.")})
 
