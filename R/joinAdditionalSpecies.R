@@ -52,7 +52,6 @@
 #' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
-#' @param ... Other arguments passed to function.
 #'
 #' @examples
 #' \dontrun{
@@ -72,7 +71,7 @@
 #------------------------
 joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
                             locType = c('VS', 'all'), eventType = c('complete', 'all'),
-                            speciesType = c('all', 'native', 'exotic', 'invasive'), ...){
+                            speciesType = c('all', 'native', 'exotic', 'invasive')){
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
                     c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))

@@ -12,8 +12,7 @@ joinAdditionalSpecies(
   panels = 1:4,
   locType = c("VS", "all"),
   eventType = c("complete", "all"),
-  speciesType = c("all", "native", "exotic", "invasive"),
-  ...
+  speciesType = c("all", "native", "exotic", "invasive")
 )
 }
 \arguments{
@@ -60,8 +59,6 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"exotic"}{Returns exotic species only}
 \item{"invasive"}{Returns species on the Indicator Invasive List}
 }}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a dataframe with a row for each species recorded during the timed search per visit.

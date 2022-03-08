@@ -82,11 +82,11 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
 
   # Prepare quad datasets
   tryCatch(quadspp <- get("QuadSpecies_NETN", envir = env) %>%
-                      select(PlotID, EventID, ScientificName, QuadSppNote, IsCollected),
+                      select(Plot_Name, PlotID, EventID, ScientificName, QuadSppNote, IsCollected),
            error = function(e){stop("QuadSpecies_NETN view not found. Please import view.")})
 
   tryCatch(quadnotes <- get("QuadNotes_NETN", envir = env) %>%
-                        select(PlotID, EventID, SQQuadCharCode, SQQuadCharNotes,
+                        select(Plot_Name, PlotID, EventID, SQQuadCharCode, SQQuadCharNotes,
                                SQQuadSppNotes, QuadratCode, QuadratNote) %>%
                                unique(),
            error = function(e){stop("QuadNotes_NETN view not found. Please import view.")})
@@ -112,7 +112,7 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
   spp_notes <- quadspp_evs %>% mutate(Note_Type = "Quad_Species",
                                       Sample_Info = ifelse(IsCollected == TRUE, "Collected", NA_character_)) %>%
                                rename(Note_Info = ScientificName, Notes = QuadSppNote) %>%
-                               select(-IsCollected) %>% na.omit(Notes)
+                               select(-IsCollected) %>% filter(!is.na(Notes))
 
   # SQ Species quad-level notes
   sq_spp_notes <- quadnotes_evs %>% select(Plot_Name:IsQAQC,
@@ -120,7 +120,7 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                            Note_Info = QuadratCode,
                                            Notes = SQQuadSppNotes) %>%
                                     mutate(Note_Type = "Quad_SQ_Species") %>%
-                                    select(names(spp_notes)) %>% na.omit(Notes)
+                                    select(names(spp_notes)) %>% filter(!is.na(Notes))
 
   # SQ Char quad-level notes
   sq_char_notes <- quadnotes_evs %>% select(Plot_Name:IsQAQC,
@@ -128,7 +128,7 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                             Note_Info = QuadratCode,
                                             Notes = SQQuadCharNotes) %>%
                                      mutate(Note_Type = "Quad_SQ_Character") %>%
-                                     select(names(spp_notes)) %>% na.omit(Notes)
+                                     select(names(spp_notes)) %>% filter(!is.na(Notes))
 
   # SQ generic quad-level notes
   gen_notes <- quadnotes_evs %>% select(Plot_Name:IsQAQC,
@@ -136,7 +136,7 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                             Note_Info = QuadratCode,
                                             Notes = QuadratNote) %>%
                                  mutate(Note_Type = "Quad_General") %>%
-                                 select(names(spp_notes)) %>% na.omit(Notes)
+                                 select(names(spp_notes)) %>% filter(!is.na(Notes))
 
 
   quad_notes <- rbind(spp_notes, sq_spp_notes, sq_char_notes, gen_notes) %>%

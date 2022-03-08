@@ -13,8 +13,7 @@ joinLocEvent(
   panels = 1:4,
   locType = c("VS", "all"),
   eventType = c("complete", "all"),
-  output = c("short", "verbose"),
-  ...
+  output = c("short", "verbose")
 )
 }
 \arguments{
@@ -60,8 +59,6 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 
 \item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
 inputs are "short" and "verbose".}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with location and visit events

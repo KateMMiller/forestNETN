@@ -48,8 +48,6 @@
 #' @param output Allows you to return all columns or just the most important columns for analysis. Valid
 #' inputs are "short" and "verbose".
 #'
-#' @param ... Other arguments passed to function.
-#'
 #' @return returns a dataframe with location and visit events
 #'
 #' @examples
@@ -75,7 +73,7 @@
 #------------------------
 joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, abandoned = FALSE, panels = 1:4,
                        locType = c('VS', 'all'), eventType = c('complete', 'all'),
-                       output = c('short', 'verbose'), ...){
+                       output = c('short', 'verbose')){
 
   # Match args and class
   locType <- match.arg(locType)
