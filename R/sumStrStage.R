@@ -80,7 +80,7 @@ sumStrStage <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pane
     options(scipen = 100)
   # Set up data
   arglist <- list(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
-                  locType = locType, eventType = eventType)
+                  locType = locType, eventType = eventType, ...)
 
   plot_events <- do.call(joinLocEvent, arglist) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
