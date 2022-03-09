@@ -105,9 +105,10 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
   arglist <- list(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                   locType = locType, eventType = eventType)
 
-  plot_events <- do.call(joinLocEvent, arglist) %>%
-                 select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, SampleYear, SampleDate, cycle, IsQAQC)
+  plot_events <-   plot_events <- joinLocEvent(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
+                                               locType = locType, eventType = eventType, output = 'verbose', ...) %>%
+                   select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
+                          EventID, SampleYear, SampleDate, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 

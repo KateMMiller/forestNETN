@@ -91,7 +91,7 @@ sumQuadGuilds <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
     # Prepare the quadrat data
     quad_evs <- suppressWarnings(joinQuadSpecies(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                                 locType = locType, eventType = 'complete', speciesType = speciesType,
-                                valueType = 'midpoint')) %>%
+                                valueType = 'midpoint', ...)) %>%
                 filter(!TSN %in% -9999999950) %>% # Drops "Unknown species" which can't be fit into a group
                 filter(IsGerminant == 0 | is.na(IsGerminant))
 
