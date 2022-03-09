@@ -120,13 +120,13 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
     # should drop unwanted trees
 
   fol_evs3 <- fol_evs2 %>% mutate(Pct_Leaves_Aff = as.numeric(
-                                  case_when(PercentLeavesCode == "0" ~ 0,
-                                            PercentLeavesCode == "1" ~ 5.5,
-                                            PercentLeavesCode == "2" ~ 30,
-                                            PercentLeavesCode == "3" ~ 70,
-                                            PercentLeavesCode == "4" ~ 95,
-                                            PercentLeavesCode %in% c("NC", "PM") ~ NA_real_,
-                                            TRUE ~ NA_real_)),
+                                    case_when(PercentLeavesCode == "0" ~ 0,
+                                              PercentLeavesCode == "1" ~ 5.5,
+                                              PercentLeavesCode == "2" ~ 30,
+                                              PercentLeavesCode == "3" ~ 70,
+                                              PercentLeavesCode == "4" ~ 95,
+                                              PercentLeavesCode %in% c("NC", "PM") ~ NA_real_,
+                                              TRUE ~ NA_real_)),
                                   Pct_Leaf_Area = as.numeric(
                                     case_when(PercentLeafAreaCode == "0" ~ 0,
                                               PercentLeafAreaCode == "1" ~ 5.5,
@@ -138,7 +138,7 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
                                   Txt_Leaves_Aff = PercentLeavesLabel,
                                   Txt_Leaf_Area = PercentLeafAreaLabel) %>%
                           select(-PercentLeavesCode, -PercentLeavesLabel,
-                                 -PercentLeafAreaCode, -PercentLeafAreaLabel) # fix . after next release
+                                 -PercentLeafAreaCode, -PercentLeafAreaLabel)
 
   # have to add all possible codes before pivot
   full_conds <- data.frame(FoliageConditionCode = c("C", "H", "L", "N", "S", "W", "O"))

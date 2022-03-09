@@ -173,8 +173,8 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   tree_comb$num_cond <- rowSums(tree_comb[, cond_sum], na.rm = T) # num of conditions recorded
 
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
-                "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "TSN", "ScientificName",
-                "TagCode", "TreeStatusCode")
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "TSN",
+                "ScientificName", "TagCode", "TreeStatusCode", "BBDCode", "HWACode")
 
   tree_comb2 <-
     if(status == 'dead'){
