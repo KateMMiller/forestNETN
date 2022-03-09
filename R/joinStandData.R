@@ -94,27 +94,24 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
     )
 
     tryCatch(pstrata <- subset(get("StandPlantCoverStrata_NETN", envir = env),
-                               select = c(Plot_Name, PlotID, EventID, ParkUnit, PlotCode, IsQAQC,
-                                          SampleYear, StrataCode, CoverClassLabel)),
+                               select = c(Plot_Name, PlotID, EventID, StrataCode, CoverClassLabel)),
              error = function(e){stop("StandPlantCoverStrata_NETN view not found. Please import view.")}
     )
 
     tryCatch(ffloor <- subset(get("StandForestFloor_NETN", envir = env),
-                              select = c(Plot_Name, PlotID, EventID, ParkUnit, PlotCode, IsQAQC,
-                                         SampleYear, ForestFloorCode, CoverClassLabel)),
+                              select = c(Plot_Name, PlotID, EventID, ForestFloorCode, CoverClassLabel)),
              error = function(e){stop("StandForestFloor_NETN view not found. Please import view.")}
     )
 
     tryCatch(treeht <- subset(get("StandTreeHeights_NETN", envir = env),
-                              select = c(Plot_Name, PlotID, EventID, ParkUnit, PlotCode, IsQAQC,
-                                         SampleYear, CrownClassCode, CrownClassLabel, TagCode, Height)),
+                              select = c(Plot_Name, PlotID, EventID, CrownClassCode, CrownClassLabel,
+                                         TagCode, Height)),
              error = function(e){stop("StandTreeHeights_NETN view not found. Please import view.")}
     )
 
     tryCatch(slopes <- subset(get("StandSlopes_NETN", envir = env),
-                              select = c(Plot_Name, PlotID, EventID, ParkUnit, PlotCode, IsQAQC,
-                                         SampleYear, PlotSlope)),
-             error = function(e){stop("COMN_StandSlopes view not found. Please import view.")}
+                              select = c(Plot_Name, PlotID, EventID, IsQAQC, SampleYear, PlotSlope)),
+             error = function(e){stop("StandSlopes_NETN view not found. Please import view.")}
     )
 
     # standinfo comes in as 1 row per visit, so don't need to reshape, but need to fix cover midpoints and rename
@@ -165,15 +162,15 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
                                 select(-CoverClassLabel) %>%
                                 pivot_wider(names_from = StrataCode, values_from = Pct,
                                             values_fill = NA) %>%
-                                select(PlotID:SampleYear, G, MU, HU)
+                                select(Plot_Name, PlotID, EventID, G, MU, HU)
 
     old_pcol <- c("G", "MU", "HU")
     new_pcolp <- c("Pct_Understory_Low", "Pct_Understory_Mid", "Pct_Understory_High")
     names(pstrata_pct_wide)[match(old_pcol, names(pstrata_pct_wide))] <- new_pcolp # change col names to match prev. analyses
 
-    pstrata_txt_wide <- pstrata %>% select(PlotID:SampleYear, StrataCode, CoverClassLabel) %>%
+    pstrata_txt_wide <- pstrata %>% select(Plot_Name, PlotID, EventID, StrataCode, CoverClassLabel) %>%
                                     pivot_wider(names_from = StrataCode, values_from = CoverClassLabel) %>%
-                                    select(PlotID:HU)
+                                    select(Plot_Name:HU)
 
     new_pcolt <- c("Txt_Understory_Low", "Txt_Understory_Mid", "Txt_Understory_High")
     names(pstrata_txt_wide)[match(old_pcol, names(pstrata_txt_wide))] <- new_pcolt # change col names to match prev. analyses
@@ -181,7 +178,7 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
     pstrata_wide <- full_join(pstrata_pct_wide, pstrata_txt_wide,
                           by = intersect(names(pstrata_pct_wide), names(pstrata_txt_wide)))
 
-    pstrata_wide <- pstrata_wide[,c("PlotID", "EventID", "ParkUnit", "PlotCode", "IsQAQC", "SampleYear",
+    pstrata_wide <- pstrata_wide[,c("Plot_Name", "PlotID", "EventID",
                                     "Pct_Understory_Low", "Txt_Understory_Low",
                                     "Pct_Understory_Mid", "Txt_Understory_Mid",
                                     "Pct_Understory_High", "Txt_Understory_High")]
@@ -200,14 +197,14 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
                                   select(-CoverClassLabel) %>%
                                   pivot_wider(names_from = ForestFloorCode, values_from = Pct,
                                               values_fill = NA) %>%
-                                  select(PlotID:SampleYear, BS, R, W, `T`, NV, L)
+                                  select(Plot_Name, PlotID, EventID, BS, R, W, `T`, NV, L)
 
     old_fcol <- c("BS", "R", "W", "T", "NV", "L")
     new_fcolp <- c("Pct_Bare_Soil", "Pct_Rock", "Pct_Water", "Pct_Trampled", "Pct_Bryophyte", "Pct_Lichen")
     names(ffloor_pct_wide)[match(old_fcol, names(ffloor_pct_wide))] <- new_fcolp # change col names to match prev. analyses
 
     ffloor_txt_wide <- ffloor %>% pivot_wider(names_from = ForestFloorCode, values_from = CoverClassLabel) %>%
-                                  select(PlotID:SampleYear, BS, R, W, `T`, NV, L)
+                                  select(Plot_Name, PlotID, EventID, BS, R, W, `T`, NV, L)
 
     new_fcolt <- c("Txt_Bare_Soil", "Txt_Rock", "Txt_Water", "Txt_Trampled", "Txt_Bryophyte", "Txt_Lichen")
     names(ffloor_txt_wide)[match(old_fcol, names(ffloor_txt_wide))] <- new_fcolt # change col names to match prev. analyses
@@ -215,7 +212,7 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
     ffloor_wide <- full_join(ffloor_pct_wide, ffloor_txt_wide,
                          by = intersect(names(ffloor_pct_wide), names(ffloor_txt_wide)))
 
-    ffloor_wide <- ffloor_wide[, c("PlotID", "EventID", "ParkUnit", "PlotCode", "IsQAQC", "SampleYear",
+    ffloor_wide <- ffloor_wide[, c("Plot_Name", "PlotID", "EventID",
                                    "Pct_Bare_Soil", "Txt_Bare_Soil", "Pct_Bryophyte", "Txt_Bryophyte",
                                    "Pct_Lichen", "Txt_Lichen", "Pct_Rock", "Txt_Rock", "Pct_Trampled",
                                    "Txt_Trampled", "Pct_Water", "Txt_Water")]
@@ -223,31 +220,25 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
     # stand height
       # Consider making a new function that pulls in the stand heights and leaves individuals
     treeht_sum <- treeht %>% mutate(crown = ifelse(CrownClassCode == 4, "Inter", "Codom")) %>%
-                             group_by(PlotID, EventID, ParkUnit, PlotCode, IsQAQC, SampleYear,
-                                      crown) %>%
+                             group_by(Plot_Name, PlotID, EventID, crown) %>%
                              summarize(avg_ht = mean(Height, na.rm = TRUE), .groups = 'drop') %>%
                              pivot_wider(names_from = crown, values_from = avg_ht,
                                          names_prefix = "Avg_Height_") %>%
-                             select(PlotID:SampleYear, Avg_Height_Codom, Avg_Height_Inter)
+                             select(Plot_Name, PlotID, EventID, Avg_Height_Codom, Avg_Height_Inter)
 
     # slopes- need to pull in slopes for QAQC, like for CWD
-    slopes$Plot_Name <- paste(slopes$ParkUnit,
-                              stringr::str_pad(slopes$PlotCode, 3, side = 'left', "0"), sep = "-")
-
     slopes_QAQC1 <- slopes[slopes$IsQAQC == TRUE,
-                           c("PlotID", "EventID", "ParkUnit", "PlotCode","IsQAQC", "SampleYear", "Plot_Name",
-                             "PlotSlope")]
+                           c("Plot_Name", "PlotID", "EventID", "SampleYear", "IsQAQC", "PlotSlope")]
 
     slopes_init <- slopes[slopes$IsQAQC == FALSE,
-                          c("PlotID", "EventID", "ParkUnit", "PlotCode","IsQAQC", "SampleYear", "Plot_Name",
-                            "PlotSlope")]
+                          c("Plot_Name", "PlotID", "EventID", "SampleYear", "IsQAQC", "PlotSlope")]
 
     slopes_QAQC <- left_join(slopes_QAQC1 %>% select(-PlotSlope),
                              slopes %>% filter(IsQAQC == FALSE) %>% select(-PlotID, -EventID, -IsQAQC),
-                         by = c("ParkUnit", "PlotCode", "Plot_Name", "SampleYear"))
+                         by = c("Plot_Name", "SampleYear"))
 
-    slopes_QAQC <- slopes_QAQC[, c("PlotID", "EventID", "ParkUnit", "PlotCode", "IsQAQC", "SampleYear", "PlotSlope")]
-    slopes_init <- slopes_init[, c("PlotID", "EventID", "ParkUnit", "PlotCode", "IsQAQC", "SampleYear", "PlotSlope")]
+    slopes_QAQC <- slopes_QAQC[, c("Plot_Name", "PlotID", "EventID", "SampleYear", "IsQAQC", "PlotSlope")]
+    slopes_init <- slopes_init[, c("Plot_Name", "PlotID", "EventID", "SampleYear", "IsQAQC", "PlotSlope")]
 
     slopes_final <- rbind(slopes_init, slopes_QAQC)
 
@@ -264,7 +255,7 @@ joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), 
                                       panels = panels, locType = locType, eventType = "complete",
                                       abandoned = FALSE, output = 'short', ...)) %>%
                    select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                     xCoordinate, yCoordinate, EventID, SampleYear, SampleDate, cycle, IsQAQC, IsStuntedWoodland)
+                          xCoordinate, yCoordinate, EventID, SampleYear, SampleDate, cycle, IsQAQC, IsStuntedWoodland)
 
     if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 

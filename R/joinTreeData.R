@@ -146,7 +146,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
                        select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                       EventID, SampleDate, SampleYear, cycle, IsQAQC)
+                              EventID, SampleDate, SampleYear, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -186,13 +186,13 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   tree_taxa$DecayClassCode <- suppressWarnings(as.numeric(tree_taxa$DecayClassCode))
 
   tree_taxa <- tree_taxa %>% mutate(Pct_Tot_Foliage_Cond = as.numeric(
-                                      case_when(TotalFoliageConditionCode == "0" ~ 0,
-                                                TotalFoliageConditionCode == "1" ~ 5.5,
-                                                TotalFoliageConditionCode == "2" ~ 30,
-                                                TotalFoliageConditionCode == "3" ~ 70,
-                                                TotalFoliageConditionCode == "4" ~ 95,
-                                                TotalFoliageConditionCode == "NC" ~ NA_real_,
-                                                TRUE ~ NA_real_)),
+                                    case_when(TotalFoliageConditionCode == "0" ~ 0,
+                                              TotalFoliageConditionCode == "1" ~ 5.5,
+                                              TotalFoliageConditionCode == "2" ~ 30,
+                                              TotalFoliageConditionCode == "3" ~ 70,
+                                              TotalFoliageConditionCode == "4" ~ 95,
+                                              TotalFoliageConditionCode == "NC" ~ NA_real_,
+                                              TRUE ~ NA_real_)),
                                     Txt_Tot_Foliage_Cond = TotalFoliageConditionLabel) %>%
                              select(-TotalFoliageConditionCode, -TotalFoliageConditionLabel) # fix . after next release
 
