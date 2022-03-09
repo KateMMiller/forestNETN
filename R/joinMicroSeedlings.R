@@ -139,7 +139,6 @@ joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   # Create the left data.frame to join back to after filtering species types
   seed_left <- seed_tax %>% select(Plot_Name:MicroplotCode) %>% unique()
 
-
   seed_tax$ScientificName[seed_tax$SQSeedlingCode == "NS"] <- "Not Sampled"
 
   sd_cols <- c("Seedlings_15_30cm", "Seedlings_30_100cm", "Seedlings_100_150cm",
