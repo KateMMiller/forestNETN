@@ -243,8 +243,8 @@ joinRegenData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
     paste0("There following visits have differing numbers of seedling and sapling microplots. Stocking index based on sapling microplots: \n"),
     paste0(paste(capture.output(data.frame(diff_micros)), collapse = "\n")))}
 
-  reg_stock <- reg_sum %>% mutate(stock = ((1*seed_15_30cm) + (2*seed_30_100cm) + (20*seed_100_150cm) +
-                                            (50*seed_p150cm) + (50*sap_stems_SI))/num_micros_sap,
+  reg_stock <- reg_sum %>% mutate(stock = ((1 * seed_15_30cm) + (2 * seed_30_100cm) + (20 * seed_100_150cm) +
+                                            (50 * seed_p150cm) + (50 * sap_stems_SI))/num_micros_sap,
                                   seed_15_30cm = seed_15_30cm/num_micros_seed,
                                   seed_30_100cm = seed_30_100cm/num_micros_seed,
                                   seed_100_150cm = seed_100_150cm/num_micros_seed,
