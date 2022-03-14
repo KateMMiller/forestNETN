@@ -120,8 +120,8 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                     status = status, speciesType = speciesType,
                                     dist_m = dist_m, output = 'verbose')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                        PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, TSN, ScientificName,
-                        TagCode, TreeStatusCode) %>%
+                        PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, cycle,
+                        TSN, ScientificName, TagCode, TreeStatusCode) %>%
                  filter(ScientificName != "None present") # drop plot-events without trees that match
                                                           # the specified speciesType and/or status
   if(nrow(tree_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
@@ -173,8 +173,8 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   tree_comb$num_cond <- rowSums(tree_comb[, cond_sum], na.rm = T) # num of conditions recorded
 
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
-                "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "TSN",
-                "ScientificName", "TagCode", "TreeStatusCode", "BBDCode", "HWACode")
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "cycle",
+                "TSN", "ScientificName", "TagCode", "TreeStatusCode", "BBDCode", "HWACode")
 
   tree_comb2 <-
     if(status == 'dead'){
