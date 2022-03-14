@@ -14,7 +14,7 @@ joinQuadSpecies(
   eventType = c("complete", "all"),
   speciesType = c("all", "native", "exotic", "invasive"),
   valueType = c("all", "midpoint", "classes", "averages"),
-  returnNoCover = F,
+  returnNoCover = FALSE,
   ...
 )
 }
