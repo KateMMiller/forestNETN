@@ -64,7 +64,9 @@
 #' \item{"averages"}{Returns only the plot-level average cover and percent frequency.}
 #' }
 #'
-#' @param shape Temporary argument until new view is ready
+#' @param returnNoCover Logical. If FALSE (default), drops species with 0% cover across all quadrats. If TRUE,
+#' includes species percent cover across all quadrats. Argument is helpful for generating a plot species list
+#' (use TRUE) or calculating average cover (use FALSE).
 #'
 #' @param ... Other arguments passed to function.
 #'
@@ -88,6 +90,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
                             locType = c('VS', 'all'), eventType = c('complete', 'all'),
                             speciesType = c('all', 'native', 'exotic', 'invasive'),
                             valueType = c('all', 'midpoint', 'classes', 'averages'),
+                            returnNoCover = FALSE,
                             ...){
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
@@ -100,6 +103,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   eventType <- match.arg(eventType)
   speciesType <- match.arg(speciesType)
   valueType <- match.arg(valueType)
+  stopifnot(class(returnNoCover) == 'logical')
 
   options(scipen = 100)
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
@@ -202,6 +206,18 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
     quad_avg_cov = ifelse(is.na(quad_avg_cov) & num_quads > 0, 0, quad_avg_cov),
     quad_pct_freq = ifelse(is.na(quad_pct_freq) & num_quads > 0, 0, quad_pct_freq))
 
+  # Change "Permanently Missing in txt cover fields to "Not Sampled" where that's the case.
+  # Makes the results more informative. ACAD-029-2010 is EventID 710. That stays PM
+  # Don't have time to figure out the fancy way to do this right now
+  quadspp_comb2$Txt_Cov_UC[quadspp_comb2$UC_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+  quadspp_comb2$Txt_Cov_UR[quadspp_comb2$UR_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+  quadspp_comb2$Txt_Cov_MR[quadspp_comb2$MR_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+  quadspp_comb2$Txt_Cov_BR[quadspp_comb2$BR_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+  quadspp_comb2$Txt_Cov_BC[quadspp_comb2$BC_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+  quadspp_comb2$Txt_Cov_BL[quadspp_comb2$BL_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+  quadspp_comb2$Txt_Cov_ML[quadspp_comb2$ML_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+  quadspp_comb2$Txt_Cov_UL[quadspp_comb2$UL_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+
   na_cols <- c("Exotic", "InvasiveNETN", "Tree", "TreeShrub", "Shrub", "Vine",
                "Herbaceous", "Graminoid", "FernAlly")
 
@@ -210,6 +226,11 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
   cov_rename <- function(txt, col){paste(txt, substr(col, 1, 2), sep = "_")}
 
   quadspp_comb3 <- quadspp_comb2 %>% rename_with(~cov_rename("SQ", .), all_of(quad_sq_list))
+
+
+  quadspp_comb4 <- if(returnNoCover == FALSE){
+    filter(quadspp_comb3, missing_cover == FALSE)
+    } else {quadspp_comb3}
 
   # select columns based on specified valueType
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode",
@@ -233,13 +254,13 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
 
 
   quadspp_final <- switch(valueType,
-                          "midpoint" = quadspp_comb3[, c(req_cols, pct_cols, plant_cols,
+                          "midpoint" = quadspp_comb4[, c(req_cols, pct_cols, plant_cols,
                                                          sum_cols, taxa_cols, "QuadSppNote")],
-                          "classes" = quadspp_comb3[, c(req_cols, txt_cols, plant_cols,
+                          "classes" = quadspp_comb4[, c(req_cols, txt_cols, plant_cols,
                                                         sum_cols, taxa_cols, "QuadSppNote")],
-                          "all" = quadspp_comb3[, c(req_cols, sq_cols, pct_cols, txt_cols,
+                          "all" = quadspp_comb4[, c(req_cols, sq_cols, pct_cols, txt_cols,
                                                     plant_cols, sum_cols, taxa_cols, "QuadSppNote")],
-                          "averages" = quadspp_comb3[, c(req_cols, sum_cols, plant_cols, taxa_cols)])
+                          "averages" = quadspp_comb4[, c(req_cols, sum_cols, plant_cols, taxa_cols)])
 
   return(data.frame(quadspp_final))
   } # end of function

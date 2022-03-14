@@ -139,7 +139,9 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
 
   # Quad species without germinants
   quadspp <- suppressWarnings(do.call(joinQuadSpecies,
-                                      c(arglist, list(speciesType = speciesType, valueType = 'averages')))
+                                      c(arglist, list(speciesType = speciesType,
+                                                      valueType = 'averages',
+                                                      returnNoCover = TRUE)))
   )
   quad_sum <- quadspp %>% filter(IsGerminant == 0) %>%
                           select(Plot_Name, PlotID, EventID, IsQAQC, SampleYear, TSN,
