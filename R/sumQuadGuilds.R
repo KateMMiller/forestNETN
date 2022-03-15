@@ -114,7 +114,8 @@ sumQuadGuilds <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                             TRUE ~ "Unk"))
     }
 
-    quad_sum <- quad_evs2 %>% group_by(Plot_Name, ParkUnit, PlotID, EventID, IsQAQC,
+    quad_sum <- quad_evs2 %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit,
+                                       PlotID, EventID, IsQAQC,
                                        SampleYear, SampleDate, cycle, group) %>%
                               summarize(pct_UC = sum(Pct_Cov_UC, na.rm = T),
                                         pct_UR = sum(Pct_Cov_UR, na.rm = T),

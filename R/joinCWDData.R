@@ -98,16 +98,13 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
   slopes$Plot_Name <- paste(slopes$ParkUnit,
                             stringr::str_pad(slopes$PlotCode, 3, side = 'left', "0"), sep = "-")
 
-  cwd <- cwd[ , c("Plot_Name", "PlotID", "EventID", "Network", "ParkUnit", "ParkSubUnit",
-                  "PlotTypeCode", "PlotCode", "IsAbandoned", "PanelCode",
-                  "SampleDate","IsQAQC", "SampleYear", "SQTransectCode",
+  cwd <- cwd[ , c("Plot_Name", "PlotID", "EventID", "SampleDate","IsQAQC", "SampleYear", "SQTransectCode",
                   "SQTransectNotes", "TransectCode", "TaxonID", "TSN",
                   "ScientificName", "WoodTypeCode", "Distance", "Diameter", "Length",
                   "DecayClassCode", "IsHollow", "MultiCrossCode", "CWDNote")]
 
-  slopes <- slopes[ , c("Plot_Name", "ParkUnit", "ParkSubUnit", "PlotTypeCode",
-                        "PlotCode", "IsAbandoned", "PanelCode", "SampleDate",
-                        "IsQAQC", "SampleYear", "TransectCode", "CWDSlope", "EventID", "PlotID")]
+  slopes <- slopes[ , c("Plot_Name", "SampleDate", "IsQAQC", "SampleYear", "TransectCode",
+                        "CWDSlope", "EventID", "PlotID")]
 
   # Pull in the slopes from the first visit to calculate CWD volume for QAQC visits
   slopes_QAQC1 <- slopes[slopes$IsQAQC == TRUE,
@@ -131,15 +128,15 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
                                    slope = pctslope)
 
   # Summarize pieces by transect, distance, species, decay class
-  cwd_sum2 <- cwd_sum %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                   SampleYear, SampleDate, IsQAQC, PanelCode, TransectCode, hdist,
+  cwd_sum2 <- cwd_sum %>% group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC,
+                                   TransectCode, hdist,
                                    ScientificName, TSN, DecayClassCode) %>%
                           summarize(diam = sum(diam, na.rm = TRUE), slope = first(slope),
                                     .groups = "drop")
 
   # Summarize pieces by transect, species, decay class
-  cwd_sum3 <- cwd_sum2 %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                    SampleYear, SampleDate, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
+  cwd_sum3 <- cwd_sum2 %>% group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC,
+                                    TSN, ScientificName, DecayClassCode) %>%
                            summarize(CWD_Vol = ifelse(is.na(sum(diam)), 0, sum(hdist*diam)),
                                      CWD_num = sum(!is.na(diam)),
                                      slope = first(slope),
@@ -147,16 +144,15 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
 
   # Bring in SQ for events missing at least 1 transect
   cwd_sq <- cwd %>% filter(SQTransectCode != "PM") %>%
-                    group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                             SampleYear, SampleDate, IsQAQC, PanelCode) %>%
+                    group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC) %>%
                     summarize(num_trans = length(unique(TransectCode)),
                               .groups = 'drop')
 
   cwd_sum4 <- merge(cwd_sum3, cwd_sq, by = intersect(names(cwd_sum3), names(cwd_sq)), all.x = TRUE, all.y = TRUE)
   #table(complete.cases(cwd_sum4$CWD_Vol)) # All complete
 
-  cwd_vol1 <- cwd_sum4 %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                   SampleYear, SampleDate, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
+  cwd_vol1 <- cwd_sum4 %>% group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC,
+                                    TSN, ScientificName, DecayClassCode) %>%
                           summarize(CWD_Vol = sum(CWD_Vol, na.rm = TRUE)/first(num_trans), .groups = 'drop')
 
 

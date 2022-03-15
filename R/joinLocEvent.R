@@ -147,6 +147,43 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   plot_events7$cycle[plot_events7$SampleYear %in% c(2014:2017)] <- 3
   plot_events7$cycle[plot_events7$SampleYear %in% c(2018:2021)] <- 4
     # need to update for 2022
+
+  # Adding ACAD MDI Units to ParkSubUnit column
+  MDI_West <- c('ACAD-016', 'ACAD-017', 'ACAD-018', 'ACAD-019', 'ACAD-024',
+                'ACAD-025', 'ACAD-026', 'ACAD-027', 'ACAD-029', 'ACAD-031',
+                'ACAD-032', 'ACAD-033', 'ACAD-038', 'ACAD-041', 'ACAD-042',
+                'ACAD-049', 'ACAD-050', 'ACAD-053', 'ACAD-054', 'ACAD-055',
+                'ACAD-057', 'ACAD-060', 'ACAD-061', 'ACAD-062', 'ACAD-063',
+                'ACAD-071', 'ACAD-072', 'ACAD-073', 'ACAD-076', 'ACAD-080',
+                'ACAD-095', 'ACAD-096', 'ACAD-101', 'ACAD-102', 'ACAD-103',
+                'ACAD-104', 'ACAD-105', 'ACAD-106', 'ACAD-107', 'ACAD-108',
+                'ACAD-113', 'ACAD-114', 'ACAD-119', 'ACAD-120', 'ACAD-122',
+                'ACAD-125', 'ACAD-135', 'ACAD-136', 'ACAD-137', 'ACAD-138',
+                'ACAD-139', 'ACAD-140', 'ACAD-141', 'ACAD-143', 'ACAD-147',
+                'ACAD-154', 'ACAD-155', 'ACAD-156', 'ACAD-159', 'ACAD-160',
+                'ACAD-162', 'ACAD-168', 'ACAD-172', 'ACAD-174', 'ACAD-175')
+  MDI_East <- c('ACAD-004', 'ACAD-005', 'ACAD-006', 'ACAD-007', 'ACAD-008',
+                'ACAD-009', 'ACAD-010', 'ACAD-011', 'ACAD-012', 'ACAD-013',
+                'ACAD-014', 'ACAD-015', 'ACAD-028', 'ACAD-030', 'ACAD-034',
+                'ACAD-035', 'ACAD-037', 'ACAD-039', 'ACAD-040', 'ACAD-043',
+                'ACAD-044', 'ACAD-045', 'ACAD-046', 'ACAD-047', 'ACAD-048',
+                'ACAD-051', 'ACAD-052', 'ACAD-056', 'ACAD-058', 'ACAD-059',
+                'ACAD-068', 'ACAD-074', 'ACAD-075', 'ACAD-077', 'ACAD-078',
+                'ACAD-079', 'ACAD-081', 'ACAD-082', 'ACAD-083', 'ACAD-084',
+                'ACAD-085', 'ACAD-086', 'ACAD-087', 'ACAD-088', 'ACAD-089',
+                'ACAD-092', 'ACAD-093', 'ACAD-094', 'ACAD-109', 'ACAD-110',
+                'ACAD-111', 'ACAD-112', 'ACAD-115', 'ACAD-116', 'ACAD-117',
+                'ACAD-118', 'ACAD-121', 'ACAD-123', 'ACAD-124', 'ACAD-126',
+                'ACAD-127', 'ACAD-128', 'ACAD-129', 'ACAD-130', 'ACAD-131',
+                'ACAD-132', 'ACAD-133', 'ACAD-134', 'ACAD-142', 'ACAD-144',
+                'ACAD-148', 'ACAD-149', 'ACAD-150', 'ACAD-151', 'ACAD-152',
+                'ACAD-153', 'ACAD-157', 'ACAD-158', 'ACAD-163', 'ACAD-170',
+                'ACAD-171', 'ACAD-173')
+
+  plot_events7$ParkSubUnit[plot_events7$Plot_Name %in% MDI_West] <- "ACAD_MDI_West"
+  plot_events7$ParkSubUnit[plot_events7$Plot_Name %in% MDI_East] <- "ACAD_MDI_East"
+
+
   return(data.frame(plot_events7))
 } # end of function
 

@@ -79,7 +79,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
 
   # Prepare the soil data
   tryCatch(soilhd_vw <- get("SoilHeader_NETN", envir = env) %>%
-             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+             select(Plot_Name, PlotID, EventID, SampleYear,
                     SampleDate, IsQAQC, SampleTypeCode, PositionCode, HorizonCode,
                     SoilEventNote, IsArchived) %>%
              filter(SampleYear > 2006
@@ -87,7 +87,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
            error = function(e){stop("SoilHeader_NETN view not found. Please import view.")})
 
   tryCatch(soilsamp_vw <- get("SoilSample_NETN", envir = env) %>%
-             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+             select(Plot_Name, PlotID, EventID, SampleYear,
                     SampleDate, IsQAQC, SQSoilCode, SampleSequenceCode, SoilLayerLabel,
                     Depth_cm, Note) %>%
              filter(SampleYear > 2006 & !is.na(SoilLayerLabel)
@@ -151,7 +151,7 @@ joinSoilSampleData <- function(park = 'all', from = 2007, to = 2021, QAQC = FALS
   missing_soil_cols <- setdiff(all_soil_cols, names(soilsamp_wide1))
   soilsamp_wide1[missing_soil_cols] <- 0
 
-  soilsamp_wide <- soilsamp_wide1 %>% group_by(PlotID, EventID, ParkUnit, PlotCode, SampleYear,
+  soilsamp_wide <- soilsamp_wide1 %>% group_by(PlotID, EventID, SampleYear,
                                                SampleDate, IsQAQC) %>%
                                       summarize(Litter_cm = mean(Litter, na.rm = T),
                                                 O_Horizon_cm = mean(O_Horizon, na.rm = T),

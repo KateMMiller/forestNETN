@@ -88,8 +88,7 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
 
   # Prepare the quadrat data
   tryCatch(addspp_vw <- get("AdditionalSpecies_NETN", envir = VIEWS_NETN) %>%
-             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleDate,
-                    SampleYear, IsQAQC, SQAddSppCode, SQAddSppNotes, TSN, ScientificName,
+             select(Plot_Name, PlotID, EventID, SQAddSppCode, SQAddSppNotes, TSN, ScientificName,
                     ConfidenceClassCode, IsCollected, Note),
              error = function(e){stop("AdditionalSpecies_NETN view not found. Please import view.")})
 
