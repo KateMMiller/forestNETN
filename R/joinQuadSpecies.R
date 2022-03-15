@@ -227,7 +227,6 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, 
 
   quadspp_comb3 <- quadspp_comb2 %>% rename_with(~cov_rename("SQ", .), all_of(quad_sq_list))
 
-
   quadspp_comb4 <- if(returnNoCover == FALSE){
     filter(quadspp_comb3, missing_cover == FALSE)
     } else {quadspp_comb3}

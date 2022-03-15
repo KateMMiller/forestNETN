@@ -160,6 +160,11 @@ sumSpeciesList <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, p
   spp_comb <- sppdata_list %>% reduce(full_join,
                                       by = c("Plot_Name", "PlotID", "EventID", "IsQAQC",
                                              "SampleYear", "TSN", "ScientificName"))
+  # For the 22 species that were recorded in quadrats but had 0 cover for all quadrats,
+  # change addspp_present to 1
+  # table(spp_comb$quad_pct_freq, spp_comb$addspp_present)
+  spp_comb$addspp_present[spp_comb$quad_pct_freq == 0] <- 1
+
 
   spp_evs <- left_join(plot_events,
                        spp_comb, by = intersect(names(plot_events), names(spp_comb)))

@@ -125,7 +125,7 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
                                               PercentLeavesCode == "2" ~ 30,
                                               PercentLeavesCode == "3" ~ 70,
                                               PercentLeavesCode == "4" ~ 95,
-                                              PercentLeavesCode %in% c("NC", "PM") ~ NA_real_,
+                                              PercentLeavesCode %in% c("5", "NC", "PM") ~ NA_real_,
                                               TRUE ~ NA_real_)),
                                   Pct_Leaf_Area = as.numeric(
                                     case_when(PercentLeafAreaCode == "0" ~ 0,
@@ -133,12 +133,18 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
                                               PercentLeafAreaCode == "2" ~ 30,
                                               PercentLeafAreaCode == "3" ~ 70,
                                               PercentLeafAreaCode == "4" ~ 95,
-                                              PercentLeafAreaCode %in% c("NC", "PM") ~ NA_real_,
+                                              PercentLeafAreaCode %in% c("5", "NC", "PM") ~ NA_real_,
                                               TRUE ~ NA_real_)),
                                   Txt_Leaves_Aff = PercentLeavesLabel,
                                   Txt_Leaf_Area = PercentLeafAreaLabel) %>%
                           select(-PercentLeavesCode, -PercentLeavesLabel,
                                  -PercentLeafAreaCode, -PercentLeafAreaLabel)
+
+  # Convert 0 to NA for leaf area before it was collected in 2016
+  #table(fol_evs2$PercentLeafAreaLabel, fol_evs2$PercentLeafAreaCode, useNA = 'always')
+  #table(fol_evs2$PercentLeafAreaCode)
+  fol_evs3$Pct_Leaf_Area[fol_evs3$SampleYear < 2016] <- NA_real_
+  fol_evs3$Txt_Leaf_Area[fol_evs3$SampleYear < 2016] <- "Not Collected"
 
   # have to add all possible codes before pivot
   full_conds <- data.frame(FoliageConditionCode = c("C", "H", "L", "N", "S", "W", "O"))
@@ -184,6 +190,17 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
 
   fol_final <- filter(fol_wide2, !is.na(Plot_Name)) %>% # NA row added if cond code missing
                arrange(Plot_Name, SampleYear, IsQAQC, TagCode)
+
+  if(valueType == 'classes'){
+    fol_final$Txt_Leaf_Area_C[fol_final$SampleYear < 2016] <- "Not Collected"
+    fol_final$Txt_Leaf_Area_H[fol_final$SampleYear < 2016] <- "Not Collected"
+    fol_final$Txt_Leaf_Area_N[fol_final$SampleYear < 2016] <- "Not Collected"
+
+  } else if(valueType == 'midpoint'){
+    fol_final$Pct_Leaf_Area_C[fol_final$SampleYear < 2016] <- NA_real_
+    fol_final$Pct_Leaf_Area_H[fol_final$SampleYear < 2016] <- NA_real_
+    fol_final$Pct_Leaf_Area_N[fol_final$SampleYear < 2016] <- NA_real_
+  }
 
   return(data.frame(fol_final))
 } # end of function
