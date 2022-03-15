@@ -16,8 +16,7 @@ sumTreeDBHDist(
   canopyPosition = c("all", "canopy"),
   dist_m = NA,
   eventType = c("complete", "all"),
-  units = c("density", "BA", "both"),
-  ...
+  units = c("density", "BA", "both")
 )
 }
 \arguments{
@@ -90,8 +89,6 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"BA"}{Returns basal area in sq.m/ha}
 \item{"both"}{Returns noth stem density and BA/ha.}
 }}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with one row for each plot and either density or BA

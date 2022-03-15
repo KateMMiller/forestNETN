@@ -82,8 +82,6 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
-#' @param ... Other arguments passed to function.
-#'
 #' @return returns a dataframe with one row for each plot and either density or BA
 #'
 #' @examples
@@ -100,7 +98,7 @@
 sumTreeDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
                            status = c('all', 'active', 'live', 'dead'), speciesType = c('all', 'native','exotic', 'invasive'),
                            canopyPosition = c("all", "canopy"), dist_m = NA, eventType = c('complete', 'all'),
-                           units = c('density', 'BA', 'both'), ...){
+                           units = c('density', 'BA', 'both')){
 
   # Match args and class
   status <- match.arg(status)
