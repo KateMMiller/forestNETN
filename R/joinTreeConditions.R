@@ -1,7 +1,7 @@
 #' @include joinTreeData.R
 #' @title joinTreeConditions: compiles live and dead tree conditions
 #'
-#' @importFrom dplyr arrange filter full_join group_by left_join mutate select summarize
+#' @importFrom dplyr arrange case_when filter full_join group_by left_join mutate select summarize
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
 #'
@@ -140,7 +140,6 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                         values_fill = 0,
                                         names_glue = "VIN_{VinePositionCode}")
 
-
   # Another left join to drop unwanted trees early (previous step was unwanted events)
   trcond_evs2 <- left_join(tree_events, trcond_evs, by = intersect(names(tree_events), names(trcond_evs)))
 
@@ -156,8 +155,14 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   # Combine tree condition and vine data
   tree_comb <- left_join(trcond_evs2, vine_wide, by = intersect(names(trcond_evs2), names(vine_wide)))
 
+  # head(tree_comb)
+  # table(tree_comb$VIN_B, tree_comb$SampleYear, useNA = 'always')
+  # table(tree_comb$VIN_C, tree_comb$SampleYear, useNA = 'always')
+  #
   tree_comb$VIN_C <- ifelse(tree_comb$VINE == 0, 0, tree_comb$VIN_C)
-  tree_comb$VIN_B <- ifelse(tree_comb$VINE == 0 & tree_comb$SampleYear >= 2019, 0, tree_comb$VIN_B)
+  tree_comb$VIN_B <- case_when(tree_comb$VINE == 0 & tree_comb$SampleYear >= 2019 ~ 0,
+                               tree_comb$SampleYear < 2019 ~ NA_real_,
+                               TRUE ~ tree_comb$VIN_B)
 
 
   # Create list of live and dead tree conditions besides H and NO to count number of conditions
