@@ -48,10 +48,13 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a data frame for every tree visit with at least one vine condition recorded. Trees
 #' without a vine condition are not returned.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile vine data for all parks in cycle 3, excluding QAQC visits
 #' vines_c3 <- joinTreeVineSpecies(from = 2014, to = 2017, QAQC = FALSE)
@@ -62,6 +65,7 @@
 #' # compile vine data for ROVA in 2019, including QAQC visits
 #' ROVA_vines <- joinTreeVineSpecies(park = "ROVA", from = 2019, to = 2019,
 #'                                  QAQC = TRUE)
+#'}
 #'
 #' @export
 #'
@@ -85,27 +89,27 @@ joinTreeVineSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the vine data
-  tryCatch(vine_vw <- get("COMN_TreesVine", envir = env) %>%
-                      select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                             TreeLegacyID, TagCode, TreeTSN, TreeScientificName, TSN,
-                             ScientificName, VinePositionCode, VinePositionLabel) %>%
+  tryCatch(vine_vw <- get("TreesVine_NETN", envir = env) %>%
+                      select(Plot_Name, PlotID, EventID, TagCode,
+                             TreeTSN, TreeScientificName, TSN,
+                             ScientificName, VinePositionCode) %>%
                         unique(),
 
-           error = function(e){stop("COMN_TreesVine view not found. Please import view.")})
+           error = function(e){stop("TreesVine_NETN view not found. Please import view.")})
 
-  tryCatch(taxa <- subset(get("COMN_Taxa", envir = env),
+  tryCatch(taxa <- subset(get("Taxa_NETN", envir = env),
                           select = c(TaxonID, TSN, ScientificName, IsExotic)),
-           error = function(e){stop("COMN_Taxa view not found. Please import view.")})
+           error = function(e){stop("Taxa_NETN view not found. Please import view.")})
 
 
   # subset with EventID from tree_events to make tree data as small as possible to speed up function
   tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC, ...,
                                     locType = locType, panels = panels, eventType = 'complete',
-                                    abandoned = FALSE, status = 'live', speciesType = 'all',
+                                    status = 'live', speciesType = 'all',
                                     dist_m = dist_m, output = 'verbose')) %>%
                  filter(ScientificName != 'None present') %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                        PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TagCode)
+                        PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, TagCode)
 
   if(nrow(tree_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -128,7 +132,7 @@ joinTreeVineSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FAL
        } else if(speciesType == 'all'){(vine_taxa)}
 
   vines_final <- vine_nat %>% filter(!is.na(Plot_Name)) %>%
-    arrange(Plot_Name, StartYear, IsQAQC, TagCode)# drops trees that are not the selected status
+    arrange(Plot_Name, SampleYear, IsQAQC, TagCode)# drops trees that are not the selected status
 
   return(data.frame(vines_final))
 } # end of function

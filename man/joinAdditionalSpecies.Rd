@@ -12,8 +12,7 @@ joinAdditionalSpecies(
   panels = 1:4,
   locType = c("VS", "all"),
   eventType = c("complete", "all"),
-  speciesType = c("all", "native", "exotic", "invasive"),
-  ...
+  speciesType = c("all", "native", "exotic", "invasive")
 )
 }
 \arguments{
@@ -69,11 +68,13 @@ This function compiles the additional species collected during a timed 15-minute
 primarily an internal function used for QAQC and to generate the species lists for makeSppList().
 }
 \examples{
+\dontrun{
 importData()
 # compile invasive species found in plot search in SARA for all years
-SARA_quads <- joinAdditionalSpecies.R(park = 'SARA', speciesType = 'invasive')
+SARA_quads <- joinAdditionalSpecies(park = 'SARA', speciesType = 'invasive')
 
 # compile all species, including QAQC visits for parks in cycle 3
-native_quads <- joinQuadSpecies(from = 2014, to = 2017, QAQC = TRUE)
+native_quads <- joinAdditionalSpecies(from = 2014, to = 2017, QAQC = TRUE)
+}
 
 }

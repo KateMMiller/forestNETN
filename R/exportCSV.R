@@ -13,6 +13,7 @@
 #' @return NETN database views exported to specified path
 #'
 #' @examples
+#' \dontrun{
 #' # RUN FIRST
 #' library(forestNETN)
 #' importData()
@@ -25,6 +26,7 @@
 #'
 #' # Export views as .csvs to specified path
 #' exportCSV(path = "C:/Forest_Health/exports/NETN")
+#'}
 #'
 #' @export
 
@@ -38,14 +40,14 @@ exportCSV<- function(path = NA, zip = FALSE){
   options(scipen = 100) # For TSNs
 
   # Make sure all the views are loaded. If anything is missing, function stops.
-  view_list <- c("COMN_AdditionalSpecies", "COMN_CWD", "COMN_EventObservers", "COMN_Events",
-                 "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter",
-                 "COMN_SoilHeader", "COMN_SoilSample", "COMN_SoilLab",
-                 "COMN_StandDisturbances", "COMN_StandForestFloor", "COMN_StandPlantCoverStrata",
-                 "COMN_StandSlopes", "COMN_StandTreeHeights", "COMN_Taxa", "COMN_TreesByEvent",
-                 "COMN_TreesConditions", "COMN_TreesFoliageCond", "COMN_TreesVine",
-                 "NETN_MicroplotSaplings", "NETN_MicroplotSaplingsCount",
-                 "NETN_MicroplotSeedlings", "NETN_QuadSpecies", "NETN_StandInfoPhotos")
+  view_list <- c("AdditionalSpecies_NETN", "CWD_NETN", "EventObservers_NETN", "Events_NETN",
+                 "MicroplotSaplings_NETN", "MicroplotSaplingsCount_NETN", "MicroplotSeedlings_NETN",
+                 "MicroplotShrubs_NETN", "Plots_NETN", "QuadCharacter_NETN", "QuadNotes_NETN",
+                 "QuadSpecies_NETN", "SoilHeader_NETN", "SoilLab_NETN", "SoilSample_NETN",
+                 "StandDisturbances_NETN", "StandForestFloor_NETN", "StandInfoPhotos_NETN",
+                 "StandPlantCoverStrata_NETN", "StandSlopes_NETN", "StandTreeHeights_NETN",
+                 "Taxa_NETN", "TreesByEvent_NETN", "TreesConditions_NETN", "TreesFoliageCond_NETN",
+                 "TreesVine_NETN")
 
   files <- if(exists("VIEWS_NETN")){ls(envir = VIEWS_NETN)} else {ls()}
 
@@ -63,8 +65,12 @@ exportCSV<- function(path = NA, zip = FALSE){
       stop("Specified directory does not exist.")
   } else{print(paste0("Output saving to ", path), quote = FALSE)}
 
+  # Normalize path for zip
+  pathn <- normalizePath(path)
+
   # Add / to end of path if it wasn't specified.
-  path <- if(substr(path,nchar(path),nchar(path))!="/"){paste0(path,"/")} else {(paste0(path))}
+  pathn <- if(substr(pathn, nchar(pathn), nchar(pathn)) != "/"){
+    paste0(pathn,"\\")} else {(paste0(pathn))}
 
   # Set up progress bar
   pb <- txtProgressBar(min = 0, max = length(view_list), style = 3)
@@ -76,6 +82,7 @@ exportCSV<- function(path = NA, zip = FALSE){
   if(zip == FALSE){
   invisible(lapply(seq_along(view_list), function(x){
     setTxtProgressBar(pb, x)
+    print(view_list[[x]])
     write.csv(get(view_list[[x]], envir = env),
               paste0(path, view_list[x], ".csv"),
               row.names = FALSE)
@@ -90,14 +97,15 @@ exportCSV<- function(path = NA, zip = FALSE){
               paste0(tmp, "\\", view_list[x], ".csv"),
               row.names = FALSE)}))
 
+  close(pb)
+
   file_list <- list.files(tmp)
 
-  zip::zipr(zipfile = paste0(path, "NETN_Forest_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+  zip::zipr(zipfile = paste0(pathn, "NETN_Forest_", format(Sys.Date(), "%Y%m%d"), ".zip"),
             root = tmp,
             files = file_list)
   # csvs will be deleted as soon as R session is closed b/c tempfile
  }
-  close(pb)
   noquote('Export complete.')
 }
 

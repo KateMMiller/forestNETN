@@ -83,17 +83,19 @@ are assigned crown classes, this also only returns live trees.}
 \item{plotName}{Allows you to select a specific plot to run function for. Value inputs are "PARK-###", like "ACAD-001".
 If no plot name is specified, then function will save a tree map for each plot that matches the function arguments.
 Function only set up to handle 1 plotName specified at a time. If you want to save more, leave this argument blank
-and select plots based on other arguments in function. Note that function runs faster if you speficy the park along with
+and select plots based on other arguments in function. Note that function runs faster if you specify the park along with
 the plot name.}
+
+\item{path}{Quoted path to save plots to. Required if output_to = 'file'}
 
 \item{output_to}{Select whether to plot in current session or save to pdf
 \describe{
 \item{"file"}{Saves individual plots to pdf. Must also specify a path to save plots to.}
-\item{"view"}{Default. Plot in current R session. Note that this may be slow if multiple plots are included in the function arguments.}
+\item{"view"}{Default. Plot in current R session. Note that this may be slow if multiple plots are included in the
+function arguments.}
 }}
 
-\item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
-inputs are "short" and "verbose".}
+\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a map of trees on a given plot. Trees are color coded by status, with AB= Alive Broken,
@@ -109,6 +111,7 @@ this function is best used on 1 to 4 year periods. Note that QA/QC events are no
 Excluded trees are plotted with 10 cm DBH assigned, as these don't get a DBH measurement when excluded.
 }
 \examples{
+\dontrun{
 importData()
 
 # make map for single plot
@@ -116,5 +119,6 @@ plotTreeMap(park = "MABI", from = 2016, to = 2019, plotName = "MABI-001")
 
 # save pdfs of maps for panel 3
 plotTreeMap(from = 2016, to = 2019, panels = 3, output_to = "file", path = "C:/Temp")
+}
 
 }

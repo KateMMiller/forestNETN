@@ -1,7 +1,7 @@
 #' @include joinTreeData.R
 #' @title joinTreeConditions: compiles live and dead tree conditions
 #'
-#' @importFrom dplyr arrange filter full_join group_by left_join mutate select summarize
+#' @importFrom dplyr arrange case_when filter full_join group_by left_join mutate select summarize
 #' @importFrom tidyr pivot_wider
 #' @importFrom magrittr %>%
 #'
@@ -57,6 +57,7 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#'
 #' @return returns a wide data frame with one row for each tree visit and tree conditions as columns.
 #' Note that vines in the crown and on the bole return the number of species in each condition. Remaining
 #' conditions are either 0 for absent or 1 for present. Only trees that are actively assessed for status
@@ -67,6 +68,7 @@
 #' missing for that visit.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile tree condition data for live trees in all parks in cycle 3, excluding QAQC visits
 #' trcond_c3 <- joinTreeConditions(from = 2014, to = 2017, status = 'live', QAQC = FALSE)
@@ -74,7 +76,7 @@
 #' # compile tree condition for ROVA in 2019, including QAQC visits for active trees
 #' ROVA_trees <- joinTreeConditions(park = "ROVA", from = 2019, to = 2019, status = 'active',
 #'                                  QAQC = TRUE)
-#'
+#' }
 #' @export
 #'
 #------------------------
@@ -99,29 +101,27 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the condition data
-  tryCatch(trcond_vw <- unique(subset(get("COMN_TreesConditions", envir = env),
-                        select = c(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                                   TreeLegacyID, TagCode, TreeStatusCode, TreeConditionCode,
-                                   TreeConditionSummary))), # whether condition is for Live/Dead/Both
+  tryCatch(trcond_vw <- get("TreesConditions_NETN", envir = env) %>%
+                        select(Plot_Name, PlotID, EventID, TagCode, TSN, ScientificName,
+                               TreeStatusCode, BBDCode, HWACode, H:VINE), # whether condition is for Live/Dead/Both
 
-           error = function(e){stop("COMN_TreesConditions view not found. Please import view.")})
+           error = function(e){stop("TreesConditions_NETN view not found. Please import view.")})
 
-  #
-  tryCatch(vine_vw <- subset(get("COMN_TreesVine", envir = env),
-                      select = c(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                                 TreeLegacyID, TSN, ScientificName, TagCode, VinePositionCode, VinePositionLabel)),
+  # Prepare vine data. Don't care about species, just presence of vines
+  tryCatch(vine_vw <- get("TreesVine_NETN", envir = env) %>%
+                      select(Plot_Name, PlotID, EventID, TagCode, VinePositionCode),
 
-           error = function(e){stop("COMN_TreesVine view not found. Please import view.")})
+           error = function(e){stop("TreesVine_NETN view not found. Please import view.")})
 
 
   # subset with EventID from tree_events to make tree data as small as possible to speed up function
-  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC, ...,
+  tree_events <- force(joinTreeData(park = park, from = from , to = to, QAQC = QAQC,
                                     locType = locType, panels = panels, eventType = 'complete',
-                                    abandoned = FALSE, status = status, speciesType = speciesType,
+                                    status = status, speciesType = speciesType,
                                     dist_m = dist_m, output = 'verbose')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                        PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TSN, ScientificName,
-                        TagCode, TreeStatusCode, HWACode, HWALabel, BBDCode, BBDLabel) %>%
+                        PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, cycle,
+                        TSN, ScientificName, TagCode, TreeStatusCode) %>%
                  filter(ScientificName != "None present") # drop plot-events without trees that match
                                                           # the specified speciesType and/or status
   if(nrow(tree_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
@@ -131,102 +131,75 @@ joinTreeConditions <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   trcond_evs <- filter(trcond_vw, EventID %in% te_list)
   vine_evs <- filter(vine_vw, EventID %in% te_list)
 
+  # Reshape vines to wide
+  vine_wide <- vine_evs %>% mutate(present = 1) %>%
+                            group_by(Plot_Name, PlotID, EventID, TagCode, VinePositionCode) %>%
+                            summarize(present = sum(present), .groups = 'drop') %>%
+                            pivot_wider(names_from = VinePositionCode,
+                                        values_from = present,
+                                        values_fill = 0,
+                                        names_glue = "VIN_{VinePositionCode}")
+
   # Another left join to drop unwanted trees early (previous step was unwanted events)
-  trcond_evs2 <- left_join(tree_events, trcond_evs, by = intersect(names(tree_events), names(trcond_evs))) %>%
-                   mutate(present = ifelse(!is.na(TreeConditionCode), 1, 0))
+  trcond_evs2 <- left_join(tree_events, trcond_evs, by = intersect(names(tree_events), names(trcond_evs)))
 
   vine_evs2 <- left_join(tree_events %>% select(Plot_Name, ParkUnit, ParkSubUnit, PlotCode, PlotID, EventID,
-                                                IsQAQC, StartYear, TagCode, TreeStatusCode),
+                                                IsQAQC, SampleYear, TagCode, TreeStatusCode),
                          vine_evs,
-                         by = c("ParkUnit", "ParkSubUnit", "PlotCode", "PlotID",
-                                "EventID", "IsQAQC", "StartYear", "TagCode"))
-  # had to drop Tree TSN/Scientific name is different from Vine TSN/ScientificName
-
-  # Prep condition lists based on tree status to be the full list for each status before pivot wide
-  live_cond <- data.frame(TreeConditionCode =
-                            c('H', 'AD',	'ALB',	'BBD',	'BC',	'BWA',	'CAVL',	'CAVS',	'CW',	'DBT',	'DOG',
-                              'EAB',	'EB',	'EHS',	'G',	'GM',	'HWA',	'ID',	'OTH',	'RPS',
-                              'SB',	'SOD',	'SPB',	'SW',	'VINE', 'PM'))
-
-  dead_cond <- data.frame(TreeConditionCode = c('NO', 'CAVL', 'CAVS', 'PM'))
-
-  all_cond <- unique(data.frame(TreeConditionCode = c(live_cond$TreeConditionCode, dead_cond$TreeConditionCode)))
-
-  cond_join <- if(status == 'live'){live_cond
-        } else if(status == 'dead'){dead_cond
-        } else {all_cond}
-
-  trcond_evs3 <- full_join(trcond_evs2, cond_join, by = "TreeConditionCode")
-
-  # Reshape tree condition data to wide
-  trcond_wide <- trcond_evs3 %>% arrange(TreeConditionCode) %>%
-                                 pivot_wider(id_cols = c(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
-                                                         PlotCode, PlotID, EventID, IsQAQC, StartYear, StartDate, TSN, ScientificName,
-                                                         TagCode, TreeStatusCode, HWACode, BBDCode),
-                                             names_from = TreeConditionCode,
-                                             values_from = present,
-                                             values_fill = 0) #%>%
+                         by = c("Plot_Name", "PlotID", "EventID", "TagCode"))
+     # had to drop Tree TSN/Scientific name is different from Vine TSN/ScientificName
 
   # Preparing vine data to join with rest of the tree conditions
-    # In case the filtering above drops one of the vine positions
-  all_vine_codes <- data.frame(VinePositionCode = c("B", "C"))
-  vine_evs3 <- full_join(vine_evs2, all_vine_codes, by = "VinePositionCode")
-
-  vine_wide <- vine_evs3 %>% group_by(PlotID, EventID, ParkUnit, PlotCode, StartYear, IsQAQC,
-                                      TagCode, VinePositionCode) %>%
-                             summarize(num_spp = sum(!is.na(ScientificName)),
-                                       .groups = 'drop') %>%
-                             pivot_wider(names_from = VinePositionCode,
-                                         names_glue = "{'VIN_'}{VinePositionCode}",
-                                         values_from = num_spp,
-                                         values_fill = 0)
+  # In case the filtering above drops one of the vine positions
 
   # Combine tree condition and vine data
-  tree_comb <- left_join(trcond_wide, vine_wide, by = intersect(names(trcond_wide), names(vine_wide)))
+  tree_comb <- left_join(trcond_evs2, vine_wide, by = intersect(names(trcond_evs2), names(vine_wide)))
 
-  # clean up column names that are returned are relevant to status selected
-  cond_sum <- if(status == 'dead'){c("CAVL", "CAVS")
-    } else {c("AD", "ALB", "BBD", "BC", "BWA", "CAVL", "CAVS", "CW", "DBT", "DOG", "EAB",
-    "EB", "EHS", "G", "GM", "HWA", "ID", "OTH", "RPS", "SB", "SOD", "SPB",
-    "SW", "VIN_C", "VIN_B")}
+  # head(tree_comb)
+  # table(tree_comb$VIN_B, tree_comb$SampleYear, useNA = 'always')
+  # table(tree_comb$VIN_C, tree_comb$SampleYear, useNA = 'always')
+  #
+  tree_comb$VIN_C <- ifelse(tree_comb$VINE == 0, 0, tree_comb$VIN_C)
+  tree_comb$VIN_B <- case_when(tree_comb$VINE == 0 & tree_comb$SampleYear >= 2019 ~ 0,
+                               tree_comb$SampleYear < 2019 ~ NA_real_,
+                               TRUE ~ tree_comb$VIN_B)
 
-  tree_comb$num_cond <- rowSums(tree_comb[, cond_sum]) # num of conditions recorded
+
+  # Create list of live and dead tree conditions besides H and NO to count number of conditions
+  live_cond_cnt <- c('AD',	'ALB',	'BBD', 'BLD',	'BC',	'BWA',	'CAVL',	'CAVS',	'CW',
+                     'DBT',	'DOG', 'EAB',	'EB',	'EHS',	'G',	'GM',	'HWA',	'ID',	'OTH',	'RPS',
+                     'SB',	'SLF', 'SOD',	'SPB',	'SW',	'VIN_B', 'VIN_C')
+
+  dead_cond_cnt <- c('CAVL', 'CAVS')
+
+  # List of columns to sum across based on status specified
+  cond_sum <- if(status == 'dead'){dead_cond_cnt} else {live_cond_cnt}
+
+  tree_comb$num_cond <- rowSums(tree_comb[, cond_sum], na.rm = T) # num of conditions recorded
 
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
-                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "TSN", "ScientificName",
-                "TagCode", "TreeStatusCode")
-
-  live_cols <- c("AD", "ALB", "BBD", "BC", "BWA", "CAVL", "CAVS", "CW", "DBT", "DOG", "EAB",
-                 "EB", "EHS", "G", "GM", "HWA", "ID", "OTH", "RPS", "SB", "SOD", "SPB",
-                 "SW", "VIN_C", "VIN_B")
-
-  dead_cols <- c("CAVL", "CAVS")
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "cycle",
+                "TSN", "ScientificName", "TagCode", "TreeStatusCode", "BBDCode", "HWACode")
 
   tree_comb2 <-
-    if(status == 'dead'){tree_comb[!tree_comb$TreeStatusCode %in% c("DF", "DC"),
-                                   c(req_cols, "num_cond", "NO", dead_cols, "PM")]
-    } else if(status == 'live'){tree_comb[, c(req_cols, "num_cond", "H", live_cols, "PM")]
-    } else {tree_comb[, c(req_cols, "num_cond", "H", "NO", live_cols, "PM")]}
+    if(status == 'dead'){
+      tree_comb[!tree_comb$TreeStatusCode %in% c("DF", "DC"), c(req_cols, "num_cond", "NO", dead_cond_cnt)]
+    } else if(status == 'live'){tree_comb[, c(req_cols, "num_cond", "H", live_cond_cnt)]
+    } else {tree_comb[, c(req_cols, "num_cond", "H", "NO", live_cond_cnt)]} # note live_cols contains all dead_cols
 
   # Convert 0 to NA for status codes added later
-  if(status != 'dead'){
-      tree_comb2$DOG[tree_comb2$StartYear < 2015] <- NA
-      tree_comb2$VIN_B[tree_comb2$StartYear < 2019] <- NA
-      tree_comb2$RPS[tree_comb2$StartYear < 2019] <- NA
-  }
-
   if(status != 'live'){
-      tree_comb2$NO[tree_comb2$StartYear < 2012] <- NA}
+      tree_comb2$NO[tree_comb2$SampleYear < 2012] <- NA}
 
-  tree_comb2$CAVL[tree_comb2$StartYear < 2012] <- NA
-  tree_comb2$CAVS[tree_comb2$StartYear < 2012] <- NA
+  tree_comb2$CAVL[tree_comb2$SampleYear < 2012] <- NA
+  tree_comb2$CAVS[tree_comb2$SampleYear < 2012] <- NA
 
   if(status == 'dead'){
-  tree_comb2$num_cond[tree_comb2$StartYear < 2012] <- NA
+  tree_comb2$num_cond[tree_comb2$SampleYear < 2012] <- NA
   }
 
   trcond_final <- tree_comb2 %>% filter(!is.na(Plot_Name)) %>%
-    arrange(Plot_Name, StartYear, IsQAQC, TagCode)# drops trees that are not the selected status
+    arrange(Plot_Name, SampleYear, IsQAQC, TagCode)# drops trees that are not the selected status
 
   return(data.frame(trcond_final))
 } # end of function

@@ -16,8 +16,7 @@ sumTreeDBHDist(
   canopyPosition = c("all", "canopy"),
   dist_m = NA,
   eventType = c("complete", "all"),
-  units = c("density", "BA", "both"),
-  ...
+  units = c("density", "BA", "both")
 )
 }
 \arguments{
@@ -98,8 +97,9 @@ returns a dataframe with one row for each plot and either density or BA
 This function calculates DBH distribution by 10cm size classes. Must run importData first.
 }
 \examples{
+\dontrun{
 importData()
 tree_diam_dist <-sumTreeDBHDist(park = 'MORR', speciesType = 'native', from = 2016, to = 2019, units = 'ba')
 head(tree_diam_dist)
-
+}
 }

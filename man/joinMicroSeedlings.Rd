@@ -70,6 +70,8 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 }}
 
 \item{numMicros}{Allows you to select 1, 2, or 3 microplots of data to summarize}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with seedling densities
@@ -80,6 +82,7 @@ This function combines seedling data collected in microplots. If no seedlings we
 data, it means it's a missing value. These are rare, but mostly occur in data <2011. Must run importData first.
 }
 \examples{
+\dontrun{
 importCSV('./forest_csvs/')
 # compile seedling data for all parks and all species in most cycle 3
 regen_data <- joinMicroSeedlings(canopyForm = 'all', from = 2014, to = 2017)
@@ -89,5 +92,5 @@ SAGA_regen <- joinMicroSeedlings(park = 'SAGA', speciesType = 'native')
 
 # compile only 1 microplot of data for ACAD native canopy-forming species for all but first year
 ACAD_regen_m1 <- joinMicroSeedlings(park = 'ACAD', speciesType = 'native', numMicros = 1, from = 2007)
-
+}
 }

@@ -49,14 +49,34 @@ odbcClose(db)
 forestNETNarch::importData(type='file',
   path='D:/NETN/Monitoring_Projects/Forest_Health/Database/2021_Forest_Database/Forest_Backend_NETN_20210503_Migration.mdb')
 
+# Benchmarking example
+names(VIEWS_NETN)
+trees <- get("COMN_TreesByEvent", VIEWS_NETN)
+head(trees)
+library(microbenchmark)
+
+microbenchmark(subset(trees, ParkUnit == "ACAD"),
+               filter(trees, ParkUnit == "ACAD"), times = 10)
+
+#Unit: milliseconds
+#expr    min     lq     mean   median      uq     max neval
+#subset(trees, ParkUnit == "ACAD") 9.5459 9.8856 10.02015 10.05535 10.1789 10.3859    10
+#filter(trees, ParkUnit == "ACAD") 2.0483 2.0950  2.99471  2.18675  2.2793 10.4267    10
 
 #----- Testing joinLocEvent and migration -----
 plotevs_old <- do.call(forestNETNarch::joinLocEvent, c(arglist, output = 'verbose'))
 plotevs_new <- do.call(joinLocEvent, arglist)
-names(plotevs_old)
+
+debug(joinLocEvent)
+
+joinLocEvent(park = "ACAD", from = 2006, to = 2019)
+
 names(plotevs_new)
 nrow(plotevs_old) #1280
 nrow(plotevs_new) #1280
+
+microbenchmark::microbenchmark(do.call(forestNETNarch::joinLocEvent, c(arglist, output = 'verbose')),
+                               do.call(joinLocEvent, arglist), times = 10)
 
 pe_merge <- full_join(plotevs_new, plotevs_old, by = c("EventLegacyID" = "Event_ID", "Plot_Name" = "Plot_Name"))
 

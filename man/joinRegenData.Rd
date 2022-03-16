@@ -2,7 +2,7 @@
 % Please edit documentation in R/joinRegenData.R
 \name{joinRegenData}
 \alias{joinRegenData}
-\title{joinRegenData: compiles seedling and sapling data}
+\title{joinRegenData: summarizes seedling and sapling data}
 \usage{
 joinRegenData(
   park = "all",
@@ -79,6 +79,8 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"ha"}{Returns seedling and sapling densities per hectare}
 \item{"acres"}{Returns densities per acre}
 }}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with seedling and sapling densities, and stocking index metrics
@@ -94,9 +96,10 @@ index only includes saplings < 2.5cm DBH, but the sapling density returned is al
 <10cm DBH. For the few plots with > 10 saplings of a given species in a microplot, their counts are
 included in the stocking index only if the average DBH of saplings measured is <=2.5 cm. This may
 underestimate the stocking index for those plots, but their index values are still way higher than
-most plots. Must run importData first.
+most plots. Must run importData() or importCSV() first.
 }
 \examples{
+\dontrun{
 importCSV('./forest_csvs/')
 # compile seedling and sapling data for all parks and all species in cycle 3
 regen_data <- joinRegenData(canopyForm = 'all', from = 2014, to = 2017)
@@ -106,5 +109,5 @@ SAGA_regen <- joinRegenData(park = 'SAGA', speciesType = 'native')
 
 # compile only 1 microplot of data for ACAD native canopy-forming species for all but first year
 ACAD_regen_m1 <- joinRegenData(park = 'ACAD', speciesType = 'native', numMicros = 1, from = 2007)
-
+}
 }

@@ -52,11 +52,14 @@
 #' @param splitHerb TRUE/FALSE. If TRUE (Default), splits the herbaceous group into forb and fern. If FALSE,
 #' then resulting data frame will be summarized for tree, shrub, herbaceous, and graminoid guilds.
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return Returns a data frame with average quadrat cover, percent quadrat frequency and quadrat
 #' frequency count for tree, shrub/vine, herbaceous, and graminoid for each plot visit. Data are either
 #' summarized for all species, native only, exotic only, or invasive only.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #'
 #' # compile invasive quad data for all parks and most recent survey. Keep ferns in with herbs
@@ -64,6 +67,7 @@
 #'
 #' # compile native quad data for more recent survey in ACAD, with ferns and forbs split in separate guilds
 #' ACAD_guilds <- sumQuadGuilds(speciesType = 'native', from = 2015, to = 2018, splitHerb = TRUE)
+#'}
 #'
 #' @export
 #'
@@ -87,7 +91,7 @@ sumQuadGuilds <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
     # Prepare the quadrat data
     quad_evs <- suppressWarnings(joinQuadSpecies(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                                 locType = locType, eventType = 'complete', speciesType = speciesType,
-                                valueType = 'midpoint')) %>%
+                                valueType = 'midpoint', ...)) %>%
                 filter(!TSN %in% -9999999950) %>% # Drops "Unknown species" which can't be fit into a group
                 filter(IsGerminant == 0 | is.na(IsGerminant))
 
@@ -110,7 +114,9 @@ sumQuadGuilds <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, pa
                                             TRUE ~ "Unk"))
     }
 
-    quad_sum <- quad_evs2 %>% group_by(Plot_Name, ParkUnit, PlotID, EventID, IsQAQC, StartYear, StartDate, cycle, group) %>%
+    quad_sum <- quad_evs2 %>% group_by(Plot_Name, Network, ParkUnit, ParkSubUnit,
+                                       PlotID, EventID, IsQAQC,
+                                       SampleYear, SampleDate, cycle, group) %>%
                               summarize(pct_UC = sum(Pct_Cov_UC, na.rm = T),
                                         pct_UR = sum(Pct_Cov_UR, na.rm = T),
                                         pct_MR = sum(Pct_Cov_MR, na.rm = T),

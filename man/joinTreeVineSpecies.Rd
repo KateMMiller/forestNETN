@@ -57,6 +57,8 @@ If more than one panel is selected, specify by c(1, 3), for example.}
 \item{dist_m}{Filter trees by a distance that is less than or equal to the specified distance in meters
 of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a data frame for every tree visit with at least one vine condition recorded. Trees
@@ -67,6 +69,7 @@ This function compiles vine species data for live trees only. Must run importDat
 Abandoned plots and incomplete visits are excluded from function.
 }
 \examples{
+\dontrun{
 importData()
 # compile vine data for all parks in cycle 3, excluding QAQC visits
 vines_c3 <- joinTreeVineSpecies(from = 2014, to = 2017, QAQC = FALSE)
@@ -77,5 +80,6 @@ vines_exo <- joinTreeVineSpecies(speciesType = 'exotic')
 # compile vine data for ROVA in 2019, including QAQC visits
 ROVA_vines <- joinTreeVineSpecies(park = "ROVA", from = 2019, to = 2019,
                                  QAQC = TRUE)
+}
 
 }

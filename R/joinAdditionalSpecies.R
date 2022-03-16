@@ -52,16 +52,18 @@
 #' \item{"invasive"}{Returns species on the Indicator Invasive List}
 #' }
 #'
-#' @return Returns a dataframe with a row for each species recorded during the timed search per visit.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile invasive species found in plot search in SARA for all years
-#' SARA_quads <- joinAdditionalSpecies.R(park = 'SARA', speciesType = 'invasive')
+#' SARA_quads <- joinAdditionalSpecies(park = 'SARA', speciesType = 'invasive')
 #'
 #' # compile all species, including QAQC visits for parks in cycle 3
-#' native_quads <- joinQuadSpecies(from = 2014, to = 2017, QAQC = TRUE)
+#' native_quads <- joinAdditionalSpecies(from = 2014, to = 2017, QAQC = TRUE)
+#' }
 #'
+#' @return Returns a dataframe with a row for each species recorded during the timed search per visit.
 #' @export
 #'
 #------------------------
@@ -69,7 +71,7 @@
 #------------------------
 joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
                             locType = c('VS', 'all'), eventType = c('complete', 'all'),
-                            speciesType = c('all', 'native', 'exotic', 'invasive'), ...){
+                            speciesType = c('all', 'native', 'exotic', 'invasive')){
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
                     c("all", "ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"))
@@ -85,11 +87,10 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the quadrat data
-  tryCatch(addspp_vw <- get("COMN_AdditionalSpecies", envir = VIEWS_NETN) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                   SQAddSppCode, SQAddSppNotes, TSN, ScientificName, ConfidenceClassCode,
-                   IsCollected, Note),
-             error = function(e){stop("COMN_AdditionalSpecies view not found. Please import view.")})
+  tryCatch(addspp_vw <- get("AdditionalSpecies_NETN", envir = VIEWS_NETN) %>%
+             select(Plot_Name, PlotID, EventID, SQAddSppCode, SQAddSppNotes, TSN, ScientificName,
+                    ConfidenceClassCode, IsCollected, Note),
+             error = function(e){stop("AdditionalSpecies_NETN view not found. Please import view.")})
 
   taxa_wide <- force(prepTaxa())
 
@@ -98,7 +99,7 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartDate, StartYear, cycle, IsQAQC)
+           EventID, SampleDate, SampleYear, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -131,7 +132,7 @@ joinAdditionalSpecies <- function(park = 'all', from = 2006, to = 2021, QAQC = F
 
   addspp_final <- addspp_comb %>% select(Plot_Name, Network, ParkUnit, ParkSubUnit,
                                          PlotTypeCode, PanelCode, PlotCode, PlotID,
-                                         EventID, IsQAQC, StartYear, StartDate, cycle,
+                                         EventID, IsQAQC, SampleYear, SampleDate, cycle,
                                          SQAddSppCode, TSN, ScientificName, addspp_present,
                                          Exotic, InvasiveNETN, Confidence, IsCollected, Note,
                                          SQAddSppNotes)

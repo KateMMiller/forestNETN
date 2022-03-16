@@ -65,16 +65,22 @@
 #' \item{"averages"}{Returns only the plot-level average cover and percent frequency per species.}
 #' }
 #'
+#' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+#' If more than one panel is selected, specify by c(1, 3), for example.
+#'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with shrub data collected in microplots
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # native shrubs in MORR all years
 #' native_shrubs <- joinMicroShrubData(park ='MORR', speciesType = 'native')
 #'
 #' # all parks with exotic shrubs in most recent survey
 #' exotic_shrubs <- joinMicroShrubData(from = 2015, to = 2018, speciesType = 'exotic')
-#'
+#' }
 #' @export
 #'
 #------------------------
@@ -102,19 +108,20 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the shrub data
-  tryCatch(shrubs <- get("COMN_MicroplotShrubs", envir = env) %>%
-             select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, SQShrubCode,
-                    MicroplotCode, TSN, ScientificName, CoverClassCode, CoverClassLabel),
-           error = function(e){stop("COMN_MicroplotShrubs view not found. Please import view.")})
+  tryCatch(shrubs <- get("MicroplotShrubs_NETN", envir = env) %>%
+             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+                    IsQAQC, SQShrubCode, MicroplotCode, TSN, ScientificName, CoverClassCode,
+                    CoverClassLabel),
+           error = function(e){stop("MicroplotShrubs_NETN view not found. Please import view.")})
 
   taxa_wide <- force(prepTaxa())
 
   # subset with EventID from plot_events to make function faster
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = eventType,
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
     select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-           EventID, StartYear, StartDate, cycle, IsQAQC)
+           EventID, SampleYear, SampleDate, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -123,7 +130,7 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   shrub_evs <- filter(shrubs, EventID %in% pe_list) %>%
                left_join(plot_events, .,
                          by = intersect(names(plot_events), names(.))) %>%
-               filter(!(StartYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
+               filter(!(SampleYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
 
   shrub_tax <- left_join(shrub_evs,
                          taxa_wide[, c("TSN", "ScientificName", "Exotic", "InvasiveNETN", "Shrub", "Vine")],
@@ -152,20 +159,20 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                                          CoverClassCode == "8" ~ 97.5,
                                                          CoverClassCode == "PM" ~ NA_real_,
                                                          TRUE ~ 0),
-                                     Pct_Cov = case_when(StartYear < 2010 ~ NA_real_,
-                                                         StartYear >= 2010 & SQShrubCode %in% c("NS", "ND") ~ NA_real_,
-                                                         StartYear >= 2010 & ScientificName == "None present" ~ 0,
+                                     Pct_Cov = case_when(SampleYear < 2010 ~ NA_real_,
+                                                         SampleYear >= 2010 & SQShrubCode %in% c("NS", "ND") ~ NA_real_,
+                                                         SampleYear >= 2010 & ScientificName == "None present" ~ 0,
                                                          TRUE ~ Pct_Cov1),
-                                     Txt_Cov = case_when(between(StartYear, 2006, 2009) ~ paste("Not Collected"),
-                                                         StartYear > 2009 & SQShrubCode == "NP" ~ "0%",
-                                                         StartYear > 2009 & SQShrubCode %in% c("NS", "ND") ~ "Not Sampled",
+                                     Txt_Cov = case_when(between(SampleYear, 2006, 2009) ~ paste("Not Collected"),
+                                                         SampleYear > 2009 & SQShrubCode == "NP" ~ "0%",
+                                                         SampleYear > 2009 & SQShrubCode %in% c("NS", "ND") ~ "Not Sampled",
                                                          TRUE ~ paste(CoverClassLabel))) %>%
                                     select(-Pct_Cov1)
 
   shrub_mic1$Txt_Cov <- ifelse(shrub_mic1$Txt_Cov == "-<1%", "<1%", shrub_mic1$Txt_Cov)
 
-  # table(shrub_mic1$StartYear, shrub_mic1$Pct_Cov, useNA = 'always')
-  # table(shrub_mic1$StartYear, shrub_mic1$Txt_Cov, useNA = 'always')
+  # table(shrub_mic1$SampleYear, shrub_mic1$Pct_Cov, useNA = 'always')
+  # table(shrub_mic1$SampleYear, shrub_mic1$Txt_Cov, useNA = 'always')
 
   shrub_wide <- shrub_mic1 %>% select(-SQShrubCode, -CoverClassCode, -CoverClassLabel) %>%
                                pivot_wider(names_from = "MicroplotCode",
@@ -186,26 +193,26 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
   shrub_comb3 <- shrub_comb2 %>%
                    mutate(
                           Pct_Cov_UR = case_when(is.na(Pct_Cov_UR) & (!Txt_Cov_UR %in% c("Permanently Missing", "Not Collected"))
-                                                   & StartYear > 2009 ~ 0,
+                                                   & SampleYear > 2009 ~ 0,
                                                  TRUE ~ Pct_Cov_UR),
                           Pct_Cov_B = case_when(is.na(Pct_Cov_B) & (!Txt_Cov_B %in% c("Permanently Missing", "Not Collected"))
-                                                   & StartYear > 2009 ~ 0,
+                                                   & SampleYear > 2009 ~ 0,
                                                 TRUE ~ Pct_Cov_B),
                           Pct_Cov_UL = case_when(is.na(Pct_Cov_UL) & (!Txt_Cov_UL %in% c("Permanently Missing", "Not Collected"))
-                                                   & StartYear > 2009 ~ 0,
+                                                   & SampleYear > 2009 ~ 0,
                                                  TRUE ~ Pct_Cov_UL),
 
                           Txt_Cov_UR = case_when(is.na(Txt_Cov_UR) & num_micros >= 1 &
-                                                   between(StartYear, 2006, 2009) ~ "Not Collected",
-                                                 is.na(Txt_Cov_UR) & StartYear > 2009 ~ "0%",
+                                                   between(SampleYear, 2006, 2009) ~ "Not Collected",
+                                                 is.na(Txt_Cov_UR) & SampleYear > 2009 ~ "0%",
                                                  TRUE ~ Txt_Cov_UR),
-                          Txt_Cov_UL = case_when(StartYear == 2006 ~ "Not Sampled",
-                                                 is.na(Txt_Cov_UL) & between(StartYear, 2007, 2009) ~ "Not Collected",
-                                                 is.na(Txt_Cov_UL) & StartYear > 2009 ~ "0%",
+                          Txt_Cov_UL = case_when(SampleYear == 2006 ~ "Not Sampled",
+                                                 is.na(Txt_Cov_UL) & between(SampleYear, 2007, 2009) ~ "Not Collected",
+                                                 is.na(Txt_Cov_UL) & SampleYear > 2009 ~ "0%",
                                                  TRUE ~ Txt_Cov_UL),
-                          Txt_Cov_B = case_when(StartYear == 2006 ~ "Not Sampled",
-                                                 is.na(Txt_Cov_B) & between(StartYear, 2007, 2009) ~ "Not Collected",
-                                                 is.na(Txt_Cov_B) & StartYear > 2009 ~ "0%",
+                          Txt_Cov_B = case_when(SampleYear == 2006 ~ "Not Sampled",
+                                                 is.na(Txt_Cov_B) & between(SampleYear, 2007, 2009) ~ "Not Collected",
+                                                 is.na(Txt_Cov_B) & SampleYear > 2009 ~ "0%",
                                                  TRUE ~ Txt_Cov_B),
                           num_pres = ifelse(ScientificName == 'None present', 0, num_pres))
 
@@ -216,20 +223,20 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
                                         shrub_comb3$num_micros, NA_real_
   )
 
-  shrub_comb3$shrub_avg_cov[shrub_comb3$StartYear > 2009 & shrub_comb3$ScientificName == "None present"] <- 0
+  shrub_comb3$shrub_avg_cov[shrub_comb3$SampleYear > 2009 & shrub_comb3$ScientificName == "None present"] <- 0
   shrub_comb3$shrub_pct_freq <- as.numeric(NA)
   shrub_comb3$shrub_pct_freq <- shrub_comb3$num_pres/shrub_comb3$num_micros * 100
 
   # When 1 microplot has a None present, but other micros have species, None present is still listed in the final
   # dataset. Next lines clean this up
-  shrub_clean <- shrub_comb3 %>% group_by(Plot_Name, StartYear, IsQAQC) %>%
+  shrub_clean <- shrub_comb3 %>% group_by(Plot_Name, SampleYear, IsQAQC) %>%
                                  mutate(count_spp = sum(ScientificName != "None present")) %>%
                                  filter(!(ScientificName == "None present" & count_spp > 0)) %>%
                                  select(-count_spp)
 
   # Clean up column name order
   req_cols <- c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode",
-                "PlotCode", "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle",
+                "PlotCode", "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "cycle",
                 "TSN", "ScientificName")
 
   taxa_cols <- c("Exotic", "InvasiveNETN", "Shrub", "Vine")

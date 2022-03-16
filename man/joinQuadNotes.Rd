@@ -37,6 +37,9 @@ joinQuadNotes(
 \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 \item{TRUE}{Returns all visits, including QAQC visits}}}
 
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
 \item{locType}{Allows you to only include plots that are part of the GRTS sample design or
 include all plots, such as deer exclosures.
 \describe{
@@ -48,6 +51,8 @@ include all plots, such as deer exclosures.
 \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
 \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
 associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a dataframe with all quadrat-related notes. Only returns visits with notes. The Note_Info
@@ -61,9 +66,10 @@ This function combines quadrat-level notes from Quadrat Data and Quadrat Species
 species level notes in the Quadrat Species Tab.
 }
 \examples{
+\dontrun{
 importData()
 # compile quadrat data for invasive species in WEFA for 2019
 WEFA_quadnotes <- joinQuadNotes(park = 'WEFA', from = 2019, to = 2019)
-
+}
 
 }

@@ -54,6 +54,8 @@ inputs are "short" and "verbose".}
 \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
 \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
 associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with recorded disturbances
@@ -63,10 +65,13 @@ This function combines stand disturbance data for each plot. Visits without dist
 Must run importData first.
 }
 \examples{
+\dontrun{
 importData()
 # import 4 years of MABI stand disturbances
 stand_df <- joinStandDisturbance(park = 'MABI', from = 2015, to = 2019)
 
 # import all visits, including QAQC, from 2019 in ACAD. Only return important data fields.
 acad_stand <- joinStandDisturbance(park = ACAD, from = 2019, to = 2019, QAQC = TRUE)
+}
+
 }

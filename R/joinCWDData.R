@@ -34,11 +34,6 @@
 #' \item{"VS"}{Only include plots that are part of the Vital Signs GRTS sample design}
 #' \item{"all"}{Include all plots, such as plots in deer exclosures or test plots.}}
 #'
-#' @param eventType Allows you to include only complete sampling events or all sampling events
-#' \describe{
-#' \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
-#' \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
-#' associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}
 #'
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1, 3), for example.
@@ -52,9 +47,12 @@
 #' \item{"acres"}{Returns CWD volume as cubic ft/acre}
 #'}
 #'
+#' @param ... Other arguments passed to function.
+#'
 #' @return returns a dataframe with CWD volume for each plot, species, decay class combination
 #'
 #' @examples
+#' \dontrun{
 #' importData() #imports data
 #'
 #' # Compile CWD data for MABI for most recent survey and return in ft^3/acre
@@ -62,7 +60,7 @@
 #'
 #' # Compile CWD data for all parks and years in m^3/ha, including QAQC events.
 #' cwd_data <- joinCWDData(park = 'all', QAQC = TRUE)
-#'
+#' }
 #' @export
 #'
 #------------------------
@@ -86,12 +84,12 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the CWD data
-  tryCatch(cwd <- get("COMN_CWD", envir = env),
-           error = function(e){stop("COMN_CWD view not found. Please import view.")}
+  tryCatch(cwd <- get("CWD_NETN", envir = env),
+           error = function(e){stop("CWD_NETN view not found. Please import view.")}
            )
 
-  tryCatch(slopes <- get("COMN_StandSlopes", envir = env),
-           error = function(e){stop("COMN_StandSlopes view not found. Please import view.")}
+  tryCatch(slopes <- get("StandSlopes_NETN", envir = env),
+           error = function(e){stop("StandSlopes_NETN view not found. Please import view.")}
            )
 
   cwd$Plot_Name <- paste(cwd$ParkUnit,
@@ -100,25 +98,22 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
   slopes$Plot_Name <- paste(slopes$ParkUnit,
                             stringr::str_pad(slopes$PlotCode, 3, side = 'left', "0"), sep = "-")
 
-  cwd <- cwd[ , c("Plot_Name", "PlotID", "EventID", "Network", "ParkUnit", "ParkSubUnit",
-                  "PlotTypeCode", "PlotTypeLabel", "PlotCode", "IsAbandoned", "PanelCode",
-                  "PanelLabel", "StartDate","IsQAQC", "StartYear", "SQTransectCode", "SQTransectLabel",
-                  "SQTransectNotes", "TransectCode", "TransectLabel", "TaxonID", "TSN",
-                  "ScientificName", "WoodTypeCode", "WoodTypeLabel", "Distance", "Diameter", "Length",
-                  "DecayClassCode", "IsHollow", "MultiCrossCode", "MultiCrossLabel", "CWDNote")]
+  cwd <- cwd[ , c("Plot_Name", "PlotID", "EventID", "SampleDate","IsQAQC", "SampleYear", "SQTransectCode",
+                  "SQTransectNotes", "TransectCode", "TaxonID", "TSN",
+                  "ScientificName", "WoodTypeCode", "Distance", "Diameter", "Length",
+                  "DecayClassCode", "IsHollow", "MultiCrossCode", "CWDNote")]
 
-  slopes <- slopes[ , c("Plot_Name", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PlotTypeLabel",
-                        "PlotCode", "IsAbandoned", "PanelCode", "PanelLabel", "StartDate",
-                        "IsQAQC", "StartYear", "TransectCode", "CWDSlope", "EventID", "PlotID")]
+  slopes <- slopes[ , c("Plot_Name", "SampleDate", "IsQAQC", "SampleYear", "TransectCode",
+                        "CWDSlope", "EventID", "PlotID")]
 
   # Pull in the slopes from the first visit to calculate CWD volume for QAQC visits
   slopes_QAQC1 <- slopes[slopes$IsQAQC == TRUE,
-                         c("Plot_Name", "StartYear", "StartDate", "IsQAQC", "EventID", "PlotID")]
+                         c("Plot_Name", "SampleYear", "SampleDate", "IsQAQC", "EventID", "PlotID")]
   slopes_init <- slopes[slopes$IsQAQC == FALSE, ]
 
   slopes_QAQC <- merge(slopes_QAQC1,
-                       subset(slopes, slopes$IsQAQC == FALSE, select = c(-StartDate, -IsQAQC, -EventID, -PlotID)),
-                       by = c("Plot_Name", "StartYear"), all.x = T, all.y = F)
+                       subset(slopes, slopes$IsQAQC == FALSE, select = c(-SampleDate, -IsQAQC, -EventID, -PlotID)),
+                       by = c("Plot_Name", "SampleYear"), all.x = T, all.y = F)
 
   slopes_final <- rbind(slopes_init, slopes_QAQC)
 
@@ -133,15 +128,15 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
                                    slope = pctslope)
 
   # Summarize pieces by transect, distance, species, decay class
-  cwd_sum2 <- cwd_sum %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                   StartYear, StartDate, IsQAQC, PanelCode, TransectCode, hdist,
+  cwd_sum2 <- cwd_sum %>% group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC,
+                                   TransectCode, hdist,
                                    ScientificName, TSN, DecayClassCode) %>%
                           summarize(diam = sum(diam, na.rm = TRUE), slope = first(slope),
                                     .groups = "drop")
 
   # Summarize pieces by transect, species, decay class
-  cwd_sum3 <- cwd_sum2 %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                    StartYear, StartDate, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
+  cwd_sum3 <- cwd_sum2 %>% group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC,
+                                    TSN, ScientificName, DecayClassCode) %>%
                            summarize(CWD_Vol = ifelse(is.na(sum(diam)), 0, sum(hdist*diam)),
                                      CWD_num = sum(!is.na(diam)),
                                      slope = first(slope),
@@ -149,16 +144,15 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
 
   # Bring in SQ for events missing at least 1 transect
   cwd_sq <- cwd %>% filter(SQTransectCode != "PM") %>%
-                    group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                             StartYear, StartDate, IsQAQC, PanelCode) %>%
+                    group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC) %>%
                     summarize(num_trans = length(unique(TransectCode)),
                               .groups = 'drop')
 
   cwd_sum4 <- merge(cwd_sum3, cwd_sq, by = intersect(names(cwd_sum3), names(cwd_sq)), all.x = TRUE, all.y = TRUE)
   #table(complete.cases(cwd_sum4$CWD_Vol)) # All complete
 
-  cwd_vol1 <- cwd_sum4 %>% group_by(Plot_Name, PlotID, EventID, Network, ParkUnit, ParkSubUnit,
-                                   StartYear, StartDate, IsQAQC, PanelCode, TSN, ScientificName, DecayClassCode) %>%
+  cwd_vol1 <- cwd_sum4 %>% group_by(Plot_Name, PlotID, EventID, SampleYear, SampleDate, IsQAQC,
+                                    TSN, ScientificName, DecayClassCode) %>%
                           summarize(CWD_Vol = sum(CWD_Vol, na.rm = TRUE)/first(num_trans), .groups = 'drop')
 
 
@@ -166,14 +160,14 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
      cwd_vol1 %>% mutate(CWD_Vol = CWD_Vol * 35.314667/2.4710538) # 35.314667 is the #feet^3 in 1 m^3. 2.4710538 is #ac in 1 ha.
    } else if (units == 'ha'){cwd_vol1}
 
-  # cwd_vol_check <- unique(cwd_vol[cwd_vol$IsQAQC == FALSE, c("ParkUnit", "Plot_Name", "StartYear", "IsQAQC")])
-  # table(cwd_vol_check$ParkUnit, cwd_vol_check$StartYear) # checks out
+  # cwd_vol_check <- unique(cwd_vol[cwd_vol$IsQAQC == FALSE, c("ParkUnit", "Plot_Name", "SampleYear", "IsQAQC")])
+  # table(cwd_vol_check$ParkUnit, cwd_vol_check$SampleYear) # checks out
 
   plot_events <- force(joinLocEvent(park = park, from = from , to = to, QAQC = QAQC,
                                     panels = panels, locType = locType, eventType = "complete",
-                                    abandoned = FALSE, output = 'short')) %>%
+                                    abandoned = FALSE, output = 'short', ...)) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                        EventID, StartDate, StartYear, cycle, IsQAQC)
+                        EventID, SampleDate, SampleYear, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -181,10 +175,10 @@ joinCWDData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE,
                      cwd_vol, by = intersect(names(plot_events), names(cwd_vol)),
                      all.x = TRUE, all.y = FALSE) %>%
                mutate(ScientificName = ifelse(is.na(ScientificName), paste0("None present"), ScientificName)) %>%
-               arrange(Plot_Name, StartYear, IsQAQC)
+               arrange(Plot_Name, SampleYear, IsQAQC)
 
   cwd_final <- if(output == 'short'){
-    cwd_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, StartYear, StartDate, cycle,
+    cwd_merge %>% select(Plot_Name, ParkUnit, ParkSubUnit, SampleYear, SampleDate, cycle,
                          IsQAQC, TSN, ScientificName, DecayClassCode, CWD_Vol)
   } else {cwd_merge}
 

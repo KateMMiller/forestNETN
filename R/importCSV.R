@@ -16,12 +16,14 @@
 #' @return NETN database views in specified environment
 #'
 #' @examples
+#' \dontrun{
 #' # Import individual csvs into global environment
 #' importCSV(path = "C:/Forest_Health/exports/NETN", new_env = FALSE)
 #'
 #' # Import zipped csvs into VIEWS_NETN environment
 #' path <- "C:/Forest_Health/exports/NETN"
 #' importCSV(path = path, zip_name = "NETN_Forest_20210406.zip")
+#' }
 #'
 #' @export
 
@@ -36,14 +38,14 @@ importCSV<- function(path = NA, new_env = TRUE, zip_name = NA){
 
   options(scipen = 100) # For TSNs
 
-  view_list <- c("COMN_AdditionalSpecies", "COMN_CWD", "COMN_EventObservers", "COMN_Events",
-                 "COMN_MicroplotShrubs", "COMN_Plots", "COMN_QuadCharacter",
-                 "COMN_SoilHeader", "COMN_SoilSample", "COMN_SoilLab",
-                 "COMN_StandDisturbances", "COMN_StandForestFloor", "COMN_StandPlantCoverStrata",
-                 "COMN_StandSlopes", "COMN_StandTreeHeights", "COMN_Taxa", "COMN_TreesByEvent",
-                 "COMN_TreesConditions", "COMN_TreesFoliageCond", "COMN_TreesVine",
-                 "NETN_MicroplotSaplings", "NETN_MicroplotSaplingsCount",
-                 "NETN_MicroplotSeedlings", "NETN_QuadSpecies", "NETN_StandInfoPhotos")
+  view_list <- c("AdditionalSpecies_NETN", "CWD_NETN", "EventObservers_NETN", "Events_NETN",
+                 "MicroplotSaplings_NETN", "MicroplotSaplingsCount_NETN", "MicroplotSeedlings_NETN",
+                 "MicroplotShrubs_NETN", "Plots_NETN", "QuadCharacter_NETN", "QuadNotes_NETN",
+                 "QuadSpecies_NETN", "SoilHeader_NETN", "SoilLab_NETN", "SoilSample_NETN",
+                 "StandDisturbances_NETN", "StandForestFloor_NETN", "StandInfoPhotos_NETN",
+                 "StandPlantCoverStrata_NETN", "StandSlopes_NETN", "StandTreeHeights_NETN",
+                 "Taxa_NETN", "TreesByEvent_NETN", "TreesConditions_NETN", "TreesFoliageCond_NETN",
+                 "TreesVine_NETN")
 
   # Make sure zip file exists and all the views are included
   if(!is.na(zip_name)){

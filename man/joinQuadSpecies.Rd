@@ -14,6 +14,7 @@ joinQuadSpecies(
   eventType = c("complete", "all"),
   speciesType = c("all", "native", "exotic", "invasive"),
   valueType = c("all", "midpoint", "classes", "averages"),
+  returnNoCover = FALSE,
   ...
 )
 }
@@ -69,6 +70,12 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"classes"}{Returns the text cover class definitions, with Txt prefix.}
 \item{"averages"}{Returns only the plot-level average cover and percent frequency.}
 }}
+
+\item{returnNoCover}{Logical. If FALSE (default), drops species with 0% cover across all quadrats. If TRUE,
+includes species percent cover across all quadrats. Argument is helpful for generating a plot species list
+(use TRUE) or calculating average cover (use FALSE).}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a dataframe with a row for each species/visit combination for quadrat data
@@ -79,11 +86,12 @@ years, and visit type. Note that the Shrub guild also includes woody vine specie
 quadrat-specific notes, use the joinQuadNotes() function.
 }
 \examples{
+\dontrun{
 importData()
 # compile quadrat data for invasive species in SARA for all years
 SARA_quads <- joinQuadSpecies(park = 'SARA', speciesType = 'invasive')
 
 # compile native species only for all parks in cycle 3
 native_quads <- joinQuadSpecies(speciesType = 'native', from = 2014, to = 2017)
-
+}
 }

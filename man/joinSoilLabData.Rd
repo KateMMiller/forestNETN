@@ -11,8 +11,7 @@ joinSoilLabData(
   QAQC = FALSE,
   panels = 1:4,
   locType = c("VS", "all"),
-  layer = c("all", "O", "A"),
-  ...
+  layer = c("all", "O", "A")
 )
 }
 \arguments{
@@ -65,11 +64,12 @@ as the weight. Must run importData first. Note that Earthworms are summarized in
 visits and plots that haven't been abandoned. Note that data starts at 2007 because 2006 methods were pretty different.
 }
 \examples{
+\dontrun{
 importData() #imports using default odbc
 # join only O horizon data for most recent cycle in ACAD. Note soil chemistry data are typically a year behind plot data.
 soil_ACAD_O <- joinSoilLabData(park = 'ACAD', from = 2015, to = 2018, layers = 'O')
 
 # join all park data from all layers and all years
 soil_df_all <- joinSoilLabData(from = 2007, to = 2018, layers = 'all')
-
+}
 }

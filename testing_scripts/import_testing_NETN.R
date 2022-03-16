@@ -3,10 +3,10 @@ library(devtools)
 install_github("KateMMiller/forestNETN", ref = "sql_overhaul")
 
 # Load library
-library(forestNETN)
+library(forestMIDN)
 exportCSV(zip = T) # Should fail with useful error message
 
-#----------------------
+#----------------------exa
 # Flavors of importData() and error handling explained
 #---------------------
 importData() # Import with defaults. Should work if you have a local instance installed
@@ -37,7 +37,7 @@ exportCSV(path = path, zip = TRUE) # outputs a zip with csvs with date at the en
 #----------------------
 # Flavors of importCSV() and error handling explained
 #---------------------
-importCSV() # Will fail quickly, because requires a path to import csvs or zip
+importCSV("D:/NETN/R_Dev/forestNETN") # Will fail quickly, because requires a path to import csvs or zip
 importCSV(path = ptah) # Will fail quickly, because path misspelled/doesn't exist
 importCSV(path = path) # Default import puts views into VIEWS_NETN
 importCSV(path = path, new_env = FALSE) # import individual csvs and put in global environment
@@ -49,4 +49,4 @@ importCSV(path = path, zip_name =
 # change file name to the YYYYMMDD of your zip file.
 importCSV(path = path, zip_name = "NETN_Froest_20210220.zip") # Will fail quickly b/c zip_name misspelled
 
-
+importCSV("D:/NETN/R_Dev/forestNETN")

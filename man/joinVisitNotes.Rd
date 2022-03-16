@@ -38,6 +38,9 @@ joinVisitNotes(
 \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 \item{TRUE}{Returns all visits, including QAQC visits}}}
 
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
 \item{locType}{Allows you to only include plots that are part of the GRTS sample design or
 include all plots, such as deer exclosures.
 \describe{
@@ -54,6 +57,8 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 \item{"visit"}{Default. Only return notes recorded at the visit level.}
 \item{"all"}{Return visit and plot-level notes.}
 }}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a dataframe with all notes related to a plot and visit. Only returns records with notes. The Note_Info
@@ -64,8 +69,10 @@ help interpret the note.
 This function combines all notes collected for a given plot and/or visit
 }
 \examples{
+\dontrun{
 importData()
 # compile notes for plots sampled in MORR in 2019
 MORR_notes <- joinVisitNotes(park = 'MORR', from = 2019, to = 2019, noteType = 'visit')
+}
 
 }

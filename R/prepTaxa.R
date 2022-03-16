@@ -10,9 +10,12 @@
 #' @return Returns a dataframe with cover class midpoints for each quadrat and includes guild for each species.
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # reshape the plant taxa lookup to wide
 #' taxa_wide <- prepTaxa()
+#'}
+#'
 #'
 #' @export
 #'
@@ -21,7 +24,7 @@ prepTaxa <- function(){
 
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
-  tryCatch(taxa <- get("COMN_Taxa", envir = env) %>%
+  tryCatch(taxa <- get("Taxa_NETN", envir = env) %>%
              select(TaxonID, TSN, ScientificName, CommonName, Order, Family,
                     Genus, Species, SubSpecies, IsExotic, InvasiveNETN, IsCanopyExclusion, IsFernAlly,
                     TaxonGroupLabel, DeerIndicatorTree, DeerIndicatorHerb), # add FilterMIDN for MIDN

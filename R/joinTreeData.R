@@ -74,11 +74,13 @@
 #' of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 #' example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.
 #'
+#'
 #' @return returns a dataframe with plot-level and visit-level tree data. Returns records for all specified
 #' plots and events, even if no trees meet the specified arguments (eg dead or exotic trees), although all
 #' associated data (eg TagCode, DBH), will be NA for those plot/events. ScientificName will be "None present".
 #'
 #' @examples
+#' \dontrun{
 #' importData()
 #' # compile tree data in all parks for live trees only in cycle 3, excluding QAQC visits
 #' live_trees <- joinTreeData(status = 'live', from = 2014, to = 2017)
@@ -94,7 +96,7 @@
 #'
 #' # compile all visits in ROVA for 2019, including QAQC visits
 #' ROVA_trees <- joinTreeData(park = "ROVA", from = 2019, to = 2019, QAQC = TRUE)
-#'
+#'}
 #' @export
 #'
 #------------------------
@@ -102,7 +104,8 @@
 #------------------------
 joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
                          status = c('all', 'active', 'live', 'dead'), speciesType = c('all', 'native','exotic', 'invasive'),
-                         canopyPosition = c("all", "canopy"), dist_m = NA, eventType = c('complete', 'all'), output = 'short', ...){
+                         canopyPosition = c("all", "canopy"), dist_m = NA, eventType = c('complete', 'all'),
+                         output = 'short'){
 
   # Match args and class
   status <- match.arg(status)
@@ -121,19 +124,19 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
 
   # Prepare the tree data
-  tryCatch(tree_vw <- get("COMN_TreesByEvent", envir = env) %>%
-                      select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, TreeLegacyID,
-                             TagCode, TaxonID, TSN, ScientificName, Fork, Azimuth, Distance, DBHcm, IsDBHVerified,
-                             IsDBHUnusual, TreeStatusCode, TreeStatusLabel, CrownClassCode, CrownClassLabel,
-                             DecayClassCode, HWACode, HWALabel, BBDCode, BBDLabel, TreeEventNote),
+  tryCatch(tree_vw <- get("TreesByEvent_NETN", envir = env) %>%
+                      select(Plot_Name, PlotID, EventID, TagCode, TaxonID, TSN,
+                             ScientificName, Fork, Azimuth, Distance, DBHcm, IsDBHVerified,
+                             IsDBHUnusual, TreeStatusCode, CrownClassCode, CrownClassLabel,
+                             DecayClassCode, HWACode, BBDCode, TreeEventNote),
 
-           error = function(e){stop("COMN_TreesByEvent view not found. Please import view.")}
+           error = function(e){stop("TreesByEvent_NETN view not found. Please import view.")}
   )
 
-  tryCatch(foliage_vw <- get("COMN_TreesFoliageCond", envir = env) %>%
-                         select(PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC,
-                                TreeLegacyID, TagCode, TotalFoliageConditionCode, TotalFoliageConditionLabel) %>% unique(),
-           error = function(e){stop("COMN_TreeFoliageCond view not found. Please import view.")})
+  tryCatch(foliage_vw <- get("TreesFoliageCond_NETN", envir = env) %>%
+                         select(Plot_Name, PlotID, EventID, TagCode, TotalFoliageConditionCode,
+                                TotalFoliageConditionLabel) %>% unique(),
+           error = function(e){stop("TreeFoliageCond_NETN view not found. Please import view.")})
 
 
   taxa_wide <- prepTaxa()
@@ -143,7 +146,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
                                     panels = panels, locType = locType, eventType = eventType,
                                     abandoned = FALSE, output = 'short')) %>%
                        select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode, PlotCode, PlotID,
-                       EventID, StartDate, StartYear, cycle, IsQAQC)
+                              EventID, SampleDate, SampleYear, cycle, IsQAQC)
 
   if(nrow(plot_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -183,13 +186,13 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
   tree_taxa$DecayClassCode <- suppressWarnings(as.numeric(tree_taxa$DecayClassCode))
 
   tree_taxa <- tree_taxa %>% mutate(Pct_Tot_Foliage_Cond = as.numeric(
-                                      case_when(TotalFoliageConditionCode == "0" ~ 0,
-                                                TotalFoliageConditionCode == "1" ~ 5.5,
-                                                TotalFoliageConditionCode == "2" ~ 30,
-                                                TotalFoliageConditionCode == "3" ~ 70,
-                                                TotalFoliageConditionCode == "4" ~ 95,
-                                                TotalFoliageConditionCode == "NC" ~ NA_real_,
-                                                TRUE ~ NA_real_)),
+                                    case_when(TotalFoliageConditionCode == "0" ~ 0,
+                                              TotalFoliageConditionCode == "1" ~ 5.5,
+                                              TotalFoliageConditionCode == "2" ~ 30,
+                                              TotalFoliageConditionCode == "3" ~ 70,
+                                              TotalFoliageConditionCode == "4" ~ 95,
+                                              TotalFoliageConditionCode == "NC" ~ NA_real_,
+                                              TRUE ~ NA_real_)),
                                     Txt_Tot_Foliage_Cond = TotalFoliageConditionLabel) %>%
                              select(-TotalFoliageConditionCode, -TotalFoliageConditionLabel) # fix . after next release
 
@@ -208,7 +211,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
 
   tree_merge <- left_join(plot_events, tree_dist,
                       by = intersect(names(plot_events), names(tree_dist))) %>%
-                arrange(Plot_Name, StartYear, IsQAQC, TagCode)
+                arrange(Plot_Name, SampleYear, IsQAQC, TagCode)
 
   # Handling plots with missing status or species specified.
   tree_merge$ScientificName <- ifelse(is.na(tree_merge$ScientificName), "None present", tree_merge$ScientificName)
@@ -218,7 +221,7 @@ joinTreeData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, loc
 
   tree_final <- if(output == 'short'){
       tree_merge[, c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
-                     "PlotID", "EventID", "IsQAQC", "StartYear", "StartDate", "cycle", "TSN", "ScientificName",
+                     "PlotID", "EventID", "IsQAQC", "SampleYear", "SampleDate", "cycle", "TSN", "ScientificName",
                      "TagCode", "Fork", "Azimuth", "Distance", "DBHcm", "IsDBHVerified", "TreeStatusCode",
                      "CrownClassCode", "DecayClassCode", "Pct_Tot_Foliage_Cond",
                      "HWACode", "BBDCode", "BA_cm2", "num_stems", "TreeEventNote")]

@@ -1,11 +1,11 @@
 Package: forestNETN
 Type: Package
 Title: Package for importing, joining and querying NETN forest database tables
-Version: 1.0
+Version: 1.01
 Author: Kate Miller
 Maintainer: Kate Miller <kathryn_miller@nps.gov>
 Description: This package contains functions that import database views from the NETN forest backend and or exported CSVs from the backend and provides functions to query and summarize NETN forest data.
-License: Public Domain
+License: MIT + file LICENSE
 Depends:
     R(>= 4.0)
 Collate: 
@@ -50,9 +50,12 @@ Imports:
     magrittr,
     purrr,
     stringr,
-    tidyr
+    tidyr,
+    tidyselect
 Suggests: 
     cowplot,
+    DBI,
+    dbplyr,
     ggrepel,
-    RODBC,
+    odbc,
     zip

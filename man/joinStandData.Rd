@@ -54,6 +54,8 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 
 \item{output}{Allows you to return all columns or just the most important columns for analysis. Valid
 inputs are "short" and "verbose".}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with stand data attached to location and event data. Field names starting with "Pct" are midpoints
@@ -64,10 +66,13 @@ This function combines stand-level data for each plot, including cover by strata
 earthworms presence/absence, plot slope, canopy cover, etc. Must run importData first.
 }
 \examples{
+\dontrun{
 importData()
 # import 4 years of MABI stand data
 stand_df <- joinStandData(park = 'MABI', from = 2015, to = 2019)
 
 # import all visits, including QAQC, from 2019 in ACAD. Only return important data fields.
 acad_stand <- joinStandData(park = ACAD, from = 2019, to = 2019, QAQC = TRUE, output = 'short')
+}
+
 }

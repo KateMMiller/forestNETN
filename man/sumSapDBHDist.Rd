@@ -75,6 +75,8 @@ associated with that event. This feature is currently hard-coded in the function
 \item{"BA"}{Returns basal area in sq.m/ha}
 \item{"both"}{Returns noth stem density and BA/ha.}
 }}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with one row for each plot and either density, BA or both in 1cm size classes.
@@ -83,7 +85,8 @@ returns a dataframe with one row for each plot and either density, BA or both in
 This function calculates DBH distribution of live saplings by 1cm size classes. Must run importData first.
 }
 \examples{
+\dontrun{
 importData()
 sap_diam_dist <- sumSapDBHDist(park = 'ROVA', speciesType = 'native', from = 2015, to = 2018, units = 'BA')
-
+}
 }

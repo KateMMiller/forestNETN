@@ -4,9 +4,17 @@
 library(forestNETN)
 library(tidyverse)
 #importData()
+# ?importData()
+# importData(instance = 'local', server = "localhost", new_env = T) # release 1.0.21 with IsGerminant added to NETNquadspp
 
 path = "C:/Forest_Health/exports/NETN"
-importCSV(path = path)#, zip_name = "NETN_Forest_20210318.zip")
+list.files(path)
+
+#exportCSV(path, zip = TRUE)
+importCSV(path = path, zip_name = "NETN_Forest_20210409.zip") #includes soils views with my name changes
+
+#path = "C:/Forest_Health/exports/NETN"
+#importCSV(path = path, zip_name = "NETN_Forest_20210322.zip") # Release from 1.0.21
 # microbenchmark::microbenchmark(importData(),
 #                                importCSV("C:/Forest_Health/exports/NETN"),
 #                                times = 1) #importCSV is 4+ times faster
@@ -314,7 +322,6 @@ check_data(trht_comps, "Height", "Height_m") %>%
 
 table(trht_comps$Crown, trht_comps$CrownClassLabel) #all good
 
-#----- joinStandData -----
 names(VIEWS_NETN)
 # stand views: NETN_StandInfoPhotos, COMN_StandPlantCoverStrata, COMN_StandDisturbances,
 # COMN_StandForestFloor, COMN_StandSlopes, COMN_StandTreeHeights
@@ -480,6 +487,7 @@ netn_tree <- forestNETNarch::joinTreeData(from = 2006, to = 2019, locType = 'all
 #   filter(StartYear < 2020)
 
 #Subsets and Left joins early makes things a lot faster!
+# dplyr::left_join is WAY faster than merge
 microbenchmark::microbenchmark(
 tree_new <- joinTreeData(from = 2006, to = 2019, locType = 'all', eventType = 'complete', QAQC = TRUE,
                          output = 'verbose'),
@@ -488,11 +496,13 @@ tree_new2 <- joinTreeData(from = 2019, to = 2019, locType = 'all', eventType = '
 
 head(tree_new)
 
-tree_new <- joinTreeData(from = 2006, to = 2019, locType = 'all', eventType = 'complete', QAQC = TRUE,
+tree_new <- joinTreeData(from = 2006, to = 2019, locType = 'all', eventType = 'all', QAQC = TRUE,
                          output = 'verbose', status = 'all')
 
 head(joinTreeData(park = c("MIMA", "WEFA")))
-head(joinTreeData(park = c("MIMA", "WEFA"), from = 2006, to = 2009))
+test <- (joinTreeData(park = c("MIMA", "WEFA"), from = 2006, to = 2009))
+table(test$ParkUnit)
+
 head(joinTreeData(park = 'all', status = 'active'))
 
 trees_live <- joinTreeData(park = 'all', from = 2006, to = 2019, speciesType = 'all', locType = 'all',
@@ -530,11 +540,15 @@ tree_old <- merge(trees[,1:15], treedata[,1:16], by = "Tree_ID", all.x = T, all.
 plot_events_old <- forestNETNarch::joinLocEvent(from = 2006, to = 2019, QAQC = T, locType = 'all')
 
 #------------
-tree_old2 <- merge(plot_events_old, tree_old, by = c("Event_ID", "Location_ID"), all.x = T, all.y = T)
+plot_events_old <- forestNETNarch::joinLocEvent(locType = 'all', eventType = 'all')
+
+tree_old2 <- merge(plot_events_old, netn_tree, by = intersect(names(plot_events_old), names(netn_tree)),
+                   all.x = T, all.y = T)
 tree_old2$TagCode <- as.numeric(tree_old2$Tree_Number_NETN)
 head(tree_old2)
 
 unique(tree_old2$Event_ID[tree_old2$Plot_Name == "ACAD-029" & tree_old2$Year == 2010])
+names(tree_old2)
 
 tree_merge <- merge(tree_new, tree_old2[tree_old2$Location_ID !="8CC21CA9-9528-4A1D-A06D-64B95E89886D" &
   tree_old2$Event_ID != "3BF64BE2-7089-42B6-B610-09B3511BF1B4",],
@@ -605,13 +619,21 @@ decay_check<-check_trees(tree_merge, "Decay_Class_ID", "DecayClassCode")
 # THere are several DFs that had a decay class in original db, that are NA now. That's good.
 
 
-hwa_check <- check_trees(tree_merge, "HWACode", "HWA_Status")
+hwa_check <- check_trees(tree_merge, "HWALabel", "HWA_Status")
 hwa_check
+
 table(tree_old2$HWA_Status, tree_old2$Year, useNA = 'always')
+table(tree_merge$HWALabel, tree_merge$StartYear, useNA = 'always')
+
+hwa10p <- tree_merge %>% filter(StartYear > 2009)
+
+table(tree_merge$HWALabel, tree_merge$HWA_Status, tree_merge$StartYear, useNA = 'always')
+write.csv(tree_merge, "testing_scripts/tree_HWA_checking.csv", row.names = F)
 # Cycle one not treated correctly
 hwa_check <- tree_merge %>% filter(#ScientificName == "Tsuga canadensis" &
                                      is.na(HWACode))
 table(tree_merge$ScientificName, tree_merge$HWALabel, useNA = 'always')
+
 # TSUCAN Not Applicables are all on dead trees
 #The TreeEventHWA_Insert.sql script logic isn't quite right.
 #The start date in the CASE WHEN should be 1/1/2010 instead of 1/1/2009 (will change 48 PMs in 2009 to NC).
@@ -662,6 +684,7 @@ fol_check <- tree_merge %>% select(Plot_Name, StartYear, IsQAQC, TagCode, Scient
 #---------------------
 
 fol_cond <- joinTreeFoliageCond()
+head(fol_cond)
 fol_test <- joinTreeFoliageCond(park = "ACAD", from = 2016, to = 2019, speciesType = 'native',
                                 valueType = 'classes')
 head(fol_test)
@@ -670,3 +693,729 @@ head(fol_test)
 #---------------------
 # Tree Conditions
 #---------------------
+park = 'all'
+from = 2006
+to = 2019
+QAQC = T
+locType = 'all'
+eventType = 'all'
+panels = 1:4
+#status = 'all'
+# status = 'active'
+# status = 'dead'
+status = 'live'
+speciesType = 'all'
+dist_m <- NA
+# Vines did not migrate correctly
+# NETN correct condition counts
+  #H	    AD	BBD	BWA	CAVL CAVS	 CW	   DBT	EAB	 EB	  EHS 	G	GM	HWA	ID	NO	  OTH	RPS	SB	VIN	VOB
+  #15682	927	569	162	362	 349	3880	2412	2	   932	163	193	1	 206	30	1854	136	2	  2	  422	35
+table(VIEWS_NETN$COMN_TreesConditions$TreeConditionCode)
+head(VIEWS_NETN$COMN_TreesVine)
+table(VIEWS_NETN$COMN_TreesVine$VinePositionCode, VIEWS_NETN$COMN_TreesVine$ParkUnit)
+
+trcond <- joinTreeConditions(from = 2010, to = 2010, speciesType = 'exotic', QAQC = T)
+
+#------------------
+# Vines
+#------------------
+
+vines <- joinTreeVineSpecies()
+vine_test <- joinTreeVineSpecies(park = 'MABI')
+vine_test <- joinTreeVineSpecies(from = 2015, to = 2015)
+vine_test <- joinTreeVineSpecies(from = 2006, to = 2019, speciesType = 'exotic')
+
+#-----------------
+# Quadrat Character
+#-----------------
+library(forestNETN)
+library(tidyverse)
+#importData()
+
+path = "C:/Forest_Health/exports/NETN"
+importCSV(path = path, zip_name = "NETN_Forest_20210327.zip") # Release from 1.0.21 fixed IsGerminant
+forestNETNarch::importData()
+
+qchar_new <- joinQuadData(park = 'all', from = 2006, to = 2019, locType = 'all', eventType = 'all',
+                      valueType = 'all', QAQC= T)
+locev <- merge(loc, event, by = "Location_ID", all.x = T, all.y = T)
+
+drops <- anti_join(locev, plotevs_old, by = "Event_ID")
+
+plotevs_old <- forestNETNarch::joinLocEvent(park = 'all', from = 2006, to = 2019, eventType = 'all',
+                                            locType = 'all', QAQC = T, rejected = FALSE)
+
+qchar_old <- merge(plotevs_old, quadchr, by = intersect(names(plotevs_old), names(quadchr)), all.x = T, all.y = F) %>%
+             select(Plot_Name,Year, Event_QAQC, Quadrat_ID, UC:UR)
+quad_names = c("UC", "UR", "MR", "BR", "BC", "BL", "ML", "UL")
+head(qchar_old)
+
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 1] <- 0.1
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 2] <- 1.5
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 3] <- 3.5
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 4] <- 7.5
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 5] <- 17.5
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 6] <- 37.5
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 7] <- 62.5
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 8] <- 85
+qchar_old[ , quad_names][qchar_old[ , quad_names] == 9] <- 97.5
+
+qchar_old <- qchar_old %>% mutate(Cover_Type = case_when(Quadrat_ID == 2 ~ "Soil",
+                                                         Quadrat_ID == 3 ~ "Rock",
+                                                         Quadrat_ID == 4 ~ "Stem",
+                                                         Quadrat_ID == 5 ~ "Wood",
+                                                         Quadrat_ID == 6 ~ "Sphagnum",
+                                                         Quadrat_ID == 7 ~ "NonSphagnum",
+                                                         Quadrat_ID == 8 ~ "Lichens")) %>% # 9 = Herbs MIDN
+             select(Plot_Name, Year, Event_QAQC, Cover_Type, UC, UR, MR, BR, BC, BL, ML, UL)
+
+head(qchar_old)
+table(qchar_old$Cover_Type, useNA = 'always') # after dropping SARA.915, matches perfect
+table(qchar_new$CharacterLabel, useNA = 'always')
+names(qchar_old)
+names(qchar_new)
+
+check_qchr <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "IsQAQC", "CharacterLabel", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+quadchr_merge <- merge(qchar_new, qchar_old,
+                       by.x = c("Plot_Name", "StartYear", "IsQAQC", "CharacterLabel"),
+                       by.y = c("Plot_Name", "Year", "Event_QAQC", "Cover_Type"),
+                       all.x = T, all.y = T)
+
+check_qchr(quadchr_merge, "Pct_Cov_UC", "UC") # all good
+check_qchr(quadchr_merge, "Pct_Cov_UR", "UR") # all good
+check_qchr(quadchr_merge, "Pct_Cov_MR", "MR") # all good
+check_qchr(quadchr_merge, "Pct_Cov_BR", "BR") # all good
+check_qchr(quadchr_merge, "Pct_Cov_BC", "BC") # all good
+check_qchr(quadchr_merge, "Pct_Cov_BL", "BL") # all good
+check_qchr(quadchr_merge, "Pct_Cov_UL", "UL") # all good
+
+# Quadrat character data checks out
+
+#------------------------
+# A lot of functions rely on joinLocEvent, so benchmarking to see how much faster dplyr makes it
+microbenchmark::microbenchmark(
+  joinLocEvent(),
+  joinLocEvent(park = 'WEFA', from = 2019, to = 2019),
+  times = 5
+  )
+
+#-------------------------
+# Quadrat Species
+#-------------------------
+forestNETNarch::importData()
+park = 'all'
+from = 2006
+to = 2019
+QAQC = T
+locType = 'all'
+eventType = 'all'
+panels = 1:4
+#status = 'all'
+# status = 'active'
+# status = 'dead'
+status = 'live'
+speciesType = 'all'
+dist_m <- NA
+microbenchmark::microbenchmark(
+quadspp_old <- forestNETNarch::joinQuadData(from = 2006, to = 2019, QAQC = T, eventType = "all", locType = "all"),
+quadspp_new <- joinQuadSpecies(from = 2006, to = 2019, QAQC = T, eventType = 'all'),
+times = 5
+) # despite more cumbersome dataset, new function is faster.
+
+quadspp_new <- joinQuadSpecies(from = 2006, to = 2019,
+                               QAQC = T, eventType = 'all', locType = 'all', valueType = 'midpoint')
+nrow(quadspp_new[quadspp_new$IsGerminant == FALSE,])
+nrow(quadspp_old)
+
+quadspp_test <- joinQuadSpecies(park = 'ACAD', from = 2006, to = 2019, QAQC = T, eventType = 'all')
+quadspp_test <- joinQuadSpecies(park = 'ACAD', from = 2006, to = 2019, speciesType = 'invasive')
+quadspp_test <- joinQuadSpecies(park = 'MABI', speciesType= 'native')
+quadspp_test <- joinQuadSpecies(park = 'MABI', speciesType= 'invasive')
+quadspp_test <- joinQuadSpecies(park = 'MABI', speciesType= 'native')
+quadspp_test <- joinQuadSpecies(park = "ROVA", speciesType = 'native',
+                                eventType = "complete", valueType = 'averages')
+nrow(quadspp_test)
+head(quadspp_old)
+head(quadspp_new)
+
+# I changed how I'm handling germinants, so have to drop for now
+quadspp_old2 <- quadspp_old %>% #filter(!(avg.cover == 0 & germ.cover > 0)) %>%
+                                filter(Latin_Name != "No species") %>%
+                                mutate(germ_old = ifelse(germ.cover > 0, 1, 0))
+
+quadspp_merge <- full_join(quadspp_new %>% filter(IsGerminant == FALSE),
+                           quadspp_old2, by = c("Plot_Name" = "Plot_Name",
+                                               "StartYear" = "Year",
+                                               "IsQAQC" = "Event_QAQC",
+                                               "TSN" = "TSN")) %>%
+                 select(Plot_Name, PlotID, EventID, StartYear, cycle.x, cycle.y, IsQAQC,
+                        IsGerminant, germ_old, Confidence, TSN, ScientificName, Latin_Name,
+                        num_quads, quad_avg_cov,
+                        quad_pct_freq, avg.cover, avg.freq, Pct_Cov_UC: Pct_Cov_UL,
+                        UC, UR, MR, BR, BC, BL, ML, UL)
+head(quadspp_merge)
+names(quadspp_merge)
+
+check_qspp <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("PlotID", "EventID", "Plot_Name", "StartYear", "IsQAQC", "ScientificName", "Latin_Name",
+              "IsGerminant", "germ_old", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+quadspp_cov <- quadspp_merge %>% mutate(cov_diff = quad_avg_cov - avg.cover) %>%
+                                 filter(cov_diff > 0.01) %>%
+                                 select(PlotID, EventID, Plot_Name, StartYear, IsQAQC, TSN, ScientificName, num_quads,
+                                        quad_avg_cov, avg.cover, quad_pct_freq, avg.freq, cov_diff)
+
+quadfreq_cov <- quadspp_merge %>% mutate(freq_diff = quad_pct_freq - 100*(avg.freq)) %>%
+  filter(freq_diff > 0.01) %>%
+  select(PlotID, EventID, Plot_Name, StartYear, IsQAQC, TSN, ScientificName, num_quads,
+         quad_avg_cov, avg.cover, quad_pct_freq, avg.freq, freq_diff)
+
+# Unknown Spp ##s got swapped occassionally in the migration
+# see NETN_quad_spp_mismatch.xlsx for list of affected plots
+new_quads <- c("Pct_Cov_UC", "Pct_Cov_UR", "Pct_Cov_MR", "Pct_Cov_BR", "Pct_Cov_BC",
+               "Pct_Cov_BL", "Pct_Cov_ML", "Pct_Cov_UL")
+
+names(quadspp_merge)
+
+quadspp_merge[new_quads][quadspp_merge[new_quads] > 0] <- 1
+
+UC<-check_qspp(quadspp_merge, "Pct_Cov_UC", "UC") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_UC))
+
+UR<-check_qspp(quadspp_merge, "Pct_Cov_UR", "UR") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_UR))
+
+MR<-check_qspp(quadspp_merge, "Pct_Cov_MR", "MR") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_MR))
+
+BR<-check_qspp(quadspp_merge, "Pct_Cov_BR", "BR") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_BR))
+
+BC<-check_qspp(quadspp_merge, "Pct_Cov_BC", "BC") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_BC))
+
+BL<-check_qspp(quadspp_merge, "Pct_Cov_BL", "BL") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_BL))
+
+ML<-check_qspp(quadspp_merge, "Pct_Cov_ML", "ML") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_ML))
+
+UL<-check_qspp(quadspp_merge, "Pct_Cov_UL", "UL") %>% filter(germ_old == 0) %>%
+  filter(!is.na(Pct_Cov_UL))
+
+head(quadspp_merge)
+
+spp_check <- check_qspp(quadspp_merge, "ScientificName", "Latin_Name") %>% filter(germ_old == 0)
+
+
+#----------------------
+# Quad Notes
+#----------------------
+quadspp_test <- read.csv(paste0(path, "NETN_QuadSpecies.csv"))
+head(quadspp_test)
+
+# quadspp_wide <- quadspp_test %>% select(-QuadratLabel, -CoverClassLabel, - CoverClassSummary, -IsTrampled, -SQQuadSppCode,
+#                                         -SQQuadSppLabel, -SQQuadSppNotes, -SQQuadSppSummary) %>%
+#   group_by(PlotID, EventID, TSN, QuadratCode) %>%
+#   mutate(ScientificName = ifelse(row_number() > 1,
+#                                  paste0(ScientificName, "_", row_number()),
+#                                  paste(ScientificName))) %>%
+#                                  pivot_wider(names_from = QuadratCode,
+#                                              values_from = CoverClassCode,
+#                                              values_fill = NA_real_)
+#
+# write.csv(quadspp_wide, "NETN_QuadSpecies_wide.csv", row.names = F)
+#
+
+quad_notes <- joinQuadNotes()
+#------------------------
+# Microplot- Shrubs
+#------------------------
+forestNETNarch::importData()
+shrub_old <- forestNETNarch::joinMicroShrubData(from = 2006, to = 2019, locType = 'all', eventType = 'all', QAQC = T)
+shrub_old$Latin_Name[shrub_old$Latin_Name == "No species recorded"] <- "None present"
+shrub_new <- joinMicroShrubData(from = 2006, to = 2019, locType = 'all', eventType = 'all', QAQC = T)
+
+shrub_exo <- joinMicroShrubData(from = 2006, to = 2019, speciesType = 'invasive')
+shrub2 <- joinMicroShrubData(park = c("ACAD", "MABI"))
+length(unique(shrub2$Plot_Name))
+length(unique(shrub_exo$Plot_Name)) #352
+
+shrub_merge <- full_join(shrub_new, shrub_old, by = c("Plot_Name" = "Plot_Name",
+                                                       "StartYear" = "Year",
+                                                       "IsQAQC" = "Event_QAQC",
+                                                       "ScientificName" = "Latin_Name") )
+
+table(complete.cases(shrub_merge$Event_ID)) # 2 NAs ACAD-029-2010 & SAGA-008-2010; have a better way to handle now
+
+
+check_shrbs <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("PlotID", "EventID", "Plot_Name", "StartYear", "IsQAQC",
+              "ScientificName", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+names(shrub_merge)
+shrub_dif <- shrub_merge %>% select(Plot_Name, StartYear, IsQAQC, ScientificName, shrub_avg_cov, cover) %>%
+                mutate(cov_diff = abs(shrub_avg_cov - cover)) #%>% filter(cov_diff > 0.1)
+# Shouldn't have any cover data for records < 2009; Not sure why sometimes we have that in the database
+# The only record >2009 is SARA-023-2012 b/c duplicate Vitis in UR. Second doesn't migrate, which is fine.
+
+#---------------------------------
+# Connect to NETN_Forest_Dev to get updated taxa
+#---------------------------------
+params <- list(Driver = "SQL Server Native Client 11.0",  # You may need to change this depending on what driver you have
+               Server = "INP2300VTSQL16\\IRMADEV1",  # Your server name goes here
+               Database = "NETN_Forest_Dev",  # Your db name goes here
+               Trusted_Connection = "Yes",
+               drv = odbc::odbc())
+
+conn <- do.call(pool::dbPool, params)
+taxa_test <- dplyr::tbl(con, dbplyr::in_schema("Analysis", "COMN_Taxa")) %>% collect()
+write.csv(taxa_test, paste0(path, "/", "COMN_Taxa.csv"), row.names = F)
+
+#----------------------------------
+# Microplot Seedlings
+#----------------------------------
+library(forestNETN)
+library(tidyverse)
+path = "C:/Forest_Health/exports/NETN"
+importCSV(path = path, zip_name = "NETN_Forest_20210405.zip") #includes manually fixed taxa
+
+park = 'all'
+from = 2006
+to = 2019
+QAQC = T
+locType = 'all'
+eventType = 'all'
+panels = 1:4
+#speciesType = 'all'
+speciesType = 'exotic'
+numMicros = 3
+canopyForm = 'all'
+
+microbenchmark::microbenchmark(joinMicroSeedlings(from = 2006, to = 2019, canopyForm = 'all',
+                                                  eventType = 'all', locType = 'all', QAQC = TRUE), times = 5)
+
+seed_new <- joinMicroSeedlings(from = 2006, to = 2019, eventType = 'all', locType = 'all', QAQC = TRUE)
+length(unique(seed_new$EventID))
+
+sinv <- joinMicroSeedlings(from = 2006, to = 2019, eventType = 'all', locType = 'all', QAQC = TRUE, speciesType = 'invasive')
+length(unique(sinv$EventID))
+snat <- joinMicroSeedlings(from = 2006, to = 2019, eventType = 'all', locType = 'all', QAQC = TRUE, speciesType = 'native')
+length(unique(snat$EventID))
+sexo <- joinMicroSeedlings(from = 2006, to = 2019, eventType = 'all', locType = 'all', QAQC = TRUE, speciesType = 'exotic')
+length(unique(sexo$EventID))
+
+m1 <- joinMicroSeedlings(numMicros = 1)
+length(unique(m1$EventID))
+
+acad_sd <- joinMicroSeedlings(park = 'ACAD')
+p2 <- joinMicroSeedlings(park = c("MABI", "MIMA"))
+table(p2$ParkUnit)
+# SAGA-007-2010 UL micro is migrating as ND instead of NP. Not sure why that's happening
+# rest of issues in seedling data are SAGA-007-2010 and ACAD-029-2010 or seedlings
+# initially entered as shrubs, so no counts available
+
+#-------------------------------
+# Microplot saplings
+#-------------------------------
+saps_new <- joinMicroSaplings(locType = "all", QAQC = T, eventType = 'all')
+length(unique(saps_new$EventID))
+sap_exo <- joinMicroSaplings(speciesType = 'exotic')
+length(unique(sap_exo$EventID))
+
+sap19 <- joinMicroSaplings(from = 2019, to = 2019, speciesType = 'native', canopyForm = 'canopy')
+
+#--------------------------
+# Regen
+#----------------------
+forestNETNarch::importData()
+
+microbenchmark::microbenchmark(
+reg_new <- joinRegenData(eventType = 'all', locType = 'all', QAQC = T, canopyForm = 'all'),
+reg_old <- forestNETNarch::joinRegenData(eventType = 'all', locType = 'all', QAQC = T,
+                                         from = 2006, to = 2019, canopyForm = 'all'),
+times = 5) # new one is faster, even though it's clunky too
+
+length(unique(reg_new$EventID)) #1278 - dropped the 2 problem plots ACAD-029 and SAGA-008
+
+reg_old$Latin_Name[reg_old$Latin_Name == "No species recorded"] <- "None present"
+head(reg_new)
+head(reg_old)
+reg_old2 <- reg_old %>% filter(!Latin_Name %in% c("None present", "no species recorded"))
+
+reg_merge <- merge(reg_new, reg_old2, by.x = c("Plot_Name", "StartYear", "IsQAQC", "ScientificName"),
+                   by.y = c("Plot_Name", "Year", "Event_QAQC", "Latin_Name"),
+                   all.x=T, all.y=T) %>% filter(ScientificName != "None present")
+merge_nas <- reg_merge[is.na(reg_merge$Network),] # all NAs explainable by blank/NP handling
+# old reg fun included None present when saplings or seedlings had a spp and were non pres.
+
+check_reg <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "IsQAQC", "ScientificName", col1, col2)]}
+  )) %>% bind_rows()
+}
+head(reg_merge)
+# Issues below (n=36) are all due to diff/better error handling in new function
+check_reg(reg_merge, "seed_15_30cm", "seed15.30")
+check_reg(reg_merge, "seed_30_100cm", "seed30.100")
+check_reg(reg_merge, "seed_100_150cm", "seed100.150")
+check_reg(reg_merge, "seed_p150cm", "seed150p")
+check_reg(reg_merge, "sap_den", "sap.den")
+
+reg_merge2 <- reg_merge %>% select(Plot_Name, StartYear, IsQAQC, ScientificName, num_micros:regen_den,
+                                   seed15.30:stock.y)
+names(reg_merge2)
+# Stocking is going to change because dropping saplings >2.5 cm per FIA and EFWG
+check_stock <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "IsQAQC", "ScientificName", "sap_stems", "sap_stems_SI",
+              "sap_den", "sap.den", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+stock_diff <- check_stock(reg_merge2, "stock.x", 'stock.y')
+View(stock_diff)
+check_reg(reg_merge2, "sap_den", "sap.den")
+# when all saps < 2.5" same stocking index between old and new
+
+#---------------------
+# Additional Species
+#---------------------
+addspp_vw <- get("COMN_AdditionalSpecies", envir = VIEWS_NETN)
+addspp_vw$Plot_Name <- paste(addspp_vw$ParkUnit, sprintf("%03d", addspp_vw$PlotCode), sep = "-")
+addspp_vw <- addspp_vw %>%
+  select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, StartYear, IsQAQC, TSN, ScientificName,
+         ConfidenceClassCode, IsCollected, Note, SQAddSppNotes)
+
+table(addspp_vw$SQAddSppCode)
+
+head(addspp_vw)
+head(addspp)
+
+addspp2 <- forestNETNarch::joinLocEvent(locType = 'all', eventType = 'all', from = 2006, to = 2019, QAQC = T) %>%
+                             left_join(., addspp) %>% left_join(., plants[, c("TSN", "Latin_Name")]) %>%
+                           select(Plot_Name, Year, Event_QAQC, TSN, Latin_Name, Confidence_ID, Collected, Notes)
+names(addspp_vw)
+names(addspp2)
+addspp_merge <- merge(addspp_vw, addspp2,
+                      by.x = c("Plot_Name", "StartYear", "IsQAQC", "TSN"),
+                      by.y = c("Plot_Name", "Year", "Event_QAQC", "TSN"),
+                      all.x = T, all.y = T)
+
+
+check_spp <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "IsQAQC", col1, col2)]}
+  )) %>% bind_rows()
+}
+
+check_spp(addspp_merge, "ScientificName", "Latin_Name")
+# Some weirdness here with unknown TSNs getting switched around
+# These are the same plots where Unknowns got switched around in the quad. species. Not sure it matters...
+#   Plot_Name  StartYear IsQAQC   ScientificName           Latin_Name
+#1  ACAD-043      2007      0               <NA>     Unknown Herb - 04
+#2  ACAD-043      2007      0  Unknown Herb - 02                  <NA>
+#3  ACAD-059      2007      0               <NA>    Unknown Grass - 02
+#4  ROVA-002      2007      0               <NA>     Unknown Herb - 01
+#5  ROVA-020      2007      0               <NA>     Unknown Herb - 01
+#6  ROVA-020      2007      0               <NA>    Unknown Grass - 01
+#7  SARA-013      2006      1 Unknown Carex - 02                  <NA>
+#8  SARA-013      2006      1               <NA>                 Carex
+
+addspp_test <- joinAdditionalSpecies()
+
+
+#---------------------
+# Check taxa table
+#---------------------
+head(plants)
+
+taxa_wide <- prepTaxa()
+head(taxa_wide)
+names(plants)
+taxa_merge <- merge(taxa_wide, plants[, c(1,4:9,11:21,24)], by = "TSN",
+                    all.x = T, all.y = T)
+
+check_taxa <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("TSN", "ScientificName", "Latin_Name", col1, col2)]}
+  )) %>% bind_rows()
+}
+head(taxa_merge)
+
+check_taxa(taxa_merge, "ScientificName", "Latin_Name")
+check_taxa(taxa_merge, "Order.x", "Order.y")
+check_taxa(taxa_merge, "Family.x", "Family.y")
+check_taxa(taxa_merge, "Genus.x", "Genus.y")
+check_taxa(taxa_merge, "Tree.x", "Tree.y")
+check_taxa(taxa_merge, "Shrub.x", "Shrub.y")
+check_taxa(taxa_merge, "Vine.x", "Vine.y")
+check_taxa(taxa_merge, "Herbaceous.x", "Herbaceous.y")
+check_taxa(taxa_merge, "Graminoid.x", "Graminoid.y")
+
+check_taxa(taxa_merge, "CommonName", "Common")
+names(taxa_merge)
+
+#-----------------------------
+# Soil data
+#-----------------------------
+# Soil sample data
+soilsamp_old <- read.csv("./testing_scripts/soilsamp_data_old.csv")
+soillab_old <- read.csv("./testing_scripts/soillab_data_old.csv")
+
+tbl_ssd <- read.csv("C:/Forest_Health/exports/tbl_Soil_Sample_Data.csv")
+head(tbl_ssd)
+names(tbl_ssd)
+ff_o <- table(tbl_ssd$FF_Depth, tbl_ssd$O_Horizon_Depth)
+ff_check <- tbl_ssd %>% mutate(ff_o = ifelse (O_Horizon_Depth > 0, FF_Depth - O_Horizon_Depth, 0))
+
+View(ff_o)
+#------ Running Mark's SQL------------
+# Server connection
+connect_serv <- "Driver={SQL Server};server=INP2300VTSQL16\\IRMADEV1;database=NETN_Forest;trusted_connection=TRUE;ReadOnly=True"
+# Local connection
+connect <- "Driver={SQL Server};server=localhost\\SQLEXPRESS;database=NETN_Forest;trusted_connection=TRUE;ReadOnly=True"
+
+con <- RODBC::odbcDriverConnect(connection = connect, readOnlyOptimize = TRUE, rows_at_time = 1)
+
+path_db <- "C:/Forest_Health/schema/"
+
+# Import Soil header
+soilheader_qry <- readr::read_lines(paste0(path_db, "COMN_SoilHeader.sql")) %>%
+  glue::glue_collapse(sep = "\n") %>%
+  glue::glue_sql(.con = conn)
+
+COMN_SoilHeader <- RODBC::sqlQuery(con, soilheader_qry)
+
+# Import soil lab data
+soillab_qry <- readr::read_lines(paste0(path_db, "COMN_SoilLab.sql")) %>%
+  glue::glue_collapse(sep = "\n") %>%
+  glue::glue_sql(.con = conn)
+
+COMN_SoilLab <- RODBC::sqlQuery(con, soillab_qry)
+names(COMN_SoilLab)
+#Import Soil sample data
+soilsample_qry <- readr::read_lines(paste0(path_db, "COMN_SoilSample.sql")) %>%
+  glue::glue_collapse(sep = "\n") %>%
+  glue::glue_sql(.con = conn)
+
+COMN_SoilSample <- RODBC::sqlQuery(con, soilsample_qry)
+RODBC::odbcClose(con)
+names(COMN_SoilSample)
+
+assign("COMN_SoilHeader", COMN_SoilHeader, envir = VIEWS_NETN)
+assign("COMN_SoilLab", COMN_SoilLab, envir = VIEWS_NETN)
+assign("COMN_SoilSample", COMN_SoilSample, envir = VIEWS_NETN)
+
+names(VIEWS_NETN)
+names(VIEWS_NETN$COMN_SoilHeader)
+
+# Exporting, so the soil views are included when I run importCSV
+exportCSV(path = "C:/Forest_Health/exports/NETN", zip = T)
+#--------------------------------------
+# This is form the joinSoilData function
+soilsamp_wide$Plot_Name <-  paste(soilsamp_wide$ParkUnit, sprintf("%03d", soilsamp_wide$PlotCode), sep = "-")
+
+#tbl_ssd <- read.csv("C:/Forest_Health/exports/tbl_Soil_Sample_Data.csv")
+
+forestNETNarch::importData(type = 'file',
+  path = 'D:/NETN/Monitoring_Projects/Forest_Health/Database/2021_Forest_Database/Forest_Backend_NETN_20210409_Migration.mdb')
+names(soildata)
+names(soilsamp)
+# need to remove records that weren't sampled but had earthworms recorded
+soildata2 <- soildata[!grepl("[++]", soildata$Notes), -c(10:13)] # drop updated/created cols
+
+
+soil_old <- merge(soildata2, soilsamp[,-c(13:16)],
+                  by = intersect(names(soildata2), names(soilsamp[,-c(13:16)])), all = TRUE)
+plotevs_old <- forestNETNarch::joinLocEvent(from = 2006, to = 2019, QAQC = T, locType = 'all', eventType = 'all')
+soil_old2 <- merge(plotevs_old, soil_old, by = intersect(names(plotevs_old), names(soil_old)), all.x = FALSE, all.y = TRUE) %>%
+             filter(!is.na(Location_ID)) %>% select(Plot_Name, Year, Event_QAQC,
+                                                    Sampling_Position, Sample_Type, Horizon_Type, Archived,
+                                                    Sample_Number, Litter_Depth, FF_Depth,
+                                                    A_Horizon_Depth, Total_Excavation_Depth, Notes, Comments, Sample_Missed)
+names(soil_old2)
+# convert NA horizons to 0, but not total
+soil_old2[,c(9:11)][is.na(soil_old2[,c(9:11)])]<-0
+
+soilsamp_merge <- merge(soilsamp_wide, soil_old2,
+                        by.x = c("Plot_Name", "StartYear", "IsQAQC", "SampleSequence.Code"),
+                        by.y = c("Plot_Name", "Year", "Event_QAQC", "Sample_Number"), all = T)
+names(soilsamp_merge)
+
+soil_miss <- soilsamp_merge %>% filter(is.na(SQSoil.Code)) # I think these are all okay and will get cleaned up in next migration
+
+check_soils <- function(df, col1, col2){
+  lapply(1:nrow(df), function(x) (
+    if(length(setdiff(union(df[x, col1], df[x, col2]), intersect(df[x, col1], df[x, col2]))) > 0){
+      df[x, c("Plot_Name", "StartYear", "IsQAQC", "SQSoil.Code", "Sampling_Position", "SampleSequence.Code", col1, col2)]}
+  )) %>% bind_rows()
+}
+names(soilsamp_merge)
+
+check_soils(soilsamp_merge, "Archived", "SoilEvent.IsArchived")
+
+p5 <- soilsamp_merge %>% filter(Litter_Depth == 0.5 |A_Horizon_Depth == 0.5 | FF_Depth == 0.5)
+
+soilsamp_merge <- soilsamp_merge %>% mutate(A_diff = abs(A_Horizon_Depth - A_Horizon),  #%>% filter(A_diff > 0.5) # 2 records due to rounding errors
+                                            O_diff = abs(O_Horizon - FF_Depth),
+                                            tot_diff = abs(Total_Excavation_Depth - Total_Depth))
+
+check_soils(soilsamp_merge, "Note", "Comments") # no issues
+names(soilsamp_merge)
+
+table(soilsamp_merge$SQSoil.Code) # All SS.
+
+# Soil lab data
+
+head(COMN_SoilLab)
+head(soillab) # old data
+head(soildata2)
+names(soillab)
+# need to remove records that weren't sampled but had earthworms recorded
+soillab_old <- merge(soildata2, soillab[,-c(1, 34, 35)],
+                  by = intersect(names(soildata2), names(soillab[,-c(1, 34, 35)])), all = TRUE)
+soillab_old2 <- merge(plotevs_old, soillab_old, by = intersect(names(plotevs_old), names(soillab_old)),
+                   all.x = FALSE, all.y = TRUE) %>%
+  filter(!is.na(Location_ID)) %>% select(Plot_Name, Year, Event_QAQC, Layer, UMO_Sample:ECEC, Notes,
+                                         Sampling_Position, Sample_Type, Archived)
+head(soillab_old2)
+
+#---------------------------
+# There are 2729 records in the NETN soil data to soil sample data query after removing the +++ Soil not sampled notes +++
+#
+# SELECT tbl_Locations.Unit_ID, tbl_Locations.Plot_Number, tbl_Events.Start_Date, tbl_Events.Event_QAQC,
+#        tbl_Soil_Data.Sampling_Position, tbl_Soil_Data.Sample_Type, tbl_Soil_Sample_Data.Sample_Number,
+#        tbl_Soil_Sample_Data.Litter_Depth, tbl_Soil_Sample_Data.FF_Depth, tbl_Soil_Sample_Data.A_Horizon_Depth,
+#        tbl_Soil_Sample_Data.Total_Excavation_Depth, tbl_Soil_Sample_Data.Comments, tbl_Soil_Sample_Data.Sample_Missed,
+#        tbl_Soil_Data.Notes
+# FROM (tbl_Locations INNER JOIN tbl_Events ON tbl_Locations.Location_ID = tbl_Events.Location_ID)
+# INNER JOIN (tbl_Soil_Data INNER JOIN tbl_Soil_Sample_Data ON tbl_Soil_Data.Soil_Data_ID = tbl_Soil_Sample_Data.Soil_Data_ID) ON
+# tbl_Events.Event_ID = tbl_Soil_Data.Event_ID;
+
+#------------------------
+# Testing joinSoilLabData
+# Function is a bit slow, but willing to let that be
+
+park = 'all'
+from = 2016
+from = 2007
+to = 2019
+QAQC = T
+locType = 'all'
+eventType = 'all'
+panels = 1:4
+layer = 'all'
+
+
+soil_test <- joinSoilLabData()
+summary(soil_test)
+# need to figure out why base sat could be > 100
+# may have something to do with weighted averages with 0 for rounded down soil sample depths
+# hopefully will be fixed with next migration. For now, I'm converting them to NA in the function.
+
+acad_soil <- joinSoilLabData(park = "ACAD")
+sara_soil <- joinSoilLabData(park = "SARA", layer = "A", from = 2010, to = 2019, QAQC = T)
+soil2 <- joinSoilLabData(park = "ACAD", from = 2019, to = 2019)
+
+table(sara_soil$ParkUnit)
+table(sara_soil$Horizon_QC)
+
+yr4_soil <- joinSoilLabData(from = 2016, to = 2019)
+
+
+shtest <- joinSoilSampleData()
+shtest2 <- joinSoilSampleData(park = 'ACAD', from = 2019, to = 2019)
+
+
+# ------------------------------
+# Joining notes functions
+
+test <- joinVisitNotes() %>% filter(StartDate > "2019-06-01")
+
+head(test)
+t2 <- joinVisitNotes(park = "ACAD", from = 2016, to = 2019, QAQC = TRUE)
+head(t2)
+table(test$IsQAQC)
+table(t2$IsQAQC)
+
+t3 <- t2 %>% filter(StartDate > "2019-06-06")
+table(t3$StartDate)
+table(t2$StartDate)
+
+#---------------------
+# sumSpeciesList
+
+test <- sumSpeciesList()
+head(test)
+
+head(sumSpeciesList(park = 'MABI', speciesType = "exotic", from = 2019, to = 2019))
+
+#--------------------
+# Tree map testing
+
+plotTreeMap(park = "ACAD", from = 2016, to = 2019, output_to = 'view', plotName = "ACAD-101",
+            canopyPosition = 'canopy', speciesType = 'exotic')
+
+plotTreeMap(park = "ACAD", from = 2016, to = 2019, output_to = 'view', plotName = "ACAD-101")
+
+
+plotTreeMap(park = "ACAD", from = 2016, to = 2019, panels = c(3,4), output_to = "file",
+                      path = "D:/NETN/Monitoring_Projects/Forest_Health/2021_Data/Maps&Data/NETN_Tree_Maps")
+
+#--------------------
+# sum DBH
+test <- sumTreeDBHDist()
+head(sumTreeDBHDist(units = "BA"))
+head(sumTreeDBHDist(units = "dens"))
+head(sumTreeDBHDist(units = "both", stauts = 'live'))
+head(sumTreeDBHDist(park = "ROVA", units = 'both', canopyPosition = 'canopy'))
+head(sumTreeDBHDist(park = "ROVA", units = 'both', speciesType = 'exotic'))
+
+#--------------------
+# sumQuadGuilds
+test <- sumQuadGuilds()
+head(test)
+test2 <- sumQuadGuilds(park = "ACAD", speciesType = "invasive")
+head(test2)
+table(test2$Group, test2$StartYear)
+head(sumQuadGuilds(park = "MABI", from = 2016, to = 2019, speciesType = 'native', splitHerb = TRUE))
+head(sumQuadGuilds(park = "MABI", from = 2016, to = 2019, speciesType = 'exotic', splitHerb = TRUE))
+head(sumQuadGuilds(park = "MABI", from = 2016, to = 2019, speciesType = 'invasive', splitHerb = TRUE))
+
+#-----------------------
+# sumSapDBHDist
+test <- sumSapDBHDist()
+head(sumSapDBHDist(park = 'MORR', speciesType = 'invasive'))
+head(sumSapDBHDist(park = 'MORR', speciesType = 'native'))
+head(sumSapDBHDist(park = 'MABI', speciesType = 'native', canopyForm = 'canopy'))
+head(sumSapDBHDist(park = 'MORR', from = 2006, to = 2010, speciesType = 'invasive'))
+
+
+
+
+
+
+
+
+
+
+

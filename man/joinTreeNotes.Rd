@@ -37,6 +37,9 @@ joinTreeNotes(
 \item{FALSE}{Default. Only returns visits that are not QAQC visits}
 \item{TRUE}{Returns all visits, including QAQC visits}}}
 
+\item{panels}{Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
+If more than one panel is selected, specify by c(1, 3), for example.}
+
 \item{locType}{Allows you to only include plots that are part of the GRTS sample design or
 include all plots, such as deer exclosures.
 \describe{
@@ -48,6 +51,8 @@ include all plots, such as deer exclosures.
 \item{"complete"}{Default. Only include sampling events for a plot that are complete.}
 \item{"all}{Include all plot events with a record in tblCOMN.Event, including plots missing most of the data
 associated with that event (eg ACAD-029.2010). This feature is currently hard-coded in the function.}}}
+
+\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a dataframe with all tree-related notes. Only returns records with notes.
@@ -56,9 +61,10 @@ Returns a dataframe with all tree-related notes. Only returns records with notes
 This function combines all tree-level notes recorded in a given visit. N
 }
 \examples{
+\dontrun{
 importData()
 # compile quadrat data for invasive species in SARA for 2018
 SARA_tree_notes <- joinTreeNotes(park = 'SARA', from = 2018, to = 2018)
-
+}
 
 }
