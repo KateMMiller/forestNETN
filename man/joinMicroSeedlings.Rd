@@ -14,8 +14,7 @@ joinMicroSeedlings(
   eventType = c("complete", "all"),
   speciesType = c("all", "native", "exotic", "invasive"),
   canopyForm = c("all", "canopy"),
-  numMicros = 3,
-  ...
+  numMicros = 3
 )
 }
 \arguments{
@@ -70,8 +69,6 @@ associated with that event (eg ACAD-029.2010). This feature is currently hard-co
 }}
 
 \item{numMicros}{Allows you to select 1, 2, or 3 microplots of data to summarize}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a dataframe with seedling densities

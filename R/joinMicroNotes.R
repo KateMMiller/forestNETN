@@ -43,8 +43,6 @@
 #' @param panels Allows you to select individual panels from 1 to 4. Default is all 4 panels (1:4).
 #' If more than one panel is selected, specify by c(1, 3), for example.
 #'
-#' @param ... Other arguments passed to function.
-#'
 #' @return Returns a dataframe with all microplot-related notes. Only returns records with notes.
 #'
 #' @examples
@@ -58,7 +56,7 @@
 #'
 
 joinMicroNotes <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
-                          locType = c('VS', 'all'), eventType = c('complete', 'all'), ...){
+                          locType = c('VS', 'all'), eventType = c('complete', 'all')){
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,

@@ -62,8 +62,6 @@
 #'
 #' @param numMicros Allows you to select 1, 2, or 3 microplots of data to summarize
 #'
-#' @param ... Other arguments passed to function.
-#'
 #' @return returns a dataframe with seedling densities
 #'
 #' @examples
@@ -86,7 +84,7 @@
 joinMicroSeedlings <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, panels = 1:4,
                                locType = c('VS', 'all'), eventType = c('complete', 'all'),
                                speciesType = c('all', 'native', 'exotic', 'invasive'),
-                               canopyForm = c('all', 'canopy'), numMicros = 3, ...){
+                               canopyForm = c('all', 'canopy'), numMicros = 3){
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
