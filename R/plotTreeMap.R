@@ -85,7 +85,6 @@
 #'
 #' @param path Quoted path to save plots to. Required if output_to = 'file'
 #'
-#' @param ... Other arguments passed to function.
 #'
 #' @return Returns a map of trees on a given plot. Trees are color coded by status, with AB= Alive Broken,
 #' AF= Alive Fallen, AL= Alive Leaning, AS= Alive Standing, DB= Dead Broken, DL= Dead Leaning, and DS= Dead Standing.
@@ -111,7 +110,7 @@
 plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 'all'), panels = 1:4,
                         eventType = c('complete', 'all'), dist_m = NA, status = c('all', 'active', 'live', 'dead'),
                         speciesType = c('all', 'native','exotic', 'invasive'), canopyPosition = c('all', 'canopy'),
-                        plotName = NA, path = NA, output_to = c('view', 'file'), ...){
+                        plotName = NA, path = NA, output_to = c('view', 'file')){
 
   if(!requireNamespace("ggrepel", quietly = TRUE)){
     stop("Package 'ggrepel' needed for this function to work. Please install it.", call. = FALSE)
@@ -261,7 +260,7 @@ plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 
 
   # Set up data
   arglist <- list(park = park, from = from, to = to, QAQC = FALSE, panels = panels,
-                  locType = locType, eventType = eventType, ...)
+                  locType = locType, eventType = eventType)
 
 
   plot_events <- do.call(joinLocEvent, arglist) %>% select(Plot_Name, EventID, Orientation) %>% unique()

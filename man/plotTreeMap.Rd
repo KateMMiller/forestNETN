@@ -17,8 +17,7 @@ plotTreeMap(
   canopyPosition = c("all", "canopy"),
   plotName = NA,
   path = NA,
-  output_to = c("view", "file"),
-  ...
+  output_to = c("view", "file")
 )
 }
 \arguments{
@@ -94,8 +93,6 @@ the plot name.}
 \item{"view"}{Default. Plot in current R session. Note that this may be slow if multiple plots are included in the
 function arguments.}
 }}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 Returns a map of trees on a given plot. Trees are color coded by status, with AB= Alive Broken,
