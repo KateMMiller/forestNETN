@@ -11,9 +11,9 @@ joinTreeVineSpecies(
   QAQC = FALSE,
   locType = c("VS", "all"),
   panels = 1:4,
-  speciesType = c("all", "native", "exotic"),
-  dist_m = NA,
-  ...
+  speciesType = c("all", "native", "exotic", "invasive"),
+  canopyPosition = c("all", "canopy"),
+  dist_m = NA
 )
 }
 \arguments{
@@ -54,11 +54,16 @@ If more than one panel is selected, specify by c(1, 3), for example.}
 \item{"exotic"}{Returns exotic species only}
 }}
 
+\item{canopyPosition}{Allows you to filter on tree crown class
+\describe{
+\item{"all"}{Returns all canopy positions}
+\item{"canopy"}{Returns only dominant, codominant, and intermediate crown classes. Since only live trees
+are assigned crown classes, this also only returns live trees.}
+}}
+
 \item{dist_m}{Filter trees by a distance that is less than or equal to the specified distance in meters
 of the tree to the center of the plot. If no distance is specified, then all trees will be selected. For
 example, to select an area of trees that is 100 square meters in area, use a distance of 5.64m.}
-
-\item{...}{Other arguments passed to function.}
 }
 \value{
 returns a data frame for every tree visit with at least one vine condition recorded. Trees
