@@ -109,7 +109,7 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
   # Prepare the shrub data
   tryCatch(shrubs <- get("MicroplotShrubs_NETN", envir = env) %>%
-             select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode, SampleYear,
+             select(Plot_Name, PlotID, EventID, SampleYear,
                     IsQAQC, SQShrubCode, MicroplotCode, TSN, ScientificName, CoverClassCode,
                     CoverClassLabel),
            error = function(e){stop("MicroplotShrubs_NETN view not found. Please import view.")})
@@ -129,7 +129,7 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = 2021, QAQC = FALS
 
   shrub_evs <- filter(shrubs, EventID %in% pe_list) %>%
                left_join(plot_events, .,
-                         by = intersect(names(plot_events), names(.))) %>%
+                         by = c("Plot_Name", "PlotID", "EventID", "SampleYear", "IsQAQC")) %>%
                filter(!(SampleYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
 
   shrub_tax <- left_join(shrub_evs,
