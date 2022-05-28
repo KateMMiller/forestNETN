@@ -71,7 +71,8 @@
 #------------------------
 # Joins Plots and Events views and filters by park, year, and plot/visit type
 #------------------------
-joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, abandoned = FALSE, panels = 1:4,
+joinLocEvent<-function(park = "all", from = 2006, to = as.numeric(format(Sys.Date(), "%Y")),
+                       QAQC = FALSE, abandoned = FALSE, panels = 1:4,
                        locType = c('VS', 'all'), eventType = c('complete', 'all'),
                        output = c('short', 'verbose')){
 
@@ -145,8 +146,24 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
   plot_events7$cycle[plot_events7$SampleYear %in% c(2006:2009)] <- 1
   plot_events7$cycle[plot_events7$SampleYear %in% c(2010:2013)] <- 2
   plot_events7$cycle[plot_events7$SampleYear %in% c(2014:2017)] <- 3
-  plot_events7$cycle[plot_events7$SampleYear %in% c(2018:2021)] <- 4
-    # need to update for 2022
+
+
+  plot_events7$cycle <- with(plot_events7,
+                             ifelse(SampleYear %in% (2018:2021) &
+                                      ParkUnit == "ACAD", 4, cycle))
+
+  plot_events7$cycle <- with(plot_events7,
+                             ifelse(SampleYear %in% (2022:2025) &
+                                      ParkUnit == "ACAD", 5, cycle))
+
+  plot_events7$cycle <- with(plot_events7,
+                             ifelse(SampleYear %in% (2018:2022) &
+                                      ParkUnit != "ACAD", 4, cycle))
+
+  plot_events7$cycle <- with(plot_events7,
+                             ifelse(SampleYear %in% (2023:2026) &
+                                      ParkUnit != "ACAD", 5, cycle))
+
 
   # Adding ACAD MDI Units to ParkSubUnit column
   MDI_West <- c('ACAD-016', 'ACAD-017', 'ACAD-018', 'ACAD-019', 'ACAD-024',
@@ -182,7 +199,6 @@ joinLocEvent<-function(park = "all", from = 2006, to = 2021, QAQC = FALSE, aband
 
   plot_events7$ParkSubUnit[plot_events7$Plot_Name %in% MDI_West] <- "ACAD_MDI_West"
   plot_events7$ParkSubUnit[plot_events7$Plot_Name %in% MDI_East] <- "ACAD_MDI_East"
-
 
   return(data.frame(plot_events7))
 } # end of function

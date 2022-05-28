@@ -10,7 +10,7 @@ joinStandDisturbance(
   locType = c("VS", "all"),
   panels = 1:4,
   from = 2006,
-  to = 2021,
+  to = as.numeric(format(Sys.Date(), "\%Y")),
   output = "verbose",
   eventType = c("complete", "all"),
   ...

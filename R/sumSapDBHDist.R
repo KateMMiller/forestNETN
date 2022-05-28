@@ -79,7 +79,8 @@
 #------------------------
 # Calculates sapling diameter distribution
 #------------------------
-sumSapDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
+sumSapDBHDist <- function(park = 'all', from = 2006, to = as.numeric(format(Sys.Date(), "%Y")),
+                          QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
                           speciesType = c('all', 'native','exotic', 'invasive'),
                           canopyForm = c("all", "canopy"), eventType = c('complete', 'all'),
                           units = c('density', 'BA', 'both'), ...){

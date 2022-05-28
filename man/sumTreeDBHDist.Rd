@@ -7,7 +7,7 @@
 sumTreeDBHDist(
   park = "all",
   from = 2006,
-  to = 2021,
+  to = as.numeric(format(Sys.Date(), "\%Y")),
   QAQC = FALSE,
   locType = c("VS", "all"),
   panels = 1:4,

@@ -7,7 +7,7 @@
 plotTreeMap(
   park = "all",
   from = 2006,
-  to = 2021,
+  to = as.numeric(format(Sys.Date(), "\%Y")),
   locType = c("VS", "all"),
   panels = 1:4,
   eventType = c("complete", "all"),

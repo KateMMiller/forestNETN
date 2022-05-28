@@ -68,7 +68,8 @@
 # Join stand data
 #------------------------
 joinStandData <- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
-                          from = 2006, to = 2021, eventType = c('complete', 'all'),
+                          from = 2006, to = as.numeric(format(Sys.Date(), "%Y")),
+                          eventType = c('complete', 'all'),
                           output = 'verbose', ...){
 
     # Match args and class

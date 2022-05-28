@@ -95,9 +95,12 @@
 #------------------------
 # Calculates tree diameter distribution
 #------------------------
-sumTreeDBHDist <- function(park = 'all', from = 2006, to = 2021, QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
-                           status = c('all', 'active', 'live', 'dead'), speciesType = c('all', 'native','exotic', 'invasive'),
-                           canopyPosition = c("all", "canopy"), dist_m = NA, eventType = c('complete', 'all'),
+sumTreeDBHDist <- function(park = 'all', from = 2006, to = as.numeric(format(Sys.Date(), "%Y")),
+                           QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
+                           status = c('all', 'active', 'live', 'dead'),
+                           speciesType = c('all', 'native','exotic', 'invasive'),
+                           canopyPosition = c("all", "canopy"), dist_m = NA,
+                           eventType = c('complete', 'all'),
                            units = c('density', 'BA', 'both')){
 
   # Match args and class

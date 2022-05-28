@@ -107,9 +107,12 @@
 #------------------------
 # Plots tree map by status and size
 #------------------------
-plotTreeMap <- function(park = 'all', from = 2006, to = 2021, locType = c('VS', 'all'), panels = 1:4,
-                        eventType = c('complete', 'all'), dist_m = NA, status = c('all', 'active', 'live', 'dead'),
-                        speciesType = c('all', 'native','exotic', 'invasive'), canopyPosition = c('all', 'canopy'),
+plotTreeMap <- function(park = 'all', from = 2006, to = as.numeric(format(Sys.Date(), "%Y")),
+                        locType = c('VS', 'all'), panels = 1:4,
+                        eventType = c('complete', 'all'), dist_m = NA,
+                        status = c('all', 'active', 'live', 'dead'),
+                        speciesType = c('all', 'native','exotic', 'invasive'),
+                        canopyPosition = c('all', 'canopy'),
                         plotName = NA, path = NA, output_to = c('view', 'file')){
 
   if(!requireNamespace("ggrepel", quietly = TRUE)){

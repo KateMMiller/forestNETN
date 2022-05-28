@@ -67,7 +67,8 @@
 # Join stand dist data
 #------------------------
 joinStandDisturbance<- function(park = 'all', QAQC = FALSE, locType = c('VS', 'all'), panels = 1:4,
-                          from = 2006, to = 2021, output = 'verbose', eventType = c('complete', 'all'),
+                          from = 2006, to = as.numeric(format(Sys.Date(), "%Y")),
+                          output = 'verbose', eventType = c('complete', 'all'),
                           ...){
 
   # Match args and class
