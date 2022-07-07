@@ -133,6 +133,8 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = as.numeric(format
                          by = c("Plot_Name", "PlotID", "EventID", "SampleYear", "IsQAQC")) %>%
                filter(!(SampleYear == 2006 & MicroplotCode %in% c("UL", "B"))) # drop quads not sampled in 2006
 
+  shrub_micros_lj <- unique(shrub_evs[,c("Plot_Name", "SampleYear", "IsQAQC", "MicroplotCode", "SQShrubCode")])
+
   shrub_tax <- left_join(shrub_evs,
                          taxa_wide[, c("TSN", "ScientificName", "Exotic", "InvasiveNETN", "Shrub", "Vine")],
                          by = c("TSN", "ScientificName"))
@@ -142,9 +144,12 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = as.numeric(format
                        'exotic' = filter(shrub_tax, Exotic == TRUE),
                        'invasive' = filter(shrub_tax, InvasiveNETN == TRUE),
                        'all' = shrub_tax)
+  names(shrub_filt)
+  names(shrub_micros_lj)
 
   # Add plots that were filtered out. Easiest to do here for fill logic
-  shrub_full <- left_join(plot_events, shrub_filt, by = intersect(names(plot_events), names(shrub_filt))) %>%
+  shrub_full <- left_join(shrub_micros_lj, shrub_filt,
+                          by = c("Plot_Name", "SampleYear", "IsQAQC", "MicroplotCode", "SQShrubCode")) %>%
                 mutate(ScientificName = ifelse(is.na(SQShrubCode) & is.na(ScientificName),
                                                "None present", ScientificName)) # for the records added by left_join
 
