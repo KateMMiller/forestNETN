@@ -136,8 +136,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = as.numeric(format(Sy
 
   quadspp_evs <- filter(quadspp, EventID %in% pe_list) %>%
                  mutate(missing_cover = ifelse(rowSums(across(all_of(quad_list)), na.rm = T) == 0, TRUE, FALSE),
-                 num_quads = rowSums(!is.na(.[, c("UC", "UR", "MR", "BR",
-                                            "BC", "BL", "ML", "UL")])))
+                 num_quads = rowSums(!is.na(.[, quad_list])))
 
   names(quadspp_evs)[names(quadspp_evs) == "ConfidenceClassCode"] <- "Confidence"
 
@@ -211,6 +210,7 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = as.numeric(format(Sy
   # Change "Permanently Missing in txt cover fields to "Not Sampled" where that's the case.
   # Makes the results more informative. ACAD-029-2010 is EventID 710. That stays PM
   # Don't have time to figure out the fancy way to do this right now
+
   quadspp_comb2$Txt_Cov_UC[quadspp_comb2$UC_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
   quadspp_comb2$Txt_Cov_UR[quadspp_comb2$UR_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
   quadspp_comb2$Txt_Cov_MR[quadspp_comb2$MR_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
@@ -219,6 +219,34 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = as.numeric(format(Sy
   quadspp_comb2$Txt_Cov_BL[quadspp_comb2$BL_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
   quadspp_comb2$Txt_Cov_ML[quadspp_comb2$ML_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
   quadspp_comb2$Txt_Cov_UL[quadspp_comb2$UL_SQ == 'NS' & quadspp_comb2$EventID != 710] <- "Not Sampled"
+
+  # For filters that initially drop plots NAs are returned in left join, so adding 0s back in
+  quadspp_comb2$Txt_Cov_UC[quadspp_comb2$UC_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+  quadspp_comb2$Txt_Cov_UR[quadspp_comb2$UR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+  quadspp_comb2$Txt_Cov_MR[quadspp_comb2$MR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+  quadspp_comb2$Txt_Cov_BR[quadspp_comb2$BR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+  quadspp_comb2$Txt_Cov_BC[quadspp_comb2$BC_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+  quadspp_comb2$Txt_Cov_BL[quadspp_comb2$BL_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+  quadspp_comb2$Txt_Cov_ML[quadspp_comb2$ML_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+  quadspp_comb2$Txt_Cov_UL[quadspp_comb2$UL_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- "0%"
+
+  quadspp_comb2$Pct_Cov_UC[quadspp_comb2$UC_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$Pct_Cov_UR[quadspp_comb2$UR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$Pct_Cov_MR[quadspp_comb2$MR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$Pct_Cov_BR[quadspp_comb2$BR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$Pct_Cov_BC[quadspp_comb2$BC_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$Pct_Cov_BL[quadspp_comb2$BL_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$Pct_Cov_ML[quadspp_comb2$ML_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$Pct_Cov_UL[quadspp_comb2$UL_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+
+  quadspp_comb2$UC[quadspp_comb2$UC_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$UR[quadspp_comb2$UR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$MR[quadspp_comb2$MR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$BR[quadspp_comb2$BR_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$BC[quadspp_comb2$BC_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$BL[quadspp_comb2$BL_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$ML[quadspp_comb2$ML_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
+  quadspp_comb2$UL[quadspp_comb2$UL_SQ == 'SS' & quadspp_comb2$ScientificName == "None present"] <- 0
 
   na_cols <- c("Exotic", "InvasiveNETN", "Tree", "TreeShrub", "Shrub", "Vine",
                "Herbaceous", "Graminoid", "FernAlly")
