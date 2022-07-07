@@ -135,14 +135,15 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = as.numeric(format(Sy
   quad_sq_list <- c("UC_SQ", "UR_SQ", "MR_SQ", "BR_SQ", "BC_SQ", "BL_SQ", "ML_SQ", "UL_SQ")
 
   quadspp_evs <- filter(quadspp, EventID %in% pe_list) %>%
-                 mutate(missing_cover = ifelse(rowSums(across(all_of(quad_list)), na.rm = T) == 0, TRUE, FALSE))
+                 mutate(missing_cover = ifelse(rowSums(across(all_of(quad_list)), na.rm = T) == 0, TRUE, FALSE),
+                 num_quads = rowSums(!is.na(.[, c("UC", "UR", "MR", "BR",
+                                            "BC", "BL", "ML", "UL")])))
 
   names(quadspp_evs)[names(quadspp_evs) == "ConfidenceClassCode"] <- "Confidence"
 
   quadspp_lj <- left_join(plot_events, quadspp_evs,
-                          by = c("Plot_Name", "PlotID", "EventID")) %>%
-                select(Plot_Name:IsQAQC, UC_SQ:UL_SQ, SQQuadSum) %>% unique()
-
+                  by = c("Plot_Name", "PlotID", "EventID")) %>% unique() %>%
+                select(Plot_Name:IsQAQC, UC_SQ:UL_SQ, SQQuadSum, num_quads, missing_cover)
 
   # join with taxa data, so can filter for smaller dataset early
   quadspp_tax <- left_join(quadspp_evs, taxa_wide[, c("TSN", "ScientificName", "Exotic", "InvasiveNETN")],
@@ -170,9 +171,9 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = as.numeric(format(Sy
     rename_with(.col = contains("_txt"),
                 .fn = ~paste0("Txt_Cov_", substr(.x, 1, 2)))
 
-  quadspp_sum$num_quads <- rowSums(!is.na(quadspp_sum[, c("UC", "UR", "MR", "BR",
-                                                          "BC", "BL", "ML", "UL")]),
-                                   na.rm = T)
+  # quadspp_sum$num_quads <- rowSums(!is.na(quadspp_sum[, c("UC", "UR", "MR", "BR",
+  #                                                         "BC", "BL", "ML", "UL")]),
+  #                                  na.rm = T)
 
   quadspp_sum$quad_avg_cov <- rowSums(quadspp_sum[, c("Pct_Cov_UC", "Pct_Cov_UR", "Pct_Cov_MR",
                                                       "Pct_Cov_BR", "Pct_Cov_BC", "Pct_Cov_BL",
@@ -192,8 +193,8 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = as.numeric(format(Sy
                   select(-all_of(quad_sq_list), -SQQuadSum)
 
   # Join the plot, visit, SQ info back after species filter
-  quadspp_comb <- left_join(quadspp_lj, quadspp_filt,
-                            by = c("Plot_Name", "PlotID", "EventID"))
+  quadspp_comb <- left_join(quadspp_lj, quadspp_filt %>% select(-num_quads, -missing_cover),
+                            by = c("Plot_Name", "PlotID", "EventID")) %>% unique()
 
   quadspp_comb2 <- left_join(quadspp_comb,
                              taxa_wide %>% select(TSN, Tree, TreeShrub, Shrub, Vine,
@@ -251,7 +252,6 @@ joinQuadSpecies <- function(park = 'all', from = 2006, to = as.numeric(format(Sy
 
   taxa_cols <- c("Exotic", "InvasiveNETN", "Tree", "TreeShrub", "Shrub", "Vine",
                  "Herbaceous", "Graminoid", "FernAlly")
-
 
   quadspp_final <- switch(valueType,
                           "midpoint" = quadspp_comb4[, c(req_cols, pct_cols, plant_cols,
