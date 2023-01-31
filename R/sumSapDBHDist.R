@@ -2,7 +2,6 @@
 #' @include joinLocEvent.R
 #' @title sumSapDBHDist: calculates DBH distribution of saplings
 #'
-#'
 #' @importFrom dplyr arrange between case_when filter group_by mutate select summarize
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_sub
