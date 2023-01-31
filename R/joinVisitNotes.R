@@ -174,7 +174,7 @@ joinVisitNotes <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
   # Quad notes
   quad_notes <- joinQuadNotes(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
                               locType = locType, eventType = eventType) %>%
-                select(Plot_Name, PlotID, EventID, SampleYear, IsQAQC, Note_Type, Sample_Info, Notes)
+                select(Plot_Name, PlotID, EventID, SampleYear, IsQAQC, Note_Type, Sample_Info = Note_Info, Notes)
 
   # Microplot notes
   micro_notes <- joinMicroNotes(park = park, from = from, to = to, QAQC = QAQC, panels = panels,
