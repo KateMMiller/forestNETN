@@ -58,4 +58,5 @@ Suggests:
     dbplyr,
     ggrepel,
     odbc,
+    sf,
     zip
