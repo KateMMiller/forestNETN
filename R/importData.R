@@ -5,7 +5,7 @@
 #' new_env = TRUE or FALSE. You must have the latest ODBC SQL driver installed for this function to
 #' work. It can be downloaded from: https://go.microsoft.com/fwlink/?linkid=2168524
 #'
-#' @importFrom dplyr collect tbl
+#' @importFrom dplyr collect rename tbl
 #' @importFrom magrittr %>%
 #'
 #' @param instance Specify whether you are connecting to the local instance or server.
@@ -54,8 +54,12 @@ importData <- function(instance = c("local", "server"), server = NA, name = "NET
     stop("Package 'DBI' needed for this function to work. Please install it.", call. = FALSE)
   }
 
-  if(!requireNamespace("dplyr", quietly = TRUE)){
+  if(!requireNamespace("dbplyr", quietly = TRUE)){
     stop("Package 'dbplyr' needed for this function to work. Please install it.", call. = FALSE)
+  }
+
+  if(!requireNamespace("sf", quietly = TRUE)){
+    stop("Package 'sf' needed for this function to work. Please install it.", call. = FALSE)
   }
 
   # Set up connection
@@ -110,15 +114,35 @@ importData <- function(instance = c("local", "server"), server = NA, name = "NET
 
   view_import <- setNames(view_import, view_list)
 
-  print(ifelse(new_env == TRUE,
-               paste0("Import complete. Views are located in VIEWS_NETN environment."),
-               paste0("Import complete. Views are located in global environment.")), quote = FALSE)
-
   if(new_env == TRUE){
     VIEWS_NETN <<- new.env()
     list2env(view_import, envir = VIEWS_NETN)
   } else {
     list2env(view_import, envir = .GlobalEnv)}
+
+  # Add Lat/Long to Plots_NETN
+  env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
+  plots <- get("Plots_NETN", envir = env)
+
+  plotwgs1 <-
+    rbind(
+      plots %>% filter(ZoneCode == "19N") %>%
+      sf::st_as_sf(coords = c("xCoordinate", "yCoordinate"), crs = 26919) %>%
+      sf::st_transform(crs = 4326),
+      plots %>% filter(ZoneCode == "18N") %>%
+      sf::st_as_sf(coords = c("xCoordinate", "yCoordinate"), crs = 26918) %>%
+      sf::st_transform(crs = 4326)
+  )
+
+  plotwgs <- cbind(plots, sf::st_coordinates(plotwgs1)) %>%
+    rename(Lat = Y, Long = X)
+
+  if(new_env == TRUE){VIEWS_NETN$Plots_NETN <- plotwgs
+  } else Plots_NETN <- plotwgs
+
+  print(ifelse(new_env == TRUE,
+               paste0("Import complete. Views are located in VIEWS_NETN environment."),
+               paste0("Import complete. Views are located in global environment.")), quote = FALSE)
 
   }
 
