@@ -107,7 +107,7 @@ joinCWDData <- function(park = 'all', from = 2006, to = as.numeric(format(Sys.Da
 
   slopes_QAQC <- merge(slopes_QAQC1,
                        subset(slopes, slopes$IsQAQC == FALSE, select = c(-SampleDate, -IsQAQC, -EventID, -PlotID)),
-                       by = c("Plot_Name", "SampleYear"), all.x = T, all.y = F) |> unique()
+                       by = c("Plot_Name", "SampleYear"), all.x = T, all.y = F) %>% unique()
 
   slopes_final <- rbind(slopes_init, slopes_QAQC)
 
