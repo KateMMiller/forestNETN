@@ -104,7 +104,7 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = as.numeric(forma
 
   # Prepare the foliage data
   tryCatch(foliage_vw <- get("TreesFoliageCond_NETN", envir = env) %>%
-                         select(Plot_Name, PlotID, EventID, ParkUnit, ParkSubUnit, PlotCode,
+                         select(Plot_Name, PlotID, EventID, ParkUnit, PlotCode,
                                 SampleYear, IsQAQC, TagCode, TreeStatusCode,
                                 FoliageConditionCode, PercentLeavesCode, PercentLeavesLabel,
                                 PercentLeafAreaCode, PercentLeafAreaLabel),
@@ -117,7 +117,7 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = as.numeric(forma
                                     dist_m = dist_m, output = 'verbose')) %>%
                  select(Plot_Name, Network, ParkUnit, ParkSubUnit, PlotTypeCode, PanelCode,
                         PlotCode, PlotID, EventID, IsQAQC, SampleYear, SampleDate, TSN, ScientificName,
-                        TagCode, TreeStatusCode, Pct_Tot_Foliage_Cond, Txt_Tot_Foliage_Cond)
+                        TagCode, Pct_Tot_Foliage_Cond, Txt_Tot_Foliage_Cond)
 
   if(nrow(tree_events) == 0){stop("Function returned 0 rows. Check that park and years specified contain visits.")}
 
@@ -125,9 +125,8 @@ joinTreeFoliageCond <- function(park = 'all', from = 2006, to = as.numeric(forma
 
   fol_evs <- filter(foliage_vw, EventID %in% te_list)
 
-  # left join
-  fol_evs2 <- left_join(tree_events, fol_evs, by = intersect(names(tree_events), names(fol_evs)))
-    # should drop unwanted trees
+  fol_evs2 <- left_join(tree_events, fol_evs, by = c("Plot_Name", "ParkUnit", "PlotCode",
+                                                     "PlotID", "EventID", "IsQAQC", "SampleYear", "TagCode"))
 
   fol_evs3 <- fol_evs2 %>% mutate(Pct_Leaves_Aff = as.numeric(
                                     case_when(PercentLeavesCode == "0" ~ 0,
