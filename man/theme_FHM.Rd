@@ -23,6 +23,6 @@ importData()
      facet_wrap(vars(cycle_fac), ncol=3, labeller=as_labeller(cycle_names))+
      labs(x='Regeneration Size Distribution', y='stems/ha')+
      scale_x_discrete(labels=c('15-30cm', '30-100cm', '100-150cm', '>150cm','1-10cm DBH'))+
-     theme_FVM()
+     theme_FHM()
 }
 }
