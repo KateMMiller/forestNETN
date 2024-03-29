@@ -194,6 +194,19 @@ joinMicroShrubData <- function(park = 'all', from = 2006, to = as.numeric(format
 
   shrub_comb1 <- left_join(shrub_wide, shrub_pres, by = intersect(names(shrub_wide), names(shrub_pres)))
 
+  # Add microplot columns if missing from the data (ie none of a speciestype were found)
+  pct_names <- c("Pct_Cov_UR", "Pct_Cov_UL","Pct_Cov_B")
+  txt_names <- c("Txt_Cov_UR", "Txt_Cov_UL", "Txt_Cov_B")
+  miss_pnames <- setdiff(pct_names, names(shrub_comb1))
+  miss_tnames <- setdiff(txt_names, names(shrub_comb1))
+
+  shrub_comb1[miss_pnames] <- 0
+  shrub_comb1[miss_tnames] <- "0%"
+
+  if("Pct_Cov_NA" %in% names(shrub_comb1)){
+    shrub_comb1 <- shrub_comb1[, -which(names(shrub_comb1) %in% c("Pct_Cov_NA", "Txt_Cov_NA"))]
+  }
+
   shrub_comb2 <- shrub_comb1 %>% left_join(., micro_samp, by = intersect(names(.), names(micro_samp)))
 
   shrub_comb3 <- shrub_comb2 %>%
