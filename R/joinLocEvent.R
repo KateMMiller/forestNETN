@@ -103,8 +103,8 @@ joinLocEvent<-function(park = "all", from = 2006, to = as.numeric(format(Sys.Dat
   plots <- plots %>% select(-ExportDate)
   events <- events %>% select(-ExportDate)
   merge_names <- intersect(names(plots), names(events))
-    # merge_names: "Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PlotTypeLabel",
-    # "PanelCode", "PanelLabel", "PlotCode", "IsAbandoned"
+    # merge_names: "Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "##PlotTypeLabel",
+    # "PanelCode", "##PanelLabel", "PlotCode", "IsAbandoned"
 
   plot_events <- full_join(plots, events, by = merge_names)
 
@@ -113,10 +113,10 @@ joinLocEvent<-function(park = "all", from = 2006, to = as.numeric(format(Sys.Dat
   # Filter output based on function arguments
   plot_events <- if(output == 'short'){
     plot_events[, c("Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "PanelCode", "PlotCode",
-                    "IsAbandoned", "PlotID", "PlotLegacyID", "xCoordinate", "yCoordinate", "ZoneCode",
+                    "IsAbandoned", "PlotID", "xCoordinate", "yCoordinate", "ZoneCode",
                     "PhysiographyCode", "PhysiographyLabel", "PhysiographySummary", "Aspect",
                     "Orientation", "GRTS", "IsOrientationChanged", "IsStuntedWoodland",
-                    "EventID", "EventLegacyID", "IsQAQC", "SampleYear", "SampleDate",
+                    "EventID", "IsQAQC", "SampleYear", "SampleDate",
                     "PlotNotes", "Directions", "EventNotes", "StandNotes")]} else {plot_events}
 
 
