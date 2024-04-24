@@ -88,7 +88,7 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = as.numeric(format(Sys.
 
   tryCatch(quadnotes <- get("QuadNotes_NETN", envir = env) %>%
                         select(Plot_Name, PlotID, EventID, SQQuadCharCode, SQQuadCharNotes,
-                               SQQuadSppNotes, QuadratCode, QuadratNote) %>%
+                               SQQuadSppNotes, QuadratCode) %>%
                                unique(),
            error = function(e){stop("QuadNotes_NETN view not found. Please import view.")})
 
@@ -132,15 +132,7 @@ joinQuadNotes <- function(park = 'all', from = 2006, to = as.numeric(format(Sys.
                                      select(names(spp_notes)) %>% filter(!is.na(Notes))
 
   # SQ generic quad-level notes
-  gen_notes <- quadnotes_evs %>% select(Plot_Name:IsQAQC,
-                                            Sample_Info = SQQuadCharCode,
-                                            Note_Info = QuadratCode,
-                                            Notes = QuadratNote) %>%
-                                 mutate(Note_Type = "Quad_General") %>%
-                                 select(names(spp_notes)) %>% filter(!is.na(Notes))
-
-
-  quad_notes <- rbind(spp_notes, sq_spp_notes, sq_char_notes, gen_notes) %>%
+  quad_notes <- rbind(spp_notes, sq_spp_notes, sq_char_notes) %>%
                 unique() %>%
                 arrange(Plot_Name, SampleYear, IsQAQC, Note_Info, Note_Type) %>%
                 select(Plot_Name:IsQAQC, Note_Type, Sample_Info, Note_Info, Notes)
