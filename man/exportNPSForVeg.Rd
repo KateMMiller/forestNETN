@@ -30,8 +30,10 @@ partial visits (e.g., ACAD-029-2010), and non-VS plots are not included in the e
 # RUN FIRST
 library(forestNETN)
 importData()
-
-exportNPSForVeg(export = T, path = "C:/NETN/R_Dev/data", zip = T)
+filepath <- "C:/NETN/R_Dev/data/NPSForVeg/NETN"
+exportNPSForVeg(export = T, path = filepath, keep = T)
+exportNPSForVeg(export = T, path = filepath, keep = F)
+exportNPSForVeg(export = T, path = filepath, keep = F, zip = T)
 
 }
 
