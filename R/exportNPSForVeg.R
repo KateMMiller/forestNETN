@@ -152,7 +152,9 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
                                Deer_Browse_Line_ID, Groundstory_Cover_Class_Low, Groundstory_Cover_Class_Mid,
                                Groundstory_Cover_Class_High, Forest_Floor_Bare_Soil_Cover_Class_ID,
                                Forest_Floor_Rock_Cover_Class_ID, Forest_Floor_Trampled_Cover_Class_ID,
-                               Plot_Slope_Degree)
+                               Plot_Slope_Degree) |>
+    arrange(Plot_Name, Event_Year)
+
   #---- MetaData ----
   meta <- data.frame(ParkCode = c("ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"),
                      ShortName = c("Acadia", "Marsh-Billings-Rockefeller",
@@ -178,7 +180,7 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
                      HPlotSize = rep(1, 8))
 
   #---- Cycles ----
-  # REMOVED CYCLES FROM NETN/MIDN NPSForVeg package
+  # REMOVED CYCLES FROM NETN/MIDN NPSForVeg package, will hard code in NPSForVeg package
 
   #---- CommonNames ----
   plants1 <- prepTaxa() |>
@@ -194,8 +196,6 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
   plants <- left_join(plants1, plants_code, by = "TSN")
 
   #---- Trees ----
-  table(trees$TreeStatusCode)
-
   live <- c("1", "AB", "AF", "AL", "AM", "AS", "RB", "RF", "RL", "RS")
   dead <- c("2", "DB", "DC", "DF", "DL", "DM", "DS")
 
@@ -238,7 +238,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            Crown_Class = CrownClassCode,
            Crown_Description = CrownClassLabel,
            DBH_Status = IsDBHUnusual,
-           DecayClass = DecayClassCode)
+           DecayClass = DecayClassCode) |>
+    arrange(Plot_Name, Sample_Year, Tag)
 
   #---- Saplings ----
   saps1 <- joinMicroSaplings() |>
@@ -249,8 +250,9 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            Browsable = NA_character_,
            Date = format(SampleDate, "%Y%m%d"),
            Tag = NA,
-           TaxonCode = NA) |>
-    filter(!SQSaplingCode %in% "NS")
+           TaxonCode = NA,
+           Microplot_Number = ifelse(MicroplotCode == "UR", 45, ifelse(MicroplotCode == "B", 180, 315))) |>
+    filter(!SQSaplingCode %in% c("NS", "NP"))
 
   saps1$rep = ifelse(saps1$Count <= 1, 1, saps1$Count)
   #sum(saps1$Count) #7550 live saplings; sum(saps1$rep) #9869 sapling records, including 0s
@@ -265,22 +267,90 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            Browsed = NA_character_,
            Browsable = NA_character_) |>
     select(Plot_Name, Unit_Code = ParkUnit, Unit_Group, Subunit_Code = ParkSubUnit,
-           Cycle = cycle, Panel = PanelCode, Frame = Network, Sample_Year = SampleYear,
-           Date, Tag, TSN, TaxonCode, Latin_Name = ScientificName, StemsLive = Count,
+           Cycle = cycle, Panel = PanelCode, Frame = ParkUnit, Sample_Year = SampleYear,
+           Date, Tag, Microplot_Number, TSN, TaxonCode, Latin_Name = ScientificName, StemsLive = Count,
            StemsDead, SumLiveBasalArea_cm2, SumDeadBasalArea_cm2,
-           Equiv_Live_DBH_cm = DBHcm, Equiv_Dead_DBH_cm, Status, Habit, Browsed, Browsable)
+           Equiv_Live_DBH_cm = DBHcm, Equiv_Dead_DBH_cm, Status, Habit, Browsed, Browsable) |>
+    arrange(Plot_Name, Sample_Year, Microplot_Number)
 
   #---- Seedlings ----
-  seeds <- joinMicroSeedlings()
+  seeds1 <- joinMicroSeedlings() |>
+    filter(!ScientificName %in% c("None present", "Not Sampled")) |>  #NPSForVeg doesn't take 0s
+    mutate(Date = format(SampleDate, "%Y%m%d"),
+           Quadrat_Number = ifelse(MicroplotCode == "UR", 45, ifelse(MicroplotCode == "B", 180, 315))) |>
+    pivot_longer(cols = c(Seedlings_15_30cm, Seedlings_30_100cm, Seedlings_100_150cm, Seedlings_Above_150cm),
+                 names_to = "Class", values_to = "Count") |>
+    select(Plot_Name, Unit_Code = ParkUnit, Subunit_Code = ParkSubUnit, Cycle = cycle,
+           Panel = PanelCode, Frame = ParkUnit, Sample_Year = SampleYear, Date, Quadrat_Number,
+           Latin_Name = ScientificName, TSN, Class, Count)
+
+  seeds1$Height <- NA_real_
+  seeds1$Height[seeds1$Class == "Seedlings_15_30cm"] <- 22.5
+  seeds1$Height[seeds1$Class == "Seedlings_30_100cm"] <- 65.0
+  seeds1$Height[seeds1$Class == "Seedlings_100_150cm"] <- 125.0
+  seeds1$Height[seeds1$Class == "Seedlings_Above_150cm"] <- 200.0
+
+  seeds_long <- seeds1[rep(1:nrow(seeds1), seeds1$Count),]
+
+  seeds <- left_join(seeds_long, plots |> select(Plot_Name, Unit_Group), by = "Plot_Name") |>
+    mutate(Browsable = NA_character_,
+           Browsed = NA_character_) |>
+    select(Plot_Name, Unit_Code, Unit_Group, Subunit_Code, Cycle, Panel, Frame, Sample_Year, Date,
+           Quadrat_Number, Latin_Name, TSN, Height, Browsable, Browsed) |>
+    arrange(Plot_Name, Sample_Year, Quadrat_Number)
 
   #---- Herbs ----
-  herbs <- joinQuadSpecies()
+  herbs1 <- joinQuadSpecies() |>
+    mutate(Date = format(SampleDate, "%Y%m%d"))
+
+  herbs2 <- left_join(herbs1, plots |> select(Plot_Name, Unit_Group), by = "Plot_Name") |>
+    select(Plot_Name, Unit_Code = ParkUnit, Unit_Group, Subunit_Code = ParkSubUnit,
+           Cycle = cycle, Panel = PanelCode, Frame = ParkUnit, Sample_Year = SampleYear, Date,
+           TSN, Latin_Name = ScientificName,
+           Pct_Cov_UC, Pct_Cov_UR, Pct_Cov_MR, Pct_Cov_BR, Pct_Cov_BC, Pct_Cov_BL, Pct_Cov_ML, Pct_Cov_UL,
+           Exotic)
+
+  herbs <- herbs2 |> pivot_longer(cols = Pct_Cov_UC:Pct_Cov_UL,
+                                  names_to = "Quadrat_Number", values_to = "Percent_Cover") |>
+    mutate(TaxonCode = NA_real_) |> filter(!is.na(Percent_Cover)) |> filter(Percent_Cover > 0) |>
+    arrange(Plot_Name, Sample_Year, Latin_Name)
+
+  herbs$Quadrat_Number <- substr(herbs$Quadrat_Number, 9, 10)
 
   #---- Vines ----
-  Vines <- joinTreeVineSpecies()
+  vines1 <- joinTreeVineSpecies() |>
+    mutate(Date = format(SampleDate, "%Y%m%d"))
+  vines1$Condition <- NA_character_
+  vines1$Condition[vines1$VinePositionCode == "C"] <- "Vines in the crown"
+  vines1$Condition[vines1$VinePositionCode == "B"] <- "Vines on the bole"
+  vines1$Tag_Status = "Tree"
+
+  vines2 <- left_join(vines1, events1 |> select(Plot_Name, SampleYear, IsQAQC, Unit_Group, Cycle),
+                      by = c("Plot_Name", "SampleYear", "IsQAQC"))
+  vines3 <- left_join(vines2, trees |> select(Plot_Name, Sample_Year, Tag, Status),
+                      by = c("Plot_Name", "SampleYear" = "Sample_Year",
+                             "TagCode" = "Tag"))
+
+  vines <- vines3 |>
+    select(Plot_Name, Unit_Code = ParkUnit,
+           Unit_Group, Subunit_Code = ParkSubUnit,
+           Cycle, Panel = PanelCode, Frame = ParkUnit, Sample_Year = SampleYear, Date, TSN, Latin_Name = ScientificName,
+           Tag_Status, Host_Tag = TagCode, Host_Latin_Name = TreeScientificName, Host_Status = Status,
+           Condition, Exotic) |>
+    arrange(Plot_Name, Sample_Year, Host_Tag)
 
   #---- CWD ----
-  cwd <- joinCWDData()
+  cwd1 <- joinCWDData()
 
+  cwd <- left_join(cwd1, plots |> select(Plot_Name, Unit_Group, Subunit_Code, Panel), by = "Plot_Name") |>
+         mutate(Date = format(SampleDate, "%Y%m%d")) |>
+         select(Plot_Name, Unit_Code = ParkUnit, Unit_Group, Subunit_Code, Cycle = cycle,
+                Panel, Frame = ParkUnit, Sample_Year = SampleYear, Date, TSN, Latin_Name = ScientificName,
+                CWD_Vol, Decay_Class = DecayClassCode)
+
+  #---- Export Process -----
+  csvs <- list(plots, events, meta, plants, trees, saplings, seedlings, vines, herbs, cwd)
+
+  return(csvs)
 
   }
