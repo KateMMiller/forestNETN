@@ -35,8 +35,10 @@
 #' # RUN FIRST
 #' library(forestNETN)
 #' importData()
-#'
-#' exportNPSForVeg(export = T, path = "C:/NETN/R_Dev/data", zip = T)
+#' filepath <- "C:/NETN/R_Dev/data/NPSForVeg/NETN"
+#' exportNPSForVeg(export = T, path = filepath, keep = T)
+#' exportNPSForVeg(export = T, path = filepath, keep = F)
+#' exportNPSForVeg(export = T, path = filepath, keep = F, zip = T)
 #'
 #' }
 #'
@@ -82,11 +84,14 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
   pb <- txtProgressBar(min = 0, max = maxpb, style = 3)
   x <- 1
   setTxtProgressBar(pb, x)
+
   #-- Compile CSVs for NPSForVeg --
   plot_evs1 <- joinLocEvent(output = 'verbose', eventType = "complete", QAQC = F)
 
   #---- Plots ----
-  # Pull in alternative plot labels
+  # Pull in alternative plot labels.
+  # If this url fails, access via:
+      # "Z:/PROJECTS/MONITORING/Forest_Health/5_Data/Database/EI Scorecard/tbl_Alternate_Plot_Labels.csv"
   alturl <-
     "https://raw.githubusercontent.com/KateMMiller/forestSummaries/main/tbl_Alternative_Plot_Labels.csv"
   altlabs <- read.csv(alturl, quote = "", row.names = NULL)
@@ -378,14 +383,28 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
          mutate(Date = format(SampleDate, "%Y%m%d")) |>
          select(Plot_Name, Unit_Code = ParkUnit, Unit_Group, Subunit_Code, Cycle = cycle,
                 Panel, Frame = ParkUnit, Sample_Year = SampleYear, Date, TSN, Latin_Name = ScientificName,
-                CWD_Vol, Decay_Class = DecayClassCode)
+                CWD_Vol, DecayClass = DecayClassCode)
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- Export Process -----
   csv_list <- list(plots, events, meta, plants, trees, saplings, seeds, vines, herbs, cwd)
   csv_names <- c("Plots", "Events", "MetaData", "CommonNames",
                  "Trees", "Saplings", "Seedlings", "Vines", "Herbs", "CWD")
   csv_list <- setNames(csv_list, csv_names)
+
+  # # Create Metadata for files
+  #
+  # defs <- lapply(seq_along(csv_list), function(x){
+  #   col_names <- names(csv_list[[csv_names[[x]]]])
+  #   rbind(data.frame(
+  #     flatfile = names(csv_list[x]),
+  #     columns = col_names))
+  # })
+  #
+  # defs2 <- do.call(rbind, defs)
+  # length(unique(defs2$columns))
+  # write.csv(defs2, paste0(path, "NPSForVeg_Defs.csv"), row.names = F)
 
   if(keep == TRUE){list2env(csv_list, envir = .GlobalEnv)}
 
