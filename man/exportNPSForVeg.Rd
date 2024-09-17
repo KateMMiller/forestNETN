@@ -4,15 +4,18 @@
 \alias{exportNPSForVeg}
 \title{exportNPSForVeg}
 \usage{
-exportNPSForVeg(export = T, path = NA, zip = F)
+exportNPSForVeg(export = T, path = NA, zip = F, keep = T)
 }
 \arguments{
-\item{export}{Logical. If TRUE, saves formatted csvs to specified path.}
+\item{export}{Logical. If TRUE (default), saves formatted csvs to specified path.}
 
 \item{path}{Quoted path to save files to. If not specified, will save to working directory.}
 
 \item{zip}{Logical. If TRUE, exports zip file of csvs with timestamp of date generated.
-If FALSE (Default), exports individual csvs.}
+If FALSE (default), exports individual csvs.}
+
+\item{keep}{Logical. If TRUE (default), assigns NPSForVeg objects to global environment.
+If FALSE, does not return output, which is useful when export = T.}
 }
 \value{
 NPSForVeg flatfiles

@@ -18,12 +18,15 @@
 #' files that can be imported into the NPSForVeg R package. Abandoned plots, QAQC visits,
 #' partial visits (e.g., ACAD-029-2010), and non-VS plots are not included in the export.
 #'
-#' @param export Logical. If TRUE, saves formatted csvs to specified path.
+#' @param keep Logical. If TRUE (default), assigns NPSForVeg objects to global environment.
+#' If FALSE, does not return output, which is useful when export = T.
+#'
+#' @param export Logical. If TRUE (default), saves formatted csvs to specified path.
 #'
 #' @param path Quoted path to save files to. If not specified, will save to working directory.
 #'
 #' @param zip Logical. If TRUE, exports zip file of csvs with timestamp of date generated.
-#' If FALSE (Default), exports individual csvs.
+#' If FALSE (default), exports individual csvs.
 #'
 #' @return NPSForVeg flatfiles
 #'
@@ -40,11 +43,22 @@
 #' @export
 #'
 
-exportNPSForVeg <- function(export = T, path = NA, zip = F){
+exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
 
   #---- Error handling ----
   stopifnot(class(export) %in% "logical")
   stopifnot(class(zip) %in% "logical")
+  if(keep == FALSE & export == FALSE){stop("Must either specify keep = T or export = T for function to return anything.")}
+
+  # Check that suggested package required for this function are installed
+  if(!requireNamespace("zip", quietly = TRUE) & zip == TRUE){
+    stop("Package 'zip' needed to export to zip file. Please install it.", call. = FALSE)
+  }
+
+  env <- if(exists("VIEWS_NETN")){VIEWS_NETN} else {.GlobalEnv}
+
+  tryCatch(test <- get("Events_NETN", envir = env),
+           error = function(e){stop("NETN Forest Views not found. Please import views first.")})
 
   # Error handling for path
   if(export == TRUE){
@@ -55,11 +69,19 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
     } else{print(paste0("Output saving to ", path), quote = FALSE)}
 
     if(!grepl("/$", path)){path <- paste0(path, "/")} # add / to end of filepath if doesn't exist
-
+  }
+  if(zip == TRUE){
     # Normalize path for zip
     pathn <- normalizePath(path)
+    if(!grepl("/$", pathn)){pathn <- paste0(pathn, "\\")}
     }
 
+  if(export == FALSE){print("Compiling NPSForVeg data", quote = F)}
+
+  maxpb = ifelse(export == FALSE, 10, 20)
+  pb <- txtProgressBar(min = 0, max = maxpb, style = 3)
+  x <- 1
+  setTxtProgressBar(pb, x)
   #-- Compile CSVs for NPSForVeg --
   plot_evs1 <- joinLocEvent(output = 'verbose', eventType = "complete", QAQC = F)
 
@@ -93,7 +115,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            Latitude = Lat, Longitude = Long, UTM_Zone = ZoneCode,
            Aspect = Aspect, Physiographic_Class = PhysiographySummary,
            StuntedWoodland = IsStuntedWoodland) |> unique()
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Events ----
   events1 <- plot_evs |>
     mutate(Event_Date = format(as.Date(SampleDate, format = "%Y-%m-%d"), "%m/%d/%Y"),
@@ -154,7 +177,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
                                Forest_Floor_Rock_Cover_Class_ID, Forest_Floor_Trampled_Cover_Class_ID,
                                Plot_Slope_Degree) |>
     arrange(Plot_Name, Event_Year)
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- MetaData ----
   meta <- data.frame(ParkCode = c("ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"),
                      ShortName = c("Acadia", "Marsh-Billings-Rockefeller",
@@ -178,7 +202,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
                      VPlotSize = rep(1, 8),
                      HPlotNum = rep(8, 8),
                      HPlotSize = rep(1, 8))
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Cycles ----
   # REMOVED CYCLES FROM NETN/MIDN NPSForVeg package, will hard code in NPSForVeg package
 
@@ -190,11 +215,13 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            Shrub = ifelse(Shrub + TreeShrub > 0, TRUE, FALSE)) |> # inclusive for shrubs >10cm dbh
     select(Latin_Name = ScientificName, NCRN_Common = CommonName, Common = CommonName,
            Family, Genus, Species, TSN, Woody, Herbaceous, Targeted_Herb, Tree, Shrub,
-           Vine, Exotic, Graminoid, Fern_Ally = FernAlly)
+           Vine, Exotic, Graminoid, Fern_Ally = FernAlly) |>
+    arrange(Latin_Name)
 
   plants_code <- VIEWS_NETN$Taxa_NETN |> select(TSN, TaxonCode)
   plants <- left_join(plants1, plants_code, by = "TSN")
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Trees ----
   live <- c("1", "AB", "AF", "AL", "AM", "AS", "RB", "RF", "RL", "RS")
   dead <- c("2", "DB", "DC", "DF", "DL", "DM", "DS")
@@ -240,7 +267,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            DBH_Status = IsDBHUnusual,
            DecayClass = DecayClassCode) |>
     arrange(Plot_Name, Sample_Year, Tag)
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Saplings ----
   saps1 <- joinMicroSaplings() |>
     mutate(#BA_cm2 = round(pi*((DBHcm/2)^2),4),
@@ -272,7 +300,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            StemsDead, SumLiveBasalArea_cm2, SumDeadBasalArea_cm2,
            Equiv_Live_DBH_cm = DBHcm, Equiv_Dead_DBH_cm, Status, Habit, Browsed, Browsable) |>
     arrange(Plot_Name, Sample_Year, Microplot_Number)
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Seedlings ----
   seeds1 <- joinMicroSeedlings() |>
     filter(!ScientificName %in% c("None present", "Not Sampled")) |>  #NPSForVeg doesn't take 0s
@@ -298,7 +327,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
     select(Plot_Name, Unit_Code, Unit_Group, Subunit_Code, Cycle, Panel, Frame, Sample_Year, Date,
            Quadrat_Number, Latin_Name, TSN, Height, Browsable, Browsed) |>
     arrange(Plot_Name, Sample_Year, Quadrat_Number)
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Herbs ----
   herbs1 <- joinQuadSpecies() |>
     mutate(Date = format(SampleDate, "%Y%m%d"))
@@ -316,7 +346,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
     arrange(Plot_Name, Sample_Year, Latin_Name)
 
   herbs$Quadrat_Number <- substr(herbs$Quadrat_Number, 9, 10)
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Vines ----
   vines1 <- joinTreeVineSpecies() |>
     mutate(Date = format(SampleDate, "%Y%m%d"))
@@ -338,7 +369,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
            Tag_Status, Host_Tag = TagCode, Host_Latin_Name = TreeScientificName, Host_Status = Status,
            Condition, Exotic) |>
     arrange(Plot_Name, Sample_Year, Host_Tag)
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- CWD ----
   cwd1 <- joinCWDData()
 
@@ -347,10 +379,39 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F){
          select(Plot_Name, Unit_Code = ParkUnit, Unit_Group, Subunit_Code, Cycle = cycle,
                 Panel, Frame = ParkUnit, Sample_Year = SampleYear, Date, TSN, Latin_Name = ScientificName,
                 CWD_Vol, Decay_Class = DecayClassCode)
-
+  x <- x + 1
+  setTxtProgressBar(pb, x)
   #---- Export Process -----
-  csvs <- list(plots, events, meta, plants, trees, saplings, seedlings, vines, herbs, cwd)
+  csv_list <- list(plots, events, meta, plants, trees, saplings, seeds, vines, herbs, cwd)
+  csv_names <- c("Plots", "Events", "MetaData", "CommonNames",
+                 "Trees", "Saplings", "Seedlings", "Vines", "Herbs", "CWD")
+  csv_list <- setNames(csv_list, csv_names)
 
-  return(csvs)
+  if(keep == TRUE){list2env(csv_list, envir = .GlobalEnv)}
+
+  if(export == TRUE){
+    if(zip == FALSE){
+      invisible(lapply(seq_along(csv_names), function(x){
+        setTxtProgressBar(pb, x + 10)
+        csv_name <- csv_names[[x]]
+        write.csv(csv_list[[x]], paste0(path, csv_name, ".csv"), row.names = F)
+      }))
+    } else if(zip == TRUE){
+      dir.create(tmp <- tempfile())
+
+      invisible(lapply(seq_along(csv_names), function(x){
+        setTxtProgressBar(pb, x + 10)
+        csv_name <- csv_names[[x]]
+        write.csv(csv_list[[x]], paste0(tmp, "\\", csv_name, ".csv"),
+                  row.names = FALSE)}))
+
+      file_list <- list.files(tmp)
+
+      zip::zipr(zipfile = paste0(pathn, "NPSForVeg_NETN_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+                root = tmp,
+                files = file_list)
+    }
+  }
+  close(pb)
 
   }
