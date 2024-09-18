@@ -110,7 +110,7 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
               Event_Count = sum(!is.na(SampleYear)))
 
   plots <- left_join(plot_count, plot_evs, by = "Plot_Name") |>
-    mutate(Frame = "NETN",
+    mutate(Frame = ParkUnit,
            Location_Status = ifelse(IsAbandoned == FALSE, "Active", "Inactive")) |>
     select(Plot_Name, Unit_Code = ParkUnit, Unit_Group,
            Subunit_Code = ParkSubUnit, Panel = PanelCode, Frame,
@@ -126,7 +126,7 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
   events1 <- plot_evs |>
     mutate(Event_Date = format(as.Date(SampleDate, format = "%Y-%m-%d"), "%m/%d/%Y"),
            Event_Date_Txt = format(as.Date(SampleDate, format = "%Y-%m-%d"), "%Y%m%d"),
-           Frame = "NETN",
+           Frame = ParkUnit,
            excludeEvent = 0) |> # ACAD-029-2010 already removed, so all = 0
     select(Event_ID = EventID, Plot_Name, Event_Date, Event_Date_Txt, Unit_Code = ParkUnit,
            Unit_Group, SubUnitCode = ParkSubUnit, ProtocolName = ProtocolPublishYear,
@@ -196,7 +196,9 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
                                   "Weir Farm National Historical Park"),
                      Network = rep("NETN", 8),
                      TPlotNum = rep(1, 8),
+                     TPlotSize = c(225, rep(400, 7)),
                      SapPlotNum = rep(3, 8),
+                     SapPlotSize = rep(12.57, 8),
                      SeedPlotNum = rep(3, 8),
                      SeedPlotSize = rep(12.57, 8),
                      ShrubPlotNum = rep(3, 8),
