@@ -17,6 +17,7 @@
 #' @description This function exports NETN forest data that are formatted to match flat
 #' files that can be imported into the NPSForVeg R package. Abandoned plots, QAQC visits,
 #' partial visits (e.g., ACAD-029-2010), and non-VS plots are not included in the export.
+#' Note the every year after 2024, the cycles code will need to be updated.
 #'
 #' @param keep Logical. If TRUE (default), assigns NPSForVeg objects to global environment.
 #' If FALSE, does not return output, which is useful when export = T.
@@ -122,6 +123,7 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
            StuntedWoodland = IsStuntedWoodland) |> unique()
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- Events ----
   events1 <- plot_evs |>
     mutate(Event_Date = format(as.Date(SampleDate, format = "%Y-%m-%d"), "%m/%d/%Y"),
@@ -184,6 +186,7 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
     arrange(Plot_Name, Event_Year)
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- MetaData ----
   meta <- data.frame(ParkCode = c("ACAD", "MABI", "MIMA", "MORR", "ROVA", "SAGA", "SARA", "WEFA"),
                      ShortName = c("Acadia", "Marsh-Billings-Rockefeller",
@@ -211,8 +214,41 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
                      HPlotSize = rep(1, 8))
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- Cycles ----
-  # REMOVED CYCLES FROM NETN/MIDN NPSForVeg package, will hard code in NPSForVeg package
+  # Cycles by park
+  ACAD_cycles <- data.frame(
+    Cycle = c(1, 2, 3, 4, 5),
+    Name = c("Cycle 1", "Cycle 2", "Cycle 3", "Cycle 4", "Latest Data"),
+    YearStart = c(2006, 2010, 2014, 2018, 2021),
+    YearEnd =   c(2009, 2013, 2017, 2021, 2024),
+    PanelStart = c(1, 1, 1, 1, 4))
+
+  #MABI MIMA SAGA SARA
+  NHP13_cycles <- data.frame(
+    Cycle = c(1, 2, 3, 4, 5),
+    Name = c("Cycle 1", "Cycle 2", "Cycle 3", "Cycle 4", "Latest Data"),
+    YearStart = c(2006, 2010, 2014, 2018, 2022),
+    YearEnd =   c(2009, 2013, 2017, 2022, 2024),
+    PanelStart = c(1, 1, 1, 1, 3))
+
+  #MORR ROVA WEFA
+  NHP24_cycles <- data.frame(
+    Cycle = c(1, 2, 3, 4, 5),
+    Name = c("Cycle 1", "Cycle 2", "Cycle 3", "Cycle 4", "Latest Data"),
+    YearStart = c(2006, 2010, 2014, 2018, 2022),
+    YearEnd =   c(2009, 2013, 2017, 2022, 2024),
+    PanelStart = c(1, 1, 1, 1, 4))
+
+  cycles <- rbind(
+    data.frame(Unit_Code = rep("ACAD", 5), ACAD_cycles),
+    data.frame(Unit_Code = rep("MABI", 5), NHP13_cycles),
+    data.frame(Unit_Code = rep("MIMA", 5), NHP13_cycles),
+    data.frame(Unit_Code = rep("MORR", 5), NHP24_cycles),
+    data.frame(Unit_Code = rep("ROVA", 5), NHP24_cycles),
+    data.frame(Unit_Code = rep("SAGA", 5), NHP13_cycles),
+    data.frame(Unit_Code = rep("SARA", 5), NHP13_cycles),
+    data.frame(Unit_Code = rep("WEFA", 5), NHP24_cycles))
 
   #---- CommonNames ----
   plants1 <- prepTaxa() |>
@@ -276,6 +312,7 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
     arrange(Plot_Name, Sample_Year, Tag)
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- Saplings ----
   saps1 <- joinMicroSaplings() |>
     mutate(#BA_cm2 = round(pi*((DBHcm/2)^2),4),
@@ -283,7 +320,7 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
            Habit = "Tree",
            Browsed = NA_character_,
            Browsable = NA_character_,
-           Date = format(SampleDate, "%Y%m%d"),
+           Date = format(as.Date(SampleDate, "%Y-%m-%d"), "%Y%m%d"),
            Tag = NA,
            TaxonCode = NA,
            Microplot_Number = ifelse(MicroplotCode == "UR", 45, ifelse(MicroplotCode == "B", 180, 315))) |>
@@ -309,10 +346,11 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
     arrange(Plot_Name, Sample_Year, Microplot_Number)
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- Seedlings ----
   seeds1 <- joinMicroSeedlings() |>
     filter(!ScientificName %in% c("None present", "Not Sampled")) |>  #NPSForVeg doesn't take 0s
-    mutate(Date = format(SampleDate, "%Y%m%d"),
+    mutate(Date = format(as.Date(SampleDate, "%Y-%m-%d"), "%Y%m%d"),
            Quadrat_Number = ifelse(MicroplotCode == "UR", 45, ifelse(MicroplotCode == "B", 180, 315))) |>
     pivot_longer(cols = c(Seedlings_15_30cm, Seedlings_30_100cm, Seedlings_100_150cm, Seedlings_Above_150cm),
                  names_to = "Class", values_to = "Count") |>
@@ -336,9 +374,10 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
     arrange(Plot_Name, Sample_Year, Quadrat_Number)
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- Herbs ----
   herbs1 <- joinQuadSpecies() |>
-    mutate(Date = format(SampleDate, "%Y%m%d"))
+    mutate(Date = format(as.Date(SampleDate, "%Y-%m-%d"), "%Y%m%d"))
 
   herbs2 <- left_join(herbs1, plots |> select(Plot_Name, Unit_Group), by = "Plot_Name") |>
     select(Plot_Name, Unit_Code = ParkUnit, Unit_Group, Subunit_Code = ParkSubUnit,
@@ -355,9 +394,10 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
   herbs$Quadrat_Number <- substr(herbs$Quadrat_Number, 9, 10)
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- Vines ----
   vines1 <- joinTreeVineSpecies() |>
-    mutate(Date = format(SampleDate, "%Y%m%d"))
+    mutate(Date = format(as.Date(SampleDate, "%Y-%m-%d"), "%Y%m%d"))
   vines1$Condition <- NA_character_
   vines1$Condition[vines1$VinePositionCode == "C"] <- "Vines in the crown"
   vines1$Condition[vines1$VinePositionCode == "B"] <- "Vines on the bole"
@@ -372,17 +412,19 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
   vines <- vines3 |>
     select(Plot_Name, Unit_Code = ParkUnit,
            Unit_Group, Subunit_Code = ParkSubUnit,
-           Cycle, Panel = PanelCode, Frame = ParkUnit, Sample_Year = SampleYear, Date, TSN, Latin_Name = ScientificName,
+           Cycle, Panel = PanelCode, Frame = ParkUnit, Sample_Year = SampleYear,
+           Date, TSN, Latin_Name = ScientificName,
            Tag_Status, Host_Tag = TagCode, Host_Latin_Name = TreeScientificName, Host_Status = Status,
            Condition, Exotic) |>
     arrange(Plot_Name, Sample_Year, Host_Tag)
   x <- x + 1
   setTxtProgressBar(pb, x)
+
   #---- CWD ----
   cwd1 <- joinCWDData()
 
   cwd <- left_join(cwd1, plots |> select(Plot_Name, Unit_Group, Subunit_Code, Panel), by = "Plot_Name") |>
-         mutate(Date = format(SampleDate, "%Y%m%d")) |>
+         mutate(Date = format(as.Date(SampleDate, "%Y-%m-%d"), "%Y%m%d")) |>
          select(Plot_Name, Unit_Code = ParkUnit, Unit_Group, Subunit_Code, Cycle = cycle,
                 Panel, Frame = ParkUnit, Sample_Year = SampleYear, Date, TSN, Latin_Name = ScientificName,
                 CWD_Vol, DecayClass = DecayClassCode)
@@ -390,8 +432,8 @@ exportNPSForVeg <- function(export = T, path = NA, zip = F, keep = T){
   setTxtProgressBar(pb, x)
 
   #---- Export Process -----
-  csv_list <- list(plots, events, meta, plants, trees, saplings, seeds, vines, herbs, cwd)
-  csv_names <- c("Plots", "Events", "MetaData", "CommonNames",
+  csv_list <- list(plots, events, meta, cycles, plants, trees, saplings, seeds, vines, herbs, cwd)
+  csv_names <- c("Plots", "Events", "MetaData", "Cycles", "CommonNames",
                  "Trees", "Saplings", "Seedlings", "Vines", "Herbs", "CWD")
   csv_list <- setNames(csv_list, csv_names)
 
