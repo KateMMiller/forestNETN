@@ -11,7 +11,7 @@ joinSoilSampleData(
   QAQC = FALSE,
   panels = 1:4,
   locType = c("VS", "all"),
-  last_lab_year = 2019,
+  last_lab_year = 2023,
   ...
 )
 }
