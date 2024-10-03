@@ -6,3 +6,4 @@ data/
 testing_csvs/
 temp_scripts/
 testing_scripts/
+*.svg
