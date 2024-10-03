@@ -65,7 +65,7 @@
 #------------------------
 joinSoilSampleData <- function(park = 'all', from = 2007, to = as.numeric(format(Sys.Date(), "%Y")),
                                QAQC = FALSE, panels = 1:4,
-                               locType = c('VS', 'all'), last_lab_year = 2019, ...){
+                               locType = c('VS', 'all'), last_lab_year = 2023, ...){
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,

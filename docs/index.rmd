@@ -1,0 +1,343 @@
+---
+output: 
+  html_document:
+    css: www/styles.css
+title: "Using forestNETN R pkg." 
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+options(width = 10)
+```
+
+```{css echo = FALSE}
+.indent {
+margin-left: 25px;
+font-size: 14px;
+}
+
+.indent2 {
+margin-left: 50px;
+font-size: 12px;
+}
+
+.drop{
+  font-family: "Arial",Arial,sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  padding:0px 0px 0px 0px;
+  margin:0px 0px 0px 0px;
+}
+
+.fxn{
+  color:#1942B5;
+  font-size:14px;
+  font-weight: bold;
+}
+
+.title{
+ display:none;
+}
+/*
+h4{
+  color:#1942B5;
+}
+*/
+```
+
+```{r echo = F, include = F}
+print_head <- function(df){
+  knitr::kable(df[1:6,]) |> #, table.attr = "style='width:60%;'") |> 
+    kableExtra::kable_classic(full_width = F, font_size = 12, 
+                              bootstrap_options = c("condensed"))
+}
+library(tidyverse)
+```
+
+## Using the forestNETN R package {.tabset .tabset-pills}
+
+### Getting started {.tabset}
+
+#### Installation
+<h3><b>Step 1.</b> Install the latest version of R, RStudio, and RTools44</h3>
+If you're on an NPS computer, use Software Center to install required software. If not on an NPS computer, use the following links: 
+<ul>
+<li><a href="https://cran.r-project.org/bin/windows/base/R-4.4.1-win.exe">R-4.4.1 for Windows</a></li>
+<li><a href="https://download1.rstudio.org/electron/windows/RStudio-2024.09.0-375.exe">RStudio Desktop for Windows version 2024.09.0+375</a></li>
+<li><a href="https://cran.r-project.org/bin/windows/Rtools/rtools44/files/rtools44-6104-6039.exe">RTools44</a></li>
+</ul>
+<h3><b>Step 2.</b> Install devtools package in R:</h3>
+```{r, eval = F}
+install.packages('devtools')
+```
+<h3><b>Step 3.</b> Install forestNETN from GitHub</h3>
+Note that whenever the `forestNETN` package is updated, you can rerun this code to install the latest version.
+```{r, eval = F}
+library(devtools)
+install_github("KateMMiller/forestNETN")
+```
+<h3><b>Step 4.</b> Load forestNETN R package</h3>
+```{r}
+library(forestNETN)
+```
+<h3><b>Step 5.</b> Import forestNETN data</h3>
+Note that R is not able to connect to files on Sharepoint or MS Teams (b/c Teams also stores all files on Sharepoint). That means you need to store data package files on your local machine or on a network server (e.g. NETN Z drive). The default option for importing data will add the data package views (i.e., flatfiles) to an environment called VIEWS_NETN to your Environment work space (i.e. Environment tab in top right panel). If you would rather import each individual view into your R session, specify with the new_env argument (e.g., `importData(new_env = F)`). 
+
+The NETN forest data package is organized as a series of stand alone views (i.e., csvs) of stand, tree, sapling, seedling, herbaceous, and soil data. For metadata on each view and the data package overall, refer to the NETN_FHM_2006_2024_metadata.xml file in the data package. A more readable version of the metadata is also available on NPS DataStore: <a href="https://irma.nps.gov/DataStore/Reference/Profile/2306029">NETN Forest Data Package</a>. Clicking on an individual view and selecting the "Show Data Table Info" button gives you definitions of the columns in an individual view.
+
+<details open><summary class = 'drop'>Option 1</summary>
+To import data using the default settings (i.e. run `importData()` with no arguments), you must have the NETN SQL database installed on your local machine with the latest local instance. This is largely for internal NPS use. 
+
+<p class = 'fxn'>Import data using default SQL database connection</p>
+```{r eval = F}
+importData()
+```
+</details>
+<details open><summary class = 'drop'>Option 2</summary>
+In most cases, you'll import NETN forest data using the csv files in the zipped data package, which can be downloaded on NPS Data Store: <a href="https://irma.nps.gov/DataStore/Reference/Profile/2306029">NETN Forest Data Package</a>.
+<p class = 'fxn'>
+Import data via .csv files into the VIEWS_NETN environment. The path should be where csvs are on your machine or server.</p>
+```{r, eval = T, results = 'hide'}
+importCSV(path = "C:/NETN/R_Dev/data", zip_name = "NETN_Forest_Data_Package_20240926.zip") 
+# update path to location on your computer
+```
+</details>
+
+<h3><b>Step 6. Play with the data</b></h3>
+Once you've loaded the `forestNETN` package and have imported the data, you can look at the individual views with the following code: 
+
+```{r results = 'hide'}
+# See list of views
+names(VIEWS_NETN)
+
+# See first 6 rows of Tree Data
+head(VIEWS_NETN$TreesByEvent_NETN)
+
+# View the Seedling Data
+View(VIEWS_NETN$MicroplotSeedlings_NETN)
+
+# Check structure of the stand info view
+str(VIEWS_NETN$StandInfoPhotos_NETN)
+```
+
+While this approach works, the easier approach is to use the "join" functions in the R pacakge, which access the same files, but allow you to query data based on the park, years sample, species type, etc. See specific join tabs on how to use the various functions.
+
+#### Getting Help
+<h4><b>Getting (and improving) help</b></h4>
+The functions in `forestNETN` have help documentation like any R package. To view the help, you can go to the Packages tab and click on forestNETN. That will show you all the functions in the package. Clicking on individual functions will take you to the help documentation for that function. 
+
+<p class = 'fxn'>You can also see the help of a function by running, for example: </p>
+```{r, class.source = 'indent', eval = F}
+?importCSV
+```
+
+<p class = 'fxn'>If `forestNETN` isn't loaded yet, you'd run: </p>
+```{r, class.source = 'indent', eval = F}
+?forestNETN::importCSV
+```
+
+Each function's help includes a Description, Usage (i.e. function arguments and their defaults), Argument options/definitions, and several examples showing how the function can be used. 
+
+<b><span style='color:red;'>This is where you come in! If you notice typos or can think of better descriptions, examples, error messages, etc., please send them my way!</b></span> 
+
+Finally, if you ever want to peak under the hood at the function, you can view it several ways. 
+<ol>
+<li>Keep F2 key pressed and click on the function name in R. This trick works for many but not all functions in R.</li>
+<li>View code in the <a href="https://github.com/KateMMiller/forestNETN/tree/main">GitHub katemmiller/forestNETN repo</a>. The functions are in the R folder. 
+
+If you want to use the print_head() function that shows output in later tabs, run the code below. This function makes the results print cleaner than if you just run `head(dataframe)`, which is also fine.
+```{r}
+print_head <- function(df){
+  knitr::kable(df[1:6,]) |> #, table.attr = "style='width:60%;'") |> 
+    kableExtra::kable_classic(full_width = F, font_size = 12, 
+                              bootstrap_options = c("condensed"))
+}
+```
+
+### Join Functions
+#### joinLocEvent
+This function compiles location and visit-level data about each plot, including years sampled, X/Y coordinates taken at the plot center, and notes about the site. This function is often used to join the results of other functions to, to ensure that all plots are represented in the final dataset.
+
+<p class='fxn'>Compile all visits that have occurred in ACAD</p>
+```{r}
+acad <- joinLocEvent(park = "ACAD")
+```
+
+<p class='fxn'>Compile the most recent sample of each plot in ACAD</p>
+Note that in 2021, two panels were sampled. To get the most recent survey of each plot, the 3rd panel should be dropped.
+```{r}
+acad4yr <- joinLocEvent(park = "ACAD", from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+
+print_head(acad4yr)
+```
+
+#### joinAdditionalSpecies
+Compiles a list of additional species, which are species detected on the plot during a timed 15-minute search of the plot, and only includes species not detected in other protocol modules (i.e. microplots or quadrats).
+
+<p class='fxn'>View additional species for all plots in WEFA</p>
+```{r}
+wefa <- joinAdditionalSpecies(park = "WEFA")
+print_head(wefa)
+```
+
+#### joinCWDData
+Compiles coarse wood debris (CWD) volumn data (m3/ha). Coarse woody debris is sampled along three 15m line-intercept transects per plot. 
+
+<p class='fxn'>View CWD volume for all plots in ACAD</p>
+```{r}
+acad <- joinCWDData(park = "ACAD")
+print_head(acad)
+
+```
+
+<p class='fxn'>View CWD volume for the most recent survey of plots in MABI outputting in ft3/acre</p>
+```{r}
+mabi_ac <- joinCWDData(park = "MABI", from = 2022, to = 2024, units = "acres")
+print_head(mabi_ac)
+```
+
+#### joinMicroSaplings
+Compiles sapling data collected within three 2-m radius microplots on the plot. Saplings are >=1cm DBH and <10cm DBH.
+<p class='fxn'>View sapling data for all plots in ACAD</p>
+```{r}
+acad <- joinMicroSaplings(park = "ACAD")
+print_head(acad)
+```
+
+<p class='fxn'>View sapling data for native canopy-forming species only for all plots in ACAD</p>
+```{r}
+acad_natcan <- joinMicroSaplings(park = "ACAD", speciesType = "native", canopyForm = "canopy")
+print_head(acad_natcan)
+```
+
+#### joinMicroSeedlings
+Compiles seedling data collected within three 2-m radius microplots on the plot. Seedlings are >=15cm tall and <1cm DBH, and are tallied by size class.
+
+<p class='fxn'>View seedling data for all plots in SARA</p>
+```{r}
+sara <- joinMicroSeedlings(park = "SARA")
+print_head(sara)
+```
+
+<p class='fxn'>View sapling data for native canopy-forming species only for all plots in SARA</p>
+```{r}
+sara_natcan <- joinMicroSaplings(park = "SARA", speciesType = "native", canopyForm = "canopy")
+print_head(sara_natcan)
+```
+
+#### joinRegenData
+This function combines the sapling and seedling data from the previous 2 functions and also calculates a regeneration stocking index.
+
+<p class='fxn'>View regeneration data for all plots in ACAD</p>
+```{r}
+acad <- joinRegenData(park = "ACAD")
+print_head(acad)
+```
+
+<p class='fxn'>View sapling data for native canopy-forming species only for all plots in ACAD</p>
+```{r}
+acad_natcan <- joinRegenData(park = "ACAD", speciesType = "native", canopyForm = "canopy")
+print_head(acad_natcan)
+```
+
+#### joinMicroNotes
+Compiles any notes written about the microplots.
+<p class='fxn'>View sapling data for most recent survey of plots in MORR</p>
+```{r}
+morr <- joinMicroNotes(park = "MORR", from = 2022, to = 2024)
+print_head(morr)
+```
+
+#### joinMicroShrubData
+Compiles shrub and woody vine percent cover data estimated in three 2-m radius microplots. Shrubs must be >=30cm tall to be recorded. Vine cover is only estimated up to 2m tall.
+<p class='fxn'>View shrub data for all plots in ACAD</p>
+```{r}
+acad <- joinMicroShrubData(park = "ACAD")
+print_head(acad)
+```
+
+<p class='fxn'>View shrub data for invasive species only for all plots in SARA from most recent survey of plots</p>
+```{r}
+sara_exo <- joinMicroShrubData(park = "SARA", speciesType = "invasive")
+print_head(sara_exo)
+```
+
+#### joinQuadData
+Compiles quadrat characteristic cover data collected in eight 1m2 quadrats. 
+
+<p class='fxn'>View quadrat characteristic data for the most recent survey of plots in ROVA</p>
+```{r}
+rova <- joinMicroSaplings(park = "ROVA", from = 2022, to = 2024)
+print_head(rova)
+```
+
+#### joinQuadSpecies
+Compiles quadrat species cover data collected in eight 1m2 quadrats from the ground up to 1.5m. 
+<p class='fxn'>View quadrat species data for the most recent survey of plots in ACAD</p>
+```{r}
+acad_q4yr <- joinQuadSpecies(park = "ACAD", from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+print_head(acad_q4yr)
+```
+
+#### joinQuadNotes
+Compiles notes recorded in quadrats.
+<p class='fxn'>View quadrat notes for the most recent survey of plots in ROVA</p>
+```{r}
+rova <- joinQuadNotes(park = "ROVA", from = 2022, to = 2024)
+print_head(rova)
+```
+
+#### joinSoilLabData
+Compiles soil chemistry data derived from the lab. Note that soil chemistry data typically take about 6 months to be received from the lab. The latest year of available lab data is 2023. Starting in the 3rd cycle (2014 and later), only a subset of plots per year are sampled for soil chemistry. Note also that soil horizons are QCed based on %TC, so that horizons with >=20% TC are classified as O and horizons <20% TC are classified as A. If this check results in 2 samples with the same horizon, their chemistry is averaged weighted on the depth of each sample.
+
+<p class='fxn'>View soil chemistry data for plots in ACAD from 2014 and later.</p>
+```{r}
+acad_soil <- joinSoilLabData(park = "ACAD", from = 2014, to = 2023)
+print_head(acad_soil)
+```
+
+<p class='fxn'>View soil chemistry data of O horizon only for plots in ACAD from 2014 and later.</p>
+```{r}
+acad_soilO <- joinSoilLabData(park = "ACAD", layer = "O", from = 2014, to = 2024)
+print_head(acad_soilO)
+```
+
+#### joinSoilSampleData
+Compiles soil sample data collected in the field.
+
+<p class='fxn'>View soil sample data for plots in ACAD from 2014 and later.</p>
+```{r}
+acad_soil <- joinSoilSampleData(park = "ACAD", from = 2014, to = 2024)
+print_head(acad_soil)
+```
+
+<p class='fxn'>View soil sample data of O horizon only for plots in ACAD from 2014 and later.</p>
+```{r}
+acad_soilO <- joinSoilSampleData(park = "ACAD", layer = "O", from = 2014, to = 2024)
+print_head(acad_soilO)
+```
+
+
+#### joinStandData
+Compiles data collected at the stand level that may help identify groups for analyses or explain differences among plots.
+
+#### joinStandDisturbance
+Compiles major disturbances recorded on a plot, and that only occurred within the last 4 years of sampling. 
+
+#### joinTreeData
+Compiles live and dead standing tree data for trees >=10cm tall. 
+
+#### joinTreeConditions
+Compiles tree conditions for live and dead standing trees.
+
+#### joinTreeFoliageCond
+Compiles foliage conditions for live trees.
+
+#### joinTreeNotes
+Compiles all notes recorded for trees.
+
+#### joinVisitNotes
+Compiles all notes recorded for a given visit, including microplot, quadrat and tree notes.
