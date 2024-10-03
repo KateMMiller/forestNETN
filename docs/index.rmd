@@ -49,7 +49,7 @@ h4{
 ```{r echo = F, include = F}
 print_head <- function(df){
   knitr::kable(df[1:6,]) |> #, table.attr = "style='width:60%;'") |> 
-    kableExtra::kable_classic(full_width = F, font_size = 12, 
+    kableExtra::kable_classic(full_width = T, font_size = 12, 
                               bootstrap_options = c("condensed"))
 }
 library(tidyverse)
@@ -107,7 +107,7 @@ importCSV(path = "C:/NETN/R_Dev/data", zip_name = "NETN_Forest_Data_Package_2024
 <h3><b>Step 6. Play with the data</b></h3>
 Once you've loaded the `forestNETN` package and have imported the data, you can look at the individual views with the following code: 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval = F}
 # See list of views
 names(VIEWS_NETN)
 
@@ -155,8 +155,9 @@ print_head <- function(df){
 }
 ```
 
-### Join Functions
-#### joinLocEvent
+### Join Functions {.tabset}
+
+#### joinLocEvent {.tabset}
 This function compiles location and visit-level data about each plot, including years sampled, X/Y coordinates taken at the plot center, and notes about the site. This function is often used to join the results of other functions to, to ensure that all plots are represented in the final dataset.
 
 <p class='fxn'>Compile all visits that have occurred in ACAD</p>
@@ -170,7 +171,17 @@ Note that in 2021, two panels were sampled. To get the most recent survey of eac
 acad4yr <- joinLocEvent(park = "ACAD", from = 2021, to = 2024) |> 
   dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
 
-print_head(acad4yr)
+head(acad4yr)
+```
+
+<p class='fxn'>Compile the most recent sample of each plot in ACAD, excluding stunted woodlands.</p> 
+Note that in 2021, two panels were sampled. To get the most recent survey of each plot, the 3rd panel should be dropped.
+```{r}
+acad4yr <- joinLocEvent(park = "ACAD", from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3)) |> 
+  dplyr::filter(IsStuntedWoodland == FALSE)
+
+head(acad4yr)
 ```
 
 #### joinAdditionalSpecies
@@ -301,7 +312,7 @@ print_head(acad_soil)
 
 <p class='fxn'>View soil chemistry data of O horizon only for plots in ACAD from 2014 and later.</p>
 ```{r}
-acad_soilO <- joinSoilLabData(park = "ACAD", layer = "O", from = 2014, to = 2024)
+acad_soilO <- joinSoilLabData(park = "ACAD", layer = "O", from = 2014, to = 2023)
 print_head(acad_soilO)
 ```
 
@@ -314,30 +325,104 @@ acad_soil <- joinSoilSampleData(park = "ACAD", from = 2014, to = 2024)
 print_head(acad_soil)
 ```
 
-<p class='fxn'>View soil sample data of O horizon only for plots in ACAD from 2014 and later.</p>
+#### joinStandData
+Compiles data collected at the stand level that may help identify groups or covariates for analyses or explain differences among plots.
+
+<p class='fxn'>View stand data for plots in SAGA from all years.</p>
 ```{r}
-acad_soilO <- joinSoilSampleData(park = "ACAD", layer = "O", from = 2014, to = 2024)
-print_head(acad_soilO)
+saga_stnd <- joinStandData(park = "SAGA")
+head(saga_stnd)
 ```
 
-
-#### joinStandData
-Compiles data collected at the stand level that may help identify groups for analyses or explain differences among plots.
+<p class='fxn'>View stand data for plots in ACAD from most recent survey of plots.</p>
+```{r}
+acad_stnd4 <- joinStandData(park = "ACAD", from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+head(acad_stnd4)
+```
 
 #### joinStandDisturbance
 Compiles major disturbances recorded on a plot, and that only occurred within the last 4 years of sampling. 
+<p class='fxn'>View stand disturbances recorded for plots in ACAD from all years.</p>
+```{r}
+acad_stnd <- joinStandDisturbance(park = "ACAD")
+print_head(acad_stnd)
+```
+
+<p class='fxn'>View stand disturbances for plots in ACAD from most recent survey of plots.</p>
+```{r}
+acad_stnd4 <- joinStandDisturbance(park = "ACAD", from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+print_head(acad_stnd4)
+```
 
 #### joinTreeData
 Compiles live and dead standing tree data for trees >=10cm tall. 
+<p class='fxn'>Join all tree data from all surveys of plots in ACAD.</p>
+```{r}
+acad_live <- joinTreeData(park = "ACAD")
+```
+
+<p class='fxn'>Join live tree data from the most recent survey of plots in ACAD.</p>
+```{r}
+acad_live <- joinTreeData(park = "ACAD", status = 'live', from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+
+print_head(acad_live)
+```
+
+<p class='fxn'>Join dead tree data from the most recent survey of plots in ACAD.</p>
+```{r}
+acad_dead <- joinTreeData(park = "ACAD", status = 'dead', from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+
+print_head(acad_dead)
+```
 
 #### joinTreeConditions
-Compiles tree conditions for live and dead standing trees.
+Compiles tree conditions for live and dead standing trees. Only presence of cavities is recorded for dead trees.
+
+<p class='fxn'>Join tree condition data from the most recent survey of plots in ACAD.</p>
+```{r}
+acad_cond <- joinTreeConditions(park = "ACAD", from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+
+print_head(acad_cond)
+```
+
+<p class='fxn'>Join tree condition data for live trees only from the most recent survey of plots in ACAD.</p>
+```{r}
+acad_lcond <- joinTreeConditions(park = "ACAD", status = 'live', from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+
+print_head(acad_lcond)
+```
+
 
 #### joinTreeFoliageCond
 Compiles foliage conditions for live trees.
+<p class='fxn'>Join tree foliage condition data from the most recent survey of plots in ACAD.</p>
+```{r}
+acad_fcond <- joinTreeFoliageCond(park = "ACAD", from = 2021, to = 2024) |> 
+  dplyr::filter(!(SampleYear %in% 2021 & PanelCode %in% 3))
+
+print_head(acad_fcond)
+```
 
 #### joinTreeNotes
 Compiles all notes recorded for trees.
+<p class='fxn'>Join tree notes from all visits to plots in ACAD.</p>
+```{r}
+acad_notes <- joinTreeNotes(park = "ACAD") 
+
+print_head(acad_notes)
+```
 
 #### joinVisitNotes
 Compiles all notes recorded for a given visit, including microplot, quadrat and tree notes.
+<p class='fxn'>Join visits notes from all plots in ACAD.</p>
+```{r}
+acad_vn <- joinVisitNotes(park = "ACAD") 
+
+print_head(acad_vn)
+```
