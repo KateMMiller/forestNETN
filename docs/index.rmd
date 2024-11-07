@@ -102,6 +102,15 @@ Import data via .csv files into the VIEWS_NETN environment. The path should be w
 importCSV(path = "C:/NETN/R_Dev/data", zip_name = "NETN_Forest_Data_Package_20240926.zip") 
 # update path to location on your computer
 ```
+
+<p class = 'fxn'>Another approach is to use the NPSutils package to download the data package in R, and then import the csvs.</p>
+```{r, eval = F, results = 'hide'}
+devtools::install_github("nationalparkservice/NPSutils")
+NPSutils::get_data_package(2306029)
+importCSV("./data/2306029")
+
+```
+
 </details>
 
 <h3><b>Step 6. Play with the data</b></h3>

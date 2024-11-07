@@ -691,6 +691,13 @@ should be where csvs are on your machine or server.
 </p>
 <pre class="r"><code>importCSV(path = &quot;C:/NETN/R_Dev/data&quot;, zip_name = &quot;NETN_Forest_Data_Package_20240926.zip&quot;) 
 # update path to location on your computer</code></pre>
+<p class="fxn">
+Another approach is to use the NPSutils package to download the data
+package in R, and then import the csvs.
+</p>
+<pre class="r"><code>devtools::install_github(&quot;nationalparkservice/NPSutils&quot;)
+NPSutils::get_data_package(2306029)
+importCSV(&quot;./data/2306029&quot;)</code></pre>
 </details>
 <h3>
 <b>Step 6. Play with the data</b>
