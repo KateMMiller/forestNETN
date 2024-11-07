@@ -1,7 +1,7 @@
 Package: forestNETN
 Type: Package
 Title: Package for importing, joining and querying NETN forest database tables
-Version: 1.03
+Version: 1.04
 Author: Kate Miller
 Maintainer: Kate Miller <kathryn_miller@nps.gov>
 Description: This package contains functions that import database views from the NETN forest backend and or exported CSVs from the backend and provides functions to query and summarize NETN forest data.

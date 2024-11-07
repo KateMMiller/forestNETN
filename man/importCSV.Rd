@@ -26,6 +26,12 @@ environment in your workspace, or to your global environment based on whether ne
 }
 \examples{
 \dontrun{
+
+#' # Import data package from IRMA and import into R
+devtools::install_github('nationalparkservice/NPSutils') # takes awhile- lots of dependencies
+NPSutils::get_data_package(2306029)
+importCSV("./data/2306029")
+
 # Import individual csvs into global environment
 importCSV(path = "C:/Forest_Health/exports/NETN", new_env = FALSE)
 

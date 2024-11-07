@@ -17,6 +17,12 @@
 #'
 #' @examples
 #' \dontrun{
+#'
+#' #' # Import data package from IRMA and import into R
+#' devtools::install_github('nationalparkservice/NPSutils') # takes awhile- lots of dependencies
+#' NPSutils::get_data_package(2306029)
+#' importCSV("./data/2306029")
+#'
 #' # Import individual csvs into global environment
 #' importCSV(path = "C:/Forest_Health/exports/NETN", new_env = FALSE)
 #'
@@ -89,6 +95,12 @@ importCSV<- function(path = NA, new_env = TRUE, zip_name = NA){
     }
 
   view_import <- setNames(view_import, files)
+
+  # Fix potential encoding issues from data package
+  view_import$Taxa_MIDN_NCBN$Order <- iconv(view_import$Taxa_MIDN_NCBN$Order, "ISO-8859-1", "UTF-8")
+  view_import$Taxa_MIDN_NCBN$Order <- gsub("\u00a0", "", view_import$Taxa_MIDN_NCBN$Order, fixed = T)
+  view_import$Taxa_MIDN_NCBN$Family <- iconv(view_import$Taxa_MIDN_NCBN$Family, "ISO-8859-1", "UTF-8")
+  view_import$Taxa_MIDN_NCBN$Family <- gsub("\u00a0", "", view_import$Taxa_MIDN_NCBN$Family, fixed = T)
 
   if(new_env == TRUE){
     VIEWS_NETN <<- new.env()
