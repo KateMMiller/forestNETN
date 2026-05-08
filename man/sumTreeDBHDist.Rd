@@ -99,7 +99,8 @@ This function calculates DBH distribution by 10cm size classes. Must run importD
 \examples{
 \dontrun{
 importData()
-tree_diam_dist <-sumTreeDBHDist(park = 'MORR', speciesType = 'native', from = 2016, to = 2019, units = 'ba')
+tree_diam_dist <- sumTreeDBHDist(park = 'MORR', speciesType = 'native',
+                                 status = "live", from = 2016, to = 2019)
 head(tree_diam_dist)
 }
 }
