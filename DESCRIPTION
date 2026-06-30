@@ -35,6 +35,7 @@ Collate:
     'joinTreeFoliageCond.R'
     'joinTreeNotes.R'
     'joinVisitNotes.R'
+    'plotTreeGrowth.R'
     'plotTreeMap.R'
     'sumQuadGuilds.R'
     'sumSapDBHDist.R'
