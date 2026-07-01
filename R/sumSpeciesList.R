@@ -69,13 +69,13 @@
 #' \dontrun{
 #' importData()
 #'
-#' # Compile number of invasive species found per plot cycle 3 recent survey for all parks
-#' inv_spp <- sumSppList(speciesType = 'invasive', from = 2015, to = 2018)
+#' # Compile number of invasive species found per plot from 2023 to 2026 for all parks
+#' inv_spp <- sumSpeciesList(speciesType = 'invasive', from = 2023, to = 2026)
 #' inv_spp$present <- ifelse(is.na(inv_spp$ScientificName), 0, 1)
 #' num_inv_per_plot <- inv_spp %>% group_by(Plot_Name) %>% summarize(numspp = sum(present, na.rm = T))
 #'
-#' # Compile species list for SARA in 2019
-#' SARA_spp <- sumSppList(park = 'SARA', from = 2019)
+#' # Compile species list for SARA in 2022
+#' SARA_spp <- sumSpeciesList(park = 'SARA', from = 2022)
 #'}
 #'
 #' @export

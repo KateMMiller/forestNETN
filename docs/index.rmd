@@ -99,7 +99,7 @@ In most cases, you'll import NETN forest data using the csv files in the zipped 
 <p class = 'fxn'>
 Import data via .csv files into the VIEWS_NETN environment. The path should be where csvs are on your machine or server.</p>
 ```{r, eval = T, results = 'hide'}
-importCSV(path = "C:/NETN/R_Dev/data", zip_name = "NETN_Forest_Data_Package_20240926.zip") 
+importCSV(path = "C:/Temp/", zip_name = "NETN_Forest_20260701.zip") 
 # update path to location on your computer
 ```
 
@@ -434,4 +434,168 @@ Compiles all notes recorded for a given visit, including microplot, quadrat and 
 acad_vn <- joinVisitNotes(park = "ACAD") 
 
 print_head(acad_vn)
+```
+
+### Plot Functions {.tabset}
+
+#### plotTreeGrowth {.tabset}
+This function plots individual tree growth over time for all trees that were alive on their first record in the plot. Trees that started out as dead are not plotted. Each line on a graph represents the basal area of a live tree up until the first time it is classified as dead. Lines are color coded based on growth between visits to indicate shrinkage, slowing of growth, and/or fast growth. Each tick or X on the figure is a sample event for a given tree.
+
+<p class='fxn'>Make plot of red spruce for plots on Schoodic in panel 1</p>
+```{r}
+plotTreeGrowth(park = "ACAD", subunit = "Schoodic", panels = 1, species = "Picea rubens")
+```
+
+<p class='fxn'>Plot tree growth for Eastern MDI and balsam fir on plots with elevated mortality</p>
+```{r, fig.height=6, fig.width=10}
+plotTreeGrowth(park = "ACAD", subunit = "MDI_East", species = "Abies balsamea", elev_mort = TRUE)
+```
+
+<p class='fxn'>Plot growth for specific plots</p>
+```{r}
+plotTreeGrowth(plotName = c("ACAD-035", "ACAD-046"))
+```
+
+<p class='fxn'>Plot beech for MORR with vertical line where BLD was detected</p>
+```{r}
+ plotTreeGrowth(park = "MORR", from = 2006, to = 2026, species = "Fagus grandifolia", panels = 4) +
+   ggplot2::geom_vline(xintercept = 2019, lty = 'dashed')
+```
+
+<p class='fxn'>Plot multiple species of oaks in MORR</p>
+```{r, fig.height=6, fig.width=10}
+plotTreeGrowth(park = "MORR", from = 2006, to = 2026,
+   species = c("Quercus rubra", "Quercus velutina", "Quercus alba", "Quercus montana"))
+```
+
+<p class='fxn'>Plot hemlock in ROVA without plot title</p>
+```{r, fig.height=6, fig.width=10}
+plotTreeGrowth(park = "ROVA", species = "Tsuga canadensis", title = F)
+```
+
+<p class='fxn'>Plot ash in SARA</p>
+```{r, fig.height=6, fig.width=10}
+plotTreeGrowth(park = "SARA",
+  species = c("Fraxinus americana", "Fraxinus pennsylvanica", "Fraxinus nigra"))
+```
+
+<p class='fxn'>View plots with elevated mortality in SAGA</p>
+```{r, fig.height=6, fig.width=10}
+plotTreeGrowth(park = "SAGA", elev_mort = T)
+```
+ 
+<p class='fxn'>View MORR plots with elevated mortality not from windthrow</p>
+```{r, fig.height=6, fig.width=10}
+plotTreeGrowth(park = "MORR", elev_mort = T, exc_wind = T)
+```
+
+#### plotTreeMap
+This function converts tree distance and azimuth values to coordinates and plots the coordinates of live, dead, or excluded trees. Trees are color coded by status, and size is relative to DBH. Note that if multiple visits for a given plot are included in the function argument, only the most recent visit will be plotted. Therefore this function is best used on 1 to 4 year periods. Note that QA/QC events are not plotted with this function. Excluded trees are plotted with 10 cm DBH assigned, as these don't get a DBH measurement when excluded.
+
+<p class='fxn'>Make map for single plot</p>
+```{r}
+plotTreeMap(park = "ACAD", from = 2026, to = 2026, plotName = "ACAD-001")
+```
+
+<p class='fxn'>Make map for panel 2 in WEFA</p>
+```{r}
+plotTreeMap(park = "WEFA", from = 2022, to = 2025, panels = 2)
+```
+
+<p class='fxn'>Save pdfs for maps in panel 1 in most recent visit</p>
+```{r, eval = F}
+plotTreeMap(from = 2022, to = 2026, panels = 1, output_to = "file", path = "C:/Temp")
+```
+
+#### theme_FHM
+This function customizes a theme for plotting NETN forest data, including removing the default panel grids from ggplot2 figures.
+
+<p class='fxn'>Using function in an example ggplot object</p>
+```{r}
+dbh_dist <- sumTreeDBHDist(park = "ACAD", status = "live", from = 2022, to = 2025) |>
+            tidyr::pivot_longer(cols = starts_with("dens"), names_to = "size_class", values_to = "density") |>
+            dplyr::arrange(Plot_Name, SampleYear, size_class)
+
+ggplot(dbh_dist, aes(x = size_class, y = density)) +
+       geom_bar(stat = 'identity', fill = 'dimgrey', position = position_dodge()) +
+       labs(x='Live tree DBH size classes (cm)', y='stems/ha') +
+       scale_x_discrete(labels=c('10 - 19.9', '20 - 29.9', '30 - 39.9', '40 - 49.9','50 - 59.9',
+                                 '60 - 69.9', '70 - 79.9', '80 - 89.9', '90 - 99.9', '100+')) +
+       theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+       theme_FHM()
+```
+
+### Sum functions {.tabset}
+#### sumQuadGuilds
+This function summarizes output from joinQuadData and calculates average cover and quadrat frequency for each guild. Average cover is corrected for number of quadrats sampled. Guilds are tree, shrub, forb, fern, and graminoid. If herbaceous guild is split, then cover of ferns does not overlap with cover of herbaceous. If herbaceous guild is not split, then cover of herbaceous guild includes fern and other herbaceous (but not graminoid) species cover. Only works for complete events, but does include plots where a few quadrats were not sampled. Germinants are not included in summary.
+
+<p class='fxn'>Compile invasive quad data for all parks and most recent survey. Keep ferns in with herbs</p>
+```{r}
+inv_guilds <- sumQuadGuilds(speciesType = 'invasive', from = 2015, to = 2018, splitHerb = FALSE)
+print_head(inv_guilds)
+```
+
+<p class='fxn'>Compile native quad data for more recent survey in ACAD, with ferns and forbs split in separate guilds</p>
+```{r}
+ACAD_guilds <- sumQuadGuilds(speciesType = 'native', from = 2015, to = 2018, splitHerb = TRUE)
+print_head(ACAD_guilds)
+```
+
+#### sumSpeciesList
+This function summarizes all species data collected in a plot visit, including live trees, microplots, quadrats, and additional species lists.
+
+<p class='fxn'>Compile number of invasive species found per plot from 2023 to 2026 for all parks.</p>
+```{r}
+inv_spp <- sumSpeciesList(speciesType = "invasive", from = 2023, to = 2026)
+print_head(inv_spp)
+```
+
+<p class='fxn'>Compile species list for plots sampled in SARA in 2022</p>
+```{r}
+SARA_spp <- sumSpeciesList(park = 'SARA', from = 2022)
+print_head(SARA_spp)
+```
+
+#### sumStrStage
+This function calculates structural stage metric from Ecological Integrity Scorecard, which assigns Pole, Mature, Late Successional, or Mosaic (i.e., none of the above) to each plot based on the percent of live basal area of canopy trees in pole, mature and large size classes. Plots must be closed-canopy forest to be classified for this metric. Therefore plots classified as Woodlands (ACAD only) or Early successional (SARA only) in the field are automatically assigned those classes in the calculation. 
+
+<p class='fxn'>Summarize structural stage for all parks all years</p>
+```{r}
+strstg <- sumStrStage()
+print_head(strstg)
+```
+
+<p class='fxn'>Summarize structural stage for MIMA from 2023 to 2026</p>
+```{r}
+strstg_mima <- sumStrStage(park = "MIMA", from = 2023, to = 2026)
+print_head(strstg_mima)
+```
+
+#### sumSapDBHDist
+This function calculates DBH distribution of live saplings by 1cm size classes. 
+<p class='fxn'>Summarize DBH distribution for all saplings in MORR for all cycles</p>
+```{r}
+sap_dist_morr <- sumSapDBHDist(park = "MORR")
+print_head(sap_dist_morr)
+```
+
+<p class='fxn'>Summarize DBH distribution for native saplings in ROVA from 2023 to 2026</p>
+```{r}
+sap_diam_dist <- sumSapDBHDist(park = 'ROVA', speciesType = 'native', from = 2023, to = 2026)
+print_head(sap_diam_dist)
+```
+
+#### sumTreeDBHDist
+This function calculates DBH distribution by 10cm size classes.
+
+<p class='fxn'>Summarize DBH distribution for all trees >= 10cm DBH in MORR for all cycles</p>
+```{r}
+tree_dist_morr <- sumTreeDBHDist(park = "MORR")
+print_head(tree_dist_morr)
+```
+
+<p class='fxn'>Summarize DBH distribution for native trees in ROVA from 2023 to 2026 using basal area</p>
+```{r}
+tree_diam_BA <- sumTreeDBHDist(park = 'ROVA', speciesType = 'native', from = 2023, to = 2026, units = 'BA')
+print_head(tree_diam_BA)
 ```
