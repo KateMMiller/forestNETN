@@ -4,3 +4,6 @@
 ^data/.+$
 ^temp_scripts$
 ^LICENSE\.md$
+[.]html$
+[.]rmd$
+^docs/.+$

@@ -13,7 +13,9 @@ plotTreeGrowth(
   subunit = NA,
   plotName = NA_character_,
   species = NA_character_,
-  subuni
+  elev_mort = FALSE,
+  exc_wind = FALSE,
+  title = TRUE
 )
 }
 \arguments{
@@ -53,13 +55,27 @@ ROVA: "ELRO" for Eleanor Roosevelt NHS; "HOFR_East" for "Home of FDR - East/Farm
 If no plot name is specified, or multiple plots are specified, the function will facet on plotName.}
 
 \item{species}{Allows you to filter on species}
+
+\item{elev_mort}{Logical. If TRUE, only includes plots that have experienced at least 5% mortality over
+the time interval specified. If FALSE (default), includes all plots with at least one live tree of the species
+specified.}
+
+\item{exc_wind}{Logical. If TRUE, excludes trees where windthrow was the likely cause of mortality, due to
+a dead broken or dead fallen status the first time a tree was observed to be dead. If FALSE (default), includes
+trees that died from windthrow or other causes.}
+
+\item{title}{Logical. If TRUE (default) will include a title for the graph, which either shows park, species, or subunit,
+depending on the arguments specified.}
 }
 \value{
 Returns a plot of tree growth rates over time, color coded by rate and whether a tree died.
 }
 \description{
 This function plots individual tree growth over time for all trees that were alive on their
-first record in the plot.
+first record in the plot. Trees that started out as dead are not plotted. Each line on a graph represents
+the basal area of a live tree up until the first time it is classified as dead. Lines are color coded based
+on growth between visits to indicate shrinkage, slowing of growth, and/or fast growth. Each tick or X on the
+figure is a sample event for a given tree.
 }
 \examples{
 \dontrun{
@@ -87,8 +103,14 @@ plotTreeGrowth(park = "MORR", from = 2006, to = 2026, panels = 4,
 plotTreeGrowth(park = "ROVA", species = "Tsuga canadensis")
 
 # Plot ash in SARA, panel 3
-plotTreeGrowth(park = "SARA", species = c("Fraxinus americana", "Fraxinus pennsylvanica", "Fraxinus nigra"), panels = 3)
+plotTreeGrowth(park = "SARA",
+  species = c("Fraxinus americana", "Fraxinus pennsylvanica", "Fraxinus nigra"), panels = 3)
 
+# View MORR plots with elevated mortality
+plotTreeGrowth(park = "MORR", elev_mort = T)
+
+# View MORR plots with elevated mortality not from windthrow
+plotTreeGrowth(park = "MORR", elev_mort = T, exc_wind = T)
 
 }
 

@@ -3,12 +3,15 @@
 #'
 #' @title plotTreeGrowth: plot individual tree growth and mortality
 #'
-#' @importFrom dplyr arrange case_when lag left_join mutate select
+#' @importFrom dplyr arrange case_when lag lead left_join mutate select
 #' @importFrom tidyr fill
 #' @import ggplot2
 #'
 #' @description This function plots individual tree growth over time for all trees that were alive on their
-#' first record in the plot.
+#' first record in the plot. Trees that started out as dead are not plotted. Each line on a graph represents
+#' the basal area of a live tree up until the first time it is classified as dead. Lines are color coded based
+#' on growth between visits to indicate shrinkage, slowing of growth, and/or fast growth. Each tick or X on the
+#' figure is a sample event for a given tree.
 #'
 #' @param park Combine data from all parks or one or more parks at a time. Valid inputs:
 #' \describe{
@@ -46,7 +49,18 @@
 #' @param plotName Allows you to select a specific plot to run function for. Value inputs are "PARK-###", like "ACAD-001".
 #' If no plot name is specified, or multiple plots are specified, the function will facet on plotName.
 #'
-#'@return Returns a plot of tree growth rates over time, color coded by rate and whether a tree died.
+#' @param elev_mort Logical. If TRUE, only includes plots that have experienced at least 5% mortality over
+#' the time interval specified. If FALSE (default), includes all plots with at least one live tree of the species
+#' specified.
+#'
+#' @param exc_wind Logical. If TRUE, excludes trees where windthrow was the likely cause of mortality, due to
+#' a dead broken or dead fallen status the first time a tree was observed to be dead. If FALSE (default), includes
+#' trees that died from windthrow or other causes.
+#'
+#' @param title Logical. If TRUE (default) will include a title for the graph, which either shows park, species, or subunit,
+#' depending on the arguments specified.
+#'
+#' @return Returns a plot of tree growth rates over time, color coded by rate and whether a tree died.
 #'
 #' @examples
 #' \dontrun{
@@ -77,6 +91,11 @@
 #' plotTreeGrowth(park = "SARA",
 #'   species = c("Fraxinus americana", "Fraxinus pennsylvanica", "Fraxinus nigra"), panels = 3)
 #'
+#' # View MORR plots with elevated mortality
+#' plotTreeGrowth(park = "MORR", elev_mort = T)
+#'
+#' # View MORR plots with elevated mortality not from windthrow
+#' plotTreeGrowth(park = "MORR", elev_mort = T, exc_wind = T)
 #'
 #' }
 #'
@@ -84,15 +103,10 @@
 #'
 plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys.Date(), "%Y")),
                            locType = c('VS', 'all'), panels = 1:4, subunit = NA,
-                           plotName = NA_character_, species = NA_character_, subuni){
+                           plotName = NA_character_, species = NA_character_,
+                           elev_mort = FALSE, exc_wind = FALSE, title = TRUE){
 
-  if(!requireNamespace("ggrepel", quietly = TRUE)){
-    stop("Package 'ggrepel' needed for this function to work. Please install it.", call. = FALSE)
-  }
-
-  if(!requireNamespace("cowplot", quietly = TRUE)){
-    stop("Package 'cowplot' needed for this function to work. Please install it.", call. = FALSE)
-  }
+  options(warn = -1)
 
   # Match args and class
   park <- match.arg(park, several.ok = TRUE,
@@ -102,6 +116,9 @@ plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
   stopifnot(panels %in% c(1, 2, 3, 4))
   locType <- match.arg(locType)
   stopifnot(nchar(plotName) == 8 | is.na(plotName))
+  stopifnot(class(elev_mort) == "logical")
+  stopifnot(class(exc_wind) == "logical")
+  stopifnot(class(title) == "logical")
 
   # compile data
   trees_ind <- joinTreeData(park = park, from = from, to = to, QAQC = FALSE, panels = panels,
@@ -136,11 +153,6 @@ plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
                           locType = locType) |>
               select(Plot_Name, SampleYear, cycle, IsStuntedWoodland)
 
-  #+++ TO do +++
-  # Adjust growth rate to annual for non-equal years
-  # Add ability to remove windthrow
-  # Add ability to only view plots with elevated mortality.
-
   trees_ind2 <- left_join(trees_ind1c, plot_evs, by = c("Plot_Name", "cycle", "SampleYear")) |>
     filter(IsStuntedWoodland == FALSE) |> # might turn off
     mutate(tag = sprintf("%02d", TagCode),
@@ -154,8 +166,12 @@ plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
     arrange(Plot_Name, tree_id, SampleYear)  |>
     mutate(dbh_fill = DBHcm) |>
     tidyr::fill(dbh_fill, .direction = 'down', .by = c(Plot_Name, tree_id)) |> # fills for dead trees missing DBH
-    mutate(dbh_prev = dplyr::lag(dbh_fill, 1), .by = c(Plot_Name, tree_id),
-           dbh_growth = dbh_fill - dbh_prev)
+    mutate(dbh_prev = dplyr::lag(dbh_fill, 1),
+           year_prev = dplyr::lag(SampleYear, 1),
+           year_length1 = SampleYear - year_prev,
+           year_length = ifelse(is.na(year_length1), 4, year_length1), # including a filler
+           dbh_growth = (dbh_fill - dbh_prev)/year_length,
+           .by = c(Plot_Name, tree_id))
 
   # Remove trees that started dead and after first dead record
   trees_ind3 <- trees_ind2 |>
@@ -163,36 +179,55 @@ plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
            .by = c(Plot_Name, tree_id, subunit, PanelCode, ScientificName)) |>
     mutate(first_stat = first(status), .by = c(Plot_Name, tree_id)) |>
     filter(!prev_stat %in% 'dead') |> filter(!first_stat %in% "dead") |>
-    mutate(windthrow1 = ifelse(grepl("B", TreeStatusCode), 1, 0)) |>
-    # drop trees that died from windthrow
+    mutate(windthrow1 = ifelse(grepl("B|L|F", TreeStatusCode), 1, 0)) |>
     mutate(windthrow = ifelse(sum(windthrow1 > 0), 1, 0),
-           .by = c(Plot_Name, tree_id)) #|>
-  #filter(windthrow == 0)
+           .by = c(Plot_Name, tree_id))
+
+  trees_ind4 <- if(exc_wind == TRUE){
+    filter(trees_ind3, windthrow == FALSE)
+  } else {trees_ind3}
 
   # Select plots that have more than 1 tree die since 2006
-  trees_ind4 <- trees_ind3 |>
+  trees_ind5 <- trees_ind4 |>
     mutate(num_live = sum(status == "live"),
            num_dead = sum(status == 'dead'),
-           elev_mort = ifelse(num_dead/num_live > 0.05, 1, 0),
+           elev_mort1 = ifelse(num_dead/num_live > 0.05, 1, 0),
            .by = c(Plot_Name, SampleYear, cycle)) |>
-    mutate(elev_mort = ifelse(sum(elev_mort > 0), 1, 0),
+    mutate(elev_mort = ifelse(sum(elev_mort1 > 0), 1, 0),
            .by = Plot_Name) |>
-    mutate(dbh_growth_prev = lead(dbh_growth, 1), .by = c(Plot_Name, tree_id)) |>
+    mutate(dbh_growth_prev = dplyr::lead(dbh_growth, 1), .by = c(Plot_Name, tree_id)) |>
     mutate(growth_color = factor(case_when(dbh_growth_prev < 0 ~ "shrink",
                                            dbh_growth_prev == 0 ~ "no growth",
-                                           dbh_growth_prev > 0 & dbh_growth_prev < 0.5 ~ "slow",
-                                           dbh_growth_prev >= 0.5 & dbh_growth_prev < 1 ~  "moderate",
+                                           dbh_growth_prev > 0 & dbh_growth_prev < 0.25 ~ "slow",
+                                           dbh_growth_prev >= 0.25 & dbh_growth_prev < 1 ~  "moderate",
                                            dbh_growth_prev >= 1 ~ "fast"),
                                  levels = c("shrink", "no growth", "slow", "moderate", "fast")))
 
-
-  #table(trees_ind4$elev_mort, trees_ind4$ScientificName)
+  trees_ind6 <- if(elev_mort == TRUE){
+    filter(trees_ind5, elev_mort == 1)
+  } else {trees_ind5}
 
   facet_plot <- if(length(unique(trees_ind4$Plot_Name)) > 0) {TRUE} else {FALSE}
 
+  xlimits = c(from - 0.1, to + 0.1)
+  xbreaks = if(to - from > 8){seq(from, to, 4)} else {seq(from, to, 2)}
+
+  plot_title <-
+    if(title == TRUE){
+     paste0("Tree growth for",
+        if(any(!is.na(subunit))){paste0(" ", park, " ", subunit, collapse = ", ")} else NULL,
+        if(length(panels) < 4){paste0(" panels ", paste0(panels, collapse = ", "))} else NULL,
+        if(all(is.na(species))){paste0(" all species ")} else NULL,
+        if(all(!is.na(c(species, subunit)))){paste0(" and ")} else NULL,
+        if(any(!is.na(species))){paste0(" ", species, collapse = ", ")} else NULL,
+        if(all(is.na(c(species, subunit))) & !park %in% "all"){paste0("in ", park, collapse = ", ")} else NULL,
+        if(elev_mort == TRUE & (all(is.na(plotName)))){paste0(" in plots with elevated mortality")} else NULL,
+        if(exc_wind == TRUE){paste0(" excluding windthrow")} else NULL)
+    } else {NULL}
+
   p <-
   suppressWarnings(
-  ggplot(trees_ind4, aes(x = SampleYear, y = dbh_fill, group = tree_id)) +
+  ggplot(trees_ind6, aes(x = SampleYear, y = dbh_fill, group = tree_id)) +
     theme_FHM() +
     geom_line(aes(color = growth_color), linewidth = 1) +
     geom_point(aes(shape = status, size = status), stroke = 1) + #geom_smooth(span = 0.8, se = F) +
@@ -200,16 +235,16 @@ plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
     scale_size_manual(values = c("dead" = 3, "live" = 2), name = 'Status at measurement') +
     scale_color_manual(values = c("#d7191c", "#fdae61", "#e6f598","#78c679", "#238443"),
                        breaks = c("shrink", "no growth", "slow", "moderate", "fast"),
-                       labels = c("shrink: < 0cm", "no growth: 0 cm", "slow: 0.1 - 0.4 cm",
-                                  "moderate: 0.5 - 1 cm", "fast: > 1 cm"),
-                       name = 'Growth Rate per 4 years') +
+                       labels = c("shrink: < 0 cm", "no growth: 0 cm", "slow: 0.1 - 0.25 cm",
+                                  "moderate: 0.25 - 1 cm", "fast: > 1 cm"),
+                       name = 'Annual Growth Rate') +
     {if(facet_plot == TRUE){facet_wrap(~Plot_Name)}} +
-    scale_x_continuous(breaks = c(seq(2006, 2026, 4), 2026),
-                       limits = c(2005.9, 2026.1)) +
+    scale_x_continuous(breaks = xbreaks,
+                       limits = xlimits) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-    labs(y = "DBH (cm)", x = NULL)
+    labs(y = "Tree DBH (cm)", x = NULL, title = plot_title)
     )
 
-  return(p)
+  return(suppressWarnings(p))
 
 }
