@@ -218,7 +218,7 @@ plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
         if(any(!is.na(subunit))){paste0(" ", park, " ", subunit, collapse = ", ")} else NULL,
         if(length(panels) < 4){paste0(" panels ", paste0(panels, collapse = ", "))} else NULL,
         if(all(is.na(species))){paste0(" all species ")} else NULL,
-        if(all(!is.na(c(species, subunit)))){paste0(" and ")} else NULL,
+        if(all(!is.na(c(species, subunit)))){paste0(" and")} else NULL,
         if(any(!is.na(species))){paste0(" ", species, collapse = ", ")} else NULL,
         if(all(is.na(c(species, subunit))) & !park %in% "all"){paste0("in ", park, collapse = ", ")} else NULL,
         if(elev_mort == TRUE & (all(is.na(plotName)))){paste0(" in plots with elevated mortality")} else NULL,
