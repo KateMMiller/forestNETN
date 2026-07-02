@@ -154,7 +154,7 @@ plotTreeGrowth <- function(park = 'all', from = 2006, to = as.numeric(format(Sys
               select(Plot_Name, SampleYear, cycle, IsStuntedWoodland)
 
   trees_ind2 <- left_join(trees_ind1c, plot_evs, by = c("Plot_Name", "cycle", "SampleYear")) |>
-    filter(IsStuntedWoodland == FALSE) |> # might turn off
+    #filter(IsStuntedWoodland == FALSE) |> # might turn off
     mutate(tag = sprintf("%02d", TagCode),
            tree_id = paste0(Plot_Name, "-", tag),
            status = ifelse(TreeStatusCode %in% live, "live",
