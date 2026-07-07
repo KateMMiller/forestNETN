@@ -439,7 +439,7 @@ print_head(acad_vn)
 ### Plot Functions {.tabset}
 
 #### plotTreeGrowth {.tabset}
-This function plots individual tree growth over time for all trees that were alive on their first record in the plot. Trees that started out as dead are not plotted. Each line on a graph represents the basal area of a live tree up until the first time it is classified as dead. Lines are color coded based on growth between visits to indicate shrinkage, slowing of growth, and/or fast growth. Each tick or X on the figure is a sample event for a given tree.
+This function plots individual tree growth over time for all trees that were alive on their first record in the plot. Trees that started out as dead are not plotted. Each line on a graph represents the DBH of a live tree up until the first time it is classified as dead. Lines are color coded based on growth between visits to indicate shrinkage, slowing of growth, and/or fast growth. Each tick or X on the figure is a sample event for a given tree.
 
 <p class='fxn'>Make plot of red spruce for plots on Schoodic in panel 1</p>
 ```{r}

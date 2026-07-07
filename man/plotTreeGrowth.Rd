@@ -73,7 +73,7 @@ Returns a plot of tree growth rates over time, color coded by rate and whether a
 \description{
 This function plots individual tree growth over time for all trees that were alive on their
 first record in the plot. Trees that started out as dead are not plotted. Each line on a graph represents
-the basal area of a live tree up until the first time it is classified as dead. Lines are color coded based
+the DBH of a live tree up until the first time it is classified as dead. Lines are color coded based
 on growth between visits to indicate shrinkage, slowing of growth, and/or fast growth. Each tick or X on the
 figure is a sample event for a given tree.
 }
