@@ -100,8 +100,8 @@ joinLocEvent<-function(park = "all", from = 2006, to = as.numeric(format(Sys.Dat
   )
 
   # Merge COMN_Plots and COMN_Events
-  plots <- plots %>% select(-ExportDate)
-  events <- events %>% select(-ExportDate)
+  plots <- plots |> select(-ExportDate)
+  events <- events |> select(-ExportDate)
   merge_names <- intersect(names(plots), names(events))
     # merge_names: "Plot_Name", "Network", "ParkUnit", "ParkSubUnit", "PlotTypeCode", "##PlotTypeLabel",
     # "PanelCode", "##PanelLabel", "PlotCode", "IsAbandoned"
@@ -119,9 +119,6 @@ joinLocEvent<-function(park = "all", from = 2006, to = as.numeric(format(Sys.Dat
                     "EventID", "IsQAQC", "SampleYear", "SampleDate",
                     "PlotNotes", "Directions", "EventNotes", "StandNotes")]} else {plot_events}
 
-
-  # microbenchmark::microbenchmarl(plot_events$Plot_Name <- paste(plot_events$Park.Unit,
-  #                                sprintf("%03d", plot_events$PlotCode), sep = "-"), #sprintf was 2x slower
 
 
   plot_events1 <- if(locType == 'VS'){filter(plot_events, PlotTypeCode == "VS")
@@ -147,23 +144,25 @@ joinLocEvent<-function(park = "all", from = 2006, to = as.numeric(format(Sys.Dat
   plot_events7$cycle[plot_events7$SampleYear %in% c(2010:2013)] <- 2
   plot_events7$cycle[plot_events7$SampleYear %in% c(2014:2017)] <- 3
 
+  # updates because of COVID
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2018:2021) & ParkUnit == "ACAD", 4, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2022:2025) & ParkUnit == "ACAD", 5, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2026:2029) & ParkUnit == "ACAD", 6, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2030:2033) & ParkUnit == "ACAD", 7, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2034:2037) & ParkUnit == "ACAD", 8, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2038:2041) & ParkUnit == "ACAD", 9, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2042:2045) & ParkUnit == "ACAD", 10, cycle))
 
-  plot_events7$cycle <- with(plot_events7,
-                             ifelse(SampleYear %in% (2018:2021) &
-                                      ParkUnit == "ACAD", 4, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2018:2022) & ParkUnit != "ACAD", 4, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2023:2026) & ParkUnit != "ACAD", 5, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2027:2030) & ParkUnit != "ACAD", 6, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2031:2034) & ParkUnit != "ACAD", 7, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2035:2038) & ParkUnit != "ACAD", 8, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2039:2042) & ParkUnit != "ACAD", 9, cycle))
+  plot_events7$cycle <- with(plot_events7, ifelse(SampleYear %in% (2043:2046) & ParkUnit != "ACAD", 10, cycle))
 
-  plot_events7$cycle <- with(plot_events7,
-                             ifelse(SampleYear %in% (2022:2025) &
-                                      ParkUnit == "ACAD", 5, cycle))
-
-  plot_events7$cycle <- with(plot_events7,
-                             ifelse(SampleYear %in% (2018:2022) &
-                                      ParkUnit != "ACAD", 4, cycle))
-
-  plot_events7$cycle <- with(plot_events7,
-                             ifelse(SampleYear %in% (2023:2026) &
-                                      ParkUnit != "ACAD", 5, cycle))
-
+  if(any(is.na(plot_events7$cycle))){warning(
+    paste0("Cycle not properly attributed based on sample year. Cycle is hardcoded in joinLocEvent() starting at line 143 through year 2046."))}
 
   # Adding ACAD MDI Units to ParkSubUnit column
   MDI_West <- c('ACAD-016', 'ACAD-017', 'ACAD-018', 'ACAD-019', 'ACAD-024',
