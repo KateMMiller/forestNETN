@@ -51,7 +51,6 @@ Imports:
     ggplot2,
     magrittr,
     purrr,
-    sf,
     stringr,
     tidyr,
     tidyselect
