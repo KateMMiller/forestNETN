@@ -49,7 +49,7 @@
 #' @param plotName Allows you to select a specific plot to run function for. Value inputs are "PARK-###", like "ACAD-001".
 #' If no plot name is specified, or multiple plots are specified, the function will facet on plotName.
 #'
-#' @param elev_mort Logical. If TRUE, only includes plots that have experienced at least 5% mortality over
+#' @param elev_mort Logical. If TRUE, only includes plots that have experienced at least 5 percent mortality between a cycle and over
 #' the time interval specified. If FALSE (default), includes all plots with at least one live tree of the species
 #' specified.
 #'

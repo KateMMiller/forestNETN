@@ -56,7 +56,7 @@ If no plot name is specified, or multiple plots are specified, the function will
 
 \item{species}{Allows you to filter on species}
 
-\item{elev_mort}{Logical. If TRUE, only includes plots that have experienced at least 5% mortality over
+\item{elev_mort}{Logical. If TRUE, only includes plots that have experienced at least 5 percent mortality between a cycle and over
 the time interval specified. If FALSE (default), includes all plots with at least one live tree of the species
 specified.}
 
