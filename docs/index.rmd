@@ -57,6 +57,8 @@ library(tidyverse)
 
 ## Using the forestNETN R package {.tabset .tabset-pills}
 
+<h3>This website has been moved to <a href="https://doi-nps.github.io/forestNETN">https://doi-nps.github.io/forestNETN</a> and will no longer be updated on this site.</h3>
+
 ### Getting started {.tabset}
 
 #### Installation
